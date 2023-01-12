@@ -37,7 +37,7 @@ namespace GrpcRemoting.RpcMessaging
         /// <summary>
         /// Gets or sets a snapshot of the call context that flows from server back to the client. 
         /// </summary>
-        [DataMember]
-        public CallContextEntry[] CallContextSnapshot { get; set; }
+        //[DataMember]
+        //public CallContextEntry[] CallContextSnapshot { get; set; }
     }
 }

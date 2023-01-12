@@ -38,5 +38,7 @@ namespace GrpcRemoting.Serialization
         /// <param name="rawData">Raw data that should be deserialized</param>
         /// <returns>Deserialized object graph</returns>
         object Deserialize(Type type, byte[] rawData);
+
+        string Name { get; }
     }
 }

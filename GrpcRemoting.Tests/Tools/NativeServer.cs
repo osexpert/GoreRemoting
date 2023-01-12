@@ -24,7 +24,7 @@ namespace GrpcRemoting.Tests.Tools
                 Services =
                 {
                     ServerServiceDefinition.CreateBuilder()
-                        .AddMethod(GrpcRemoting.Descriptors.RpcCallBinaryFormatter, this.RpcCallBinaryFormatter)
+                        .AddMethod(GrpcRemoting.Descriptors.DuplexCall, this.DuplexCall)
                         .Build()
                 }
             };

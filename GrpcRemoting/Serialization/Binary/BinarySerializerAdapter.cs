@@ -95,6 +95,7 @@ namespace GrpcRemoting.Serialization.Binary
             var binaryFormatter = GetFormatter();
             return binaryFormatter.DeserializeSafe(rawData);
         }
-        
+
+        public string Name => "BinaryFormatter";
     }
 }

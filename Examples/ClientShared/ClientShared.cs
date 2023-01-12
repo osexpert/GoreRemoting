@@ -6,12 +6,16 @@ using System;
 using GrpcRemoting;
 using System.IO;
 
+
 namespace ClientShared
 {
     public class ClientTest
     {
         public void Test(ITestService testServ)
         {
+
+//            testServ.OtherFormatter();
+
             Task.Run(() =>
             {
                 testServ.GetMessages(m =>
@@ -105,5 +109,16 @@ namespace ClientShared
         void CompleteGetMessages();
         void GetFile(string file, Action<byte[], int, int> write, Action<string> progress);
         void SendFile(string file, Func<int, (byte[], int, int)> read, Action<string> progress);
+
+        [MemoryPackSerializer]
+        void OtherFormatter();
     }
+
+	public class MemoryPackSerializerAttribute : Attribute//SerializerAttribute
+	{
+		public MemoryPackSerializerAttribute() //: base("MemoryPack")
+		{
+
+		}
+	}
 }

@@ -2,6 +2,7 @@
 using Grpc.Core;
 using Grpc.Net.Client;
 using GrpcRemoting;
+using GrpcRemoting.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,13 +42,61 @@ namespace ClientNet60
 
         Guid pSessID = Guid.NewGuid();
 
-        public void BeforeBuildMethodCallMessage(Type t, MethodInfo mi)
+        public void BeforeBuildMethodCallMessage(Type t, MethodInfo mi, Metadata headers, ref ISerializerAdapter serializer)
         {
-            CallContext.SetData("SessionId", pSessID);
+            var a1 = mi.GetCustomAttribute<MemoryPackSerializerAttribute>();
+            if (a1 != null)
+            {
+				serializer = new mempack();
+			}
+            else
+            {
+                var t1 = t.GetCustomAttribute<MemoryPackSerializerAttribute>();
+                if (t1 != null)
+                    serializer = new mempack();
+            }
+
+			// men må fortelle hvilken formatter som brukes...
+			headers.Add(RemotingClient.SessionIdHeaderKey, pSessID.ToString());
+			//CallContext.SetData("SessionId", pSessID);
         }
 
     }
 
+	class mempack : ISerializerAdapter
+	{
+		public string Name => throw new NotImplementedException();
+
+		public T Deserialize<T>(byte[] rawData)
+		{
+			throw new NotImplementedException();
+		}
+
+		public object Deserialize(Type type, byte[] rawData)
+		{
+			throw new NotImplementedException();
+		}
+
+		public byte[] Serialize<T>(T graph)
+		{
+			throw new NotImplementedException();
+		}
+
+		public byte[] Serialize(Type type, object graph)
+		{
+			throw new NotImplementedException();
+		}
+	}
+
+	//public class SerializerAttribute : Attribute
+	//{
+	//	public string Name { get; private set; }
+
+	//	public SerializerAttribute(string name)
+	//	{
+	//		Name = name;
+	//	}
+	//}
 
 
 }

@@ -46,7 +46,7 @@ namespace GrpcRemoting.RpcMessaging
 				MethodName = targetMethod.Name,
 				Parameters = BuildMethodParameterInfos(serializer, targetMethod, args).ToArray(),
 				GenericArgumentTypeNames = genericArgumentTypeNames,
-				CallContextSnapshot = CallContext.GetSnapshot()
+				//CallContextSnapshot = CallContext.GetSnapshot()
 			};
 
 			return message;
@@ -151,7 +151,7 @@ namespace GrpcRemoting.RpcMessaging
 			}
 
 			message.OutParameters = outParameters.ToArray();
-			message.CallContextSnapshot = CallContext.GetSnapshot();
+			//message.CallContextSnapshot = CallContext.GetSnapshot();
 
 			return message;
 		}

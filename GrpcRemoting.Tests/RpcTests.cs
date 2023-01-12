@@ -41,7 +41,7 @@ namespace GrpcRemoting.Tests
                     //    container.RegisterService<ITestService>(
                     //        factoryDelegate: () => testService,
                     //        lifetime: ServiceLifetime.Singleton)
-                    CreateInstance = (t) => testService
+                    CreateInstance = (t, c) => testService
                 };
 
             await using var server = new NativeServer(9094, serverConfig);
@@ -134,7 +134,7 @@ namespace GrpcRemoting.Tests
                     //    container.RegisterService<ITestService>(
                     //        factoryDelegate: () => testService,
                     //        lifetime: ServiceLifetime.Singleton)
-                    CreateInstance = (t) => testService
+                    CreateInstance = (t,c) => testService
                 };
 
           
@@ -260,7 +260,7 @@ namespace GrpcRemoting.Tests
                     //    container.RegisterService<ITestService>(
                     //        factoryDelegate: () => testService,
                     //        lifetime: ServiceLifetime.Singleton)
-                    CreateInstance = (t) => testService
+                    CreateInstance = (t, c) => testService
                 };
 
             bool serviceEventCalled = false;
@@ -306,7 +306,7 @@ namespace GrpcRemoting.Tests
                     //    container.RegisterService<ITestService>(
                     //        factoryDelegate: () => testService,
                     //        lifetime: ServiceLifetime.Singleton)
-                    CreateInstance = (t) => testService
+                    CreateInstance = (t,c) => testService
                 };
 
            

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if false
+using System;
 
 namespace GrpcRemoting
 {
@@ -19,3 +20,4 @@ namespace GrpcRemoting
         public object Value { get; set; }
     }
 }
+#endif

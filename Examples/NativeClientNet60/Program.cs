@@ -1,6 +1,7 @@
 ﻿using ClientShared;
 using Grpc.Core;
 using GrpcRemoting;
+using GrpcRemoting.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -36,10 +37,11 @@ namespace ClientNet48
 
         Guid pSessID = Guid.NewGuid();
 
-        public void BeforeBuildMethodCallMessage(Type t, MethodInfo mi)
+        public void BeforeBuildMethodCallMessage(Type t, MethodInfo mi, Metadata headers, ref ISerializerAdapter ser)
         {
-            CallContext.SetData("SessionId", pSessID);
-        }
+			//CallContext.SetData("SessionId", pSessID);
+			headers.Add(RemotingClient.SessionIdHeaderKey, pSessID.ToString());
+		}
     }
 
  

@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿#if false
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -75,3 +76,4 @@ namespace GrpcRemoting
         }
     }
 }
+#endif

@@ -34,13 +34,13 @@ namespace GrpcRemoting
             _config = config;
         }
 
-		private object GetService(string serviceName)
+		private object GetService(string serviceName, ServerCallContext context)
 		{
 			if (!_services.TryGetValue(serviceName, out var serviceType))
 				throw new Exception("Service not registered: " + serviceName);
 
 			if (_config.CreateInstance != null)
-				return _config.CreateInstance(serviceType);
+				return _config.CreateInstance(serviceType, context.RequestHeaders);
 			else
 				return Activator.CreateInstance(serviceType);
         }
@@ -144,13 +144,13 @@ namespace GrpcRemoting
 		/// <param name="iface"></param>
 		//public void RegisterService(Type type, Type iface) => RegisterService(type, iface.Name);
 
-        private async Task RpcCall(ISerializerAdapter serializer, byte[] request, Func<Task<byte[]>> req, Func<byte[], Task> reponse)
+        private async Task DuplexCall(ISerializerAdapter serializer, byte[] request, Func<Task<byte[]>> req, Func<byte[], Task> reponse, ServerCallContext context)
 		{
             var wireMessage = serializer.Deserialize<WireCallMessage>(request);
 
 			var callMessage = (MethodCallMessage)wireMessage.Data;
 
-			CallContext.RestoreFromSnapshot(callMessage.CallContextSnapshot);
+			//CallContext.RestoreFromSnapshot(callMessage.CallContextSnapshot);
 
 			callMessage.UnwrapParametersFromDeserializedMethodCallMessage(
 				out var parameterValues,
@@ -230,7 +230,7 @@ namespace GrpcRemoting
 
 			try
 			{
-				var service = GetService(callMessage.ServiceName);
+				var service = GetService(callMessage.ServiceName, context);
 				result = method.Invoke(service, parameterValues);
 
 				var returnType = method.ReturnType;
@@ -292,7 +292,7 @@ namespace GrpcRemoting
 			return;// Task.CompletedTask;
 		}
 
-        static ISerializerAdapter _binaryFormatter = new BinarySerializerAdapter();
+        
 
 		/// <summary>
 		/// 
@@ -301,10 +301,14 @@ namespace GrpcRemoting
 		/// <param name="responseStream"></param>
 		/// <param name="context"></param>
 		/// <returns></returns>
-		public Task RpcCallBinaryFormatter(IAsyncStreamReader<byte[]> requestStream, IServerStreamWriter<byte[]> responseStream, ServerCallContext context)
+		public Task DuplexCall(IAsyncStreamReader<byte[]> requestStream, IServerStreamWriter<byte[]> responseStream, ServerCallContext context)
 		{
-			return RpcCall(_binaryFormatter, requestStream, responseStream, context);
-        }
+			var serializerName = context.RequestHeaders.GetValue(RemotingClient.SerializerHeaderKey);
+
+			var serializer = _config.Serializers[serializerName];
+
+			return DuplexCall(serializer, requestStream, responseStream, context);
+		}
 
 
 		/// <summary>
@@ -315,7 +319,7 @@ namespace GrpcRemoting
 		/// <param name="responseStream"></param>
 		/// <param name="context"></param>
 		/// <returns></returns>
-		public async Task RpcCall(ISerializerAdapter serializer, IAsyncStreamReader<byte[]> requestStream, IServerStreamWriter<byte[]> responseStream, ServerCallContext context)
+		private async Task DuplexCall(ISerializerAdapter serializer, IAsyncStreamReader<byte[]> requestStream, IServerStreamWriter<byte[]> responseStream, ServerCallContext context)
 		{
 			try
 			{
@@ -325,14 +329,14 @@ namespace GrpcRemoting
 				if (!gotNext)
 					throw new Exception("No method call request data");
 
-				await this.RpcCall(serializer, requestStream.Current, async () =>
+				await this.DuplexCall(serializer, requestStream.Current, async () =>
 				{
 					var gotNext = await requestStream.MoveNext().ConfigureAwait(false);
 					if (!gotNext)
 						throw new Exception("No delegate request data");
 					return requestStream.Current;
 				},
-				resp => responseStreamWrapped.WriteAsync(resp).AsTask()).ConfigureAwait(false);
+				resp => responseStreamWrapped.WriteAsync(resp).AsTask(), context).ConfigureAwait(false);
 
 				await responseStreamWrapped.CompleteAsync().ConfigureAwait(false);
 
@@ -361,6 +365,8 @@ namespace GrpcRemoting
 							_config.GrpcDotnetServerBidirStreamNotClosedHackAction?.Invoke(context);
 						}
 					}
+
+					//context. WRITE TRAILERS. Trailer = HEADER frame at the end with END_STREAM flag
 				}
 			}
 			catch (Exception e)
@@ -380,14 +386,14 @@ namespace GrpcRemoting
 		/// <summary>
 		/// 
 		/// </summary>
-		public static Method<byte[], byte[]> RpcCallBinaryFormatter = GetRpcCall("BinaryFormatter");
+		public static Method<byte[], byte[]> DuplexCall = GetDuplexCall("DuplexCall");
 
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="name"></param>
 		/// <returns></returns>
-		public static Method<byte[], byte[]> GetRpcCall(string name)
+		public static Method<byte[], byte[]> GetDuplexCall(string name)
 		{
 			return new Method<byte[], byte[]>(
 				type: MethodType.DuplexStreaming,

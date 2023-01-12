@@ -40,14 +40,15 @@ namespace GrpcRemoting
             return (T)proxy;
         }
 
-        internal void BeforeMethodCall(Type serviceType, MethodInfo mi) => _config.BeforeMethodCall?.Invoke(serviceType, mi);
+        internal void BeforeMethodCall(Type serviceType, MethodInfo mi, Metadata headers, ref ISerializerAdapter serializer) => 
+            _config.BeforeMethodCall?.Invoke(serviceType, mi, headers, ref serializer);
 
 		public MethodCallMessageBuilder MethodCallMessageBuilder = new();
-		public ISerializerAdapter Serializer = new BinarySerializerAdapter();
+        public ISerializerAdapter DefaultSerializer => _config.DefaultSerializer;
 
-        internal async Task InvokeAsync(byte[] req, Func<byte[], Func<byte[], Task>, Task> reponse)
-        {
-            using (var call = _callInvoker.AsyncDuplexStreamingCall(GrpcRemoting.Descriptors.RpcCallBinaryFormatter, null, new CallOptions { }))
+        internal async Task InvokeAsync(byte[] req, Func<byte[], Func<byte[], Task>, Task> reponse, CallOptions callOpt)
+		{
+			using (var call = _callInvoker.AsyncDuplexStreamingCall(GrpcRemoting.Descriptors.DuplexCall, null, callOpt))
             {
                 await call.RequestStream.WriteAsync(req).ConfigureAwait(false);
 
@@ -73,10 +74,12 @@ namespace GrpcRemoting
         }
 
 		internal const byte ClientHangupByte = 0x42;
+        internal const string SerializerHeaderKey = "grem-serializer";
+		public const string SessionIdHeaderKey = "grem-session-id";
 
-		internal void Invoke(byte[] req, Func<byte[], Func<byte[], Task>, Task> reponse)
+		internal void Invoke(byte[] req, Func<byte[], Func<byte[], Task>, Task> reponse, CallOptions callOpt)
         {
-			using (var call = _callInvoker.AsyncDuplexStreamingCall(GrpcRemoting.Descriptors.RpcCallBinaryFormatter, null, new CallOptions { }))
+			using (var call = _callInvoker.AsyncDuplexStreamingCall(GrpcRemoting.Descriptors.DuplexCall, null, callOpt))
             {
                 call.RequestStream.WriteAsync(req).GetAwaiter().GetResult();
 
@@ -126,4 +129,6 @@ namespace GrpcRemoting
         }
     }
 #endif
+
+  
 }

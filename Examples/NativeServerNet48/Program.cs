@@ -40,7 +40,7 @@ namespace ServerNet48
                 Services =
                 {
                     ServerServiceDefinition.CreateBuilder()
-                        .AddMethod(GrpcRemoting.Descriptors.RpcCallBinaryFormatter, remServer.RpcCallBinaryFormatter)
+                        .AddMethod(GrpcRemoting.Descriptors.DuplexCall, remServer.DuplexCall)
                         .Build()
                 }
             };
@@ -56,11 +56,12 @@ namespace ServerNet48
         }
 
 
-        public object CreateInstance(Type serviceType)
+        public object CreateInstance(Type serviceType, Metadata headers)
         {
-            Guid sessID = (Guid)CallContext.GetData("SessionId");
+            //Guid sessID = (Guid)CallContext.GetData("SessionId");
+            Guid sessID = Guid.Parse(headers.GetValue(RemotingClient.SessionIdHeaderKey));
 
-            Console.WriteLine("SessID: " + sessID);
+			Console.WriteLine("SessID: " + sessID);
 
             return Activator.CreateInstance(serviceType, sessID);
         }

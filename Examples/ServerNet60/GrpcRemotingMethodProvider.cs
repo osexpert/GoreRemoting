@@ -21,10 +21,10 @@ namespace ServerNet60
 
         public void OnServiceMethodDiscovery(ServiceMethodProviderContext<GrpcRemotingService> context)
         {
-            context.AddDuplexStreamingMethod(GrpcRemoting.Descriptors.RpcCallBinaryFormatter, new List<object>(), RpcCallBinaryFormatter);
+            context.AddDuplexStreamingMethod(GrpcRemoting.Descriptors.DuplexCall, new List<object>(), DuplexCall);
         }
 
-        Task RpcCallBinaryFormatter(GrpcRemotingService service, IAsyncStreamReader<byte[]> input, IServerStreamWriter<byte[]> output, ServerCallContext serverCallContext)
-            => pServ.RpcCallBinaryFormatter(input, output, serverCallContext);
+        Task DuplexCall(GrpcRemotingService service, IAsyncStreamReader<byte[]> input, IServerStreamWriter<byte[]> output, ServerCallContext serverCallContext)
+            => pServ.DuplexCall(input, output, serverCallContext);
     }
 }

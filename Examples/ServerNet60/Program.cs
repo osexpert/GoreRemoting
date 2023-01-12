@@ -3,6 +3,8 @@ using Grpc.Core;
 using GrpcRemoting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Core.Features;
@@ -100,16 +102,47 @@ namespace ServerNet60
 		static void Hack(ServerCallContext serverCallContext)
 		{
 			var ctx = serverCallContext.GetHttpContext();
-			var http2stream = ctx.Features.Get<IHttp2StreamIdFeature>();
-			var meht = http2stream?.GetType().GetMethod("OnEndStreamReceived", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-			meht?.Invoke(http2stream, null);
-		}
 
-		public object? CreateInstance(Type serviceType)
+   //         IHeaderDictionary trail;
+			//if (ctx.Response.HasStarted)
+			//{
+			//	// The response has content so write trailers to a trailing HEADERS frame
+			//	var feature = ctx.Response.HttpContext.Features.Get<IHttpResponseTrailersFeature>();
+			//	if (feature?.Trailers == null || feature.Trailers.IsReadOnly)
+			//	{
+			//		throw new InvalidOperationException("Trailers are not supported for this response. The server may not support gRPC.");
+			//	}
+
+			//	trail = feature.Trailers;
+			//}
+			//else
+			//{
+			//	// The response is "Trailers-Only". There are no gRPC messages in the response so the status
+			//	// and other trailers can be placed in the header HEADERS frame
+			//	trail = ctx.Response.Headers;
+			//}
+
+   //         trail["grpc-status"] = "0";
+
+			////var ctx = context.GetHttpContext();
+			//var completionFeature = ctx.Features.Get<IHttpResponseBodyFeature>();
+			//if (completionFeature != null)
+			//{
+   //             completionFeature.CompleteAsync().GetAwaiter().GetResult();
+			//}
+
+
+            var http2stream = ctx.Features.Get<IHttp2StreamIdFeature>();
+            var meht = http2stream?.GetType().GetMethod("OnEndStreamReceived", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            meht?.Invoke(http2stream, null);
+        }
+
+		public object? CreateInstance(Type serviceType, Metadata headers)
         {
-            Guid sessID = (Guid)CallContext.GetData("SessionId");
+            //Guid sessID = (Guid)CallContext.GetData("SessionId");
+            Guid sessID = Guid.Parse(headers.GetValue(RemotingClient.SessionIdHeaderKey));
 
-            Console.WriteLine("SessID: " + sessID);
+			Console.WriteLine("SessID: " + sessID);
 
             return Activator.CreateInstance(serviceType, sessID);
         }

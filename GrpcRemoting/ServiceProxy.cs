@@ -6,8 +6,10 @@ using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
+using Grpc.Core;
 using GrpcRemoting.RemoteDelegates;
 using GrpcRemoting.RpcMessaging;
+using GrpcRemoting.Serialization;
 using stakx.DynamicProxy;
 
 namespace GrpcRemoting
@@ -30,25 +32,30 @@ namespace GrpcRemoting
 
 			var arguments = MapArguments(args);
 
-			// FIXME: we should be able to check some attribute on the service interface to decide things:-)
-			_client.BeforeMethodCall(typeof(T), targetMethod);
+			var serializer = _client.DefaultSerializer;
+
+			var headers = new Metadata();
+
+			_client.BeforeMethodCall(typeof(T), targetMethod, headers, ref serializer);
+
+			headers.Add(RemotingClient.SerializerHeaderKey, serializer.Name);
 
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
-				serializer: _client.Serializer, 
+				serializer: serializer, 
 				remoteServiceName: _serviceName, 
 				targetMethod: targetMethod, 
 				args: arguments);
 
 			var wireCallMsg = new WireCallMessage() { Data = callMessage };
 
-			var bytes = _client.Serializer.Serialize(wireCallMsg);
+			var bytes = serializer.Serialize(wireCallMsg);
 
 			MethodCallResultMessage resultMessage = null;
 			
 			_client.Invoke(bytes, async (callback, res) =>
 			{
-				resultMessage = await HandleResponseAsync(callback, res, args).ConfigureAwait(false);
-			});
+				resultMessage = await HandleResponseAsync(serializer, callback, res, args).ConfigureAwait(false);
+			}, new CallOptions(headers: headers));
 
 			if (resultMessage == null)
 			{
@@ -71,12 +78,12 @@ namespace GrpcRemoting
 
 			invocation.ReturnValue = resultMessage.ReturnValue;
 
-            CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
+            //CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
         }
 
-		private async Task<MethodCallResultMessage> HandleResponseAsync(byte[] callback, Func<byte[], Task> res, object[] args)
+		private async Task<MethodCallResultMessage> HandleResponseAsync(ISerializerAdapter serializer, byte[] callback, Func<byte[], Task> res, object[] args)
 		{
-			var callbackData = _client.Serializer.Deserialize<WireResponseMessage>(callback);
+			var callbackData = serializer.Deserialize<WireResponseMessage>(callback);
 
 			switch (callbackData.ResponseType)
 			{
@@ -116,7 +123,7 @@ namespace GrpcRemoting
 						else
 							msg = new DelegateCallResultMessage() { Result = result };
 
-						var data = _client.Serializer.Serialize(msg);
+						var data = serializer.Serialize(msg);
 						await res(data).ConfigureAwait(false);
 					}
 					break;
@@ -134,25 +141,31 @@ namespace GrpcRemoting
 
 			var arguments = MapArguments(args);
 
-            _client.BeforeMethodCall(typeof(T), targetMethod);
+			var serializer = _client.DefaultSerializer;
 
-            var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
-				serializer: _client.Serializer, 
+			var headers = new Metadata();
+
+			_client.BeforeMethodCall(typeof(T), targetMethod, headers, ref serializer);
+
+			headers.Add(RemotingClient.SerializerHeaderKey, serializer.Name);
+
+			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
+				serializer: serializer, 
 				remoteServiceName: _serviceName, 
 				targetMethod: targetMethod, 
 				args: arguments);
 
 			var wireCallMsg = new WireCallMessage() { Data = callMessage };
 
-			var bytes = _client.Serializer.Serialize(wireCallMsg);
+			var bytes = serializer.Serialize(wireCallMsg);
 
 			MethodCallResultMessage resultMessage = null;
 
 			//await?
 			await _client.InvokeAsync(bytes, async (callback, reqq) =>
 			{
-				resultMessage = await HandleResponseAsync(callback, reqq, args.ToArray()).ConfigureAwait(false);
-			}).ConfigureAwait(false);
+				resultMessage = await HandleResponseAsync(serializer, callback, reqq, args.ToArray()).ConfigureAwait(false);
+			}, new CallOptions(headers: headers)).ConfigureAwait(false);
 
 			if (resultMessage == null)
 			{
@@ -169,7 +182,7 @@ namespace GrpcRemoting
 
 			invocation.Result = resultMessage.ReturnValue;
 
-            CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
+            //CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
         }
 
 		/// <summary>

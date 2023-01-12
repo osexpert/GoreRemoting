@@ -31,8 +31,8 @@ namespace GrpcRemoting.RpcMessaging
         /// <summary>
         /// Gets or sets an array of call context entries that should be send to the server.
         /// </summary>
-        [DataMember]
-        public CallContextEntry[] CallContextSnapshot { get; set; }
+        //[DataMember]
+        //public CallContextEntry[] CallContextSnapshot { get; set; }
         
         /// <summary>
         /// Gets or sets an array of generic type parameter names.
