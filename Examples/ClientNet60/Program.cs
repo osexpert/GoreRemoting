@@ -57,7 +57,7 @@ namespace ClientNet60
             }
 
 			// men må fortelle hvilken formatter som brukes...
-			headers.Add(RemotingClient.SessionIdHeaderKey, pSessID.ToString());
+			headers.Add(Constants.SessionIdHeaderKey, pSessID.ToString());
 			//CallContext.SetData("SessionId", pSessID);
         }
 

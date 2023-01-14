@@ -37,10 +37,6 @@ namespace GrpcRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                    //RegisterServicesAction = container =>
-                    //    container.RegisterService<ITestService>(
-                    //        factoryDelegate: () => testService,
-                    //        lifetime: ServiceLifetime.Singleton)
                     CreateInstance = (t, c) => testService
                 };
 
@@ -130,10 +126,6 @@ namespace GrpcRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                    //RegisterServicesAction = container =>
-                    //    container.RegisterService<ITestService>(
-                    //        factoryDelegate: () => testService,
-                    //        lifetime: ServiceLifetime.Singleton)
                     CreateInstance = (t,c) => testService
                 };
 
@@ -212,10 +204,6 @@ namespace GrpcRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                    //RegisterServicesAction = container =>
-                    //    container.RegisterService<ITestService>(
-                    //        factoryDelegate: () => testService,
-                    //        lifetime: ServiceLifetime.Singleton)
                 };
 
             await using var server = new NativeServer(9095, serverConfig);
@@ -256,10 +244,6 @@ namespace GrpcRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                    //RegisterServicesAction = container =>
-                    //    container.RegisterService<ITestService>(
-                    //        factoryDelegate: () => testService,
-                    //        lifetime: ServiceLifetime.Singleton)
                     CreateInstance = (t, c) => testService
                 };
 
@@ -302,10 +286,6 @@ namespace GrpcRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                    //RegisterServicesAction = container =>
-                    //    container.RegisterService<ITestService>(
-                    //        factoryDelegate: () => testService,
-                    //        lifetime: ServiceLifetime.Singleton)
                     CreateInstance = (t,c) => testService
                 };
 
@@ -372,9 +352,6 @@ namespace GrpcRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                    //RegisterServicesAction = container =>
-                    //    container.RegisterService<IGenericEchoService, GenericEchoService>(
-                    //        lifetime: ServiceLifetime.Singleton)
                 };
 
             await using var server = new NativeServer(9197, serverConfig);
@@ -421,9 +398,6 @@ namespace GrpcRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                    //RegisterServicesAction = container =>
-                    //    container.RegisterService<IEnumTestService, EnumTestService>(
-                    //        lifetime: ServiceLifetime.Singleton)
                 };
 
             await using var server = new NativeServer(9198, serverConfig);
@@ -440,5 +414,52 @@ namespace GrpcRemoting.Tests
             Assert.Equal(TestEnum.First, resultFirst);
             Assert.Equal(TestEnum.Second, resultSecond);
         }
-    }
+
+
+
+		public interface IRefTestService
+		{
+            void EchoRef(ref string refValue);
+            string EchoOut(out string outValue);
+		}
+
+		public class RefTestService : IRefTestService
+		{
+			public void EchoRef(ref string refValue)
+			{
+                refValue = "bad to the bone";
+			}
+			public string EchoOut(out string outValue)
+			{
+                outValue = "I am out";
+                return "result";
+			}
+		}
+
+
+		[Fact]
+		public async Task Ref_param_should_fail()
+		{
+			var serverConfig =
+				new ServerConfig()
+				{
+				};
+
+			await using var server = new NativeServer(9198, serverConfig);
+			server.RegisterService<IRefTestService, RefTestService>();
+			server.Start();
+
+			await using var client = new NativeClient(9198, new ClientConfig());
+
+			var proxy = client.CreateProxy<IRefTestService>();
+
+            string aString = "test";
+            Assert.Throws<NotSupportedException>(() => proxy.EchoRef(ref aString));
+			Assert.Equal("test", aString);
+
+			var r = proxy.EchoOut(out var outstr);
+            Assert.Equal("result", r);
+			Assert.Equal("I am out", outstr);
+		}
+	}
 }

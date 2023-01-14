@@ -140,7 +140,7 @@ namespace ServerNet60
 		public object? CreateInstance(Type serviceType, Metadata headers)
         {
             //Guid sessID = (Guid)CallContext.GetData("SessionId");
-            Guid sessID = Guid.Parse(headers.GetValue(RemotingClient.SessionIdHeaderKey));
+            Guid sessID = Guid.Parse(headers.GetValue(Constants.SessionIdHeaderKey));
 
 			Console.WriteLine("SessID: " + sessID);
 

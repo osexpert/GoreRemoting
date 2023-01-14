@@ -48,6 +48,11 @@ namespace GrpcRemoting
 
         internal async Task InvokeAsync(byte[] req, Func<byte[], Func<byte[], Task>, Task> reponse, CallOptions callOpt)
 		{
+            //using (var call = _callInvoker.AsyncUnaryCall(GrpcRemoting.Descriptors.UnaryCall, null, callOpt, req))
+            //{
+            //    var res = call.GetAwaiter().GetResult();
+            //}
+
 			using (var call = _callInvoker.AsyncDuplexStreamingCall(GrpcRemoting.Descriptors.DuplexCall, null, callOpt))
             {
                 await call.RequestStream.WriteAsync(req).ConfigureAwait(false);
@@ -59,7 +64,7 @@ namespace GrpcRemoting
                         // Client hung up
                         if (call.ResponseStream.Current.Length == 1)
                         {
-                            if (call.ResponseStream.Current[0] == ClientHangupByte)
+                            if (call.ResponseStream.Current[0] == Constants.ClientHangupByte)
                                 break;
                             else
                                 throw new Exception($"1 byte but not ClientHangupByte");
@@ -73,12 +78,10 @@ namespace GrpcRemoting
 			}
         }
 
-		internal const byte ClientHangupByte = 0x42;
-        internal const string SerializerHeaderKey = "grem-serializer";
-		public const string SessionIdHeaderKey = "grem-session-id";
-
 		internal void Invoke(byte[] req, Func<byte[], Func<byte[], Task>, Task> reponse, CallOptions callOpt)
         {
+//            var res = _callInvoker.BlockingUnaryCall(GrpcRemoting.Descriptors.UnaryCall, null, callOpt, req);
+
 			using (var call = _callInvoker.AsyncDuplexStreamingCall(GrpcRemoting.Descriptors.DuplexCall, null, callOpt))
             {
                 call.RequestStream.WriteAsync(req).GetAwaiter().GetResult();
@@ -94,7 +97,7 @@ namespace GrpcRemoting
                         // PS: only works with the dotnet client...
                         if (call.ResponseStream.Current.Length == 1)
                         {
-                            if (call.ResponseStream.Current[0] == ClientHangupByte)
+                            if (call.ResponseStream.Current[0] == Constants.ClientHangupByte)
                                 break;
                             else
                                 throw new Exception($"1 byte but not ClientHangupByte");

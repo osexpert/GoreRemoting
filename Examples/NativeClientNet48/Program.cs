@@ -40,7 +40,7 @@ namespace ClientNet48
         public void BeforeBuildMethodCallMessage(Type t, MethodInfo mi, Metadata headers, ref ISerializerAdapter serl)
         {
 			//CallContext.SetData("SessionId", pSessID);
-			headers.Add(RemotingClient.SessionIdHeaderKey, pSessID.ToString());
+			headers.Add(Constants.SessionIdHeaderKey, pSessID.ToString());
         }
     }
 

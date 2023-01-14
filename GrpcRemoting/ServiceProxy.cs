@@ -38,7 +38,7 @@ namespace GrpcRemoting
 
 			_client.BeforeMethodCall(typeof(T), targetMethod, headers, ref serializer);
 
-			headers.Add(RemotingClient.SerializerHeaderKey, serializer.Name);
+			headers.Add(Constants.SerializerHeaderKey, serializer.Name);
 
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
 				serializer: serializer, 
@@ -147,7 +147,7 @@ namespace GrpcRemoting
 
 			_client.BeforeMethodCall(typeof(T), targetMethod, headers, ref serializer);
 
-			headers.Add(RemotingClient.SerializerHeaderKey, serializer.Name);
+			headers.Add(Constants.SerializerHeaderKey, serializer.Name);
 
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
 				serializer: serializer, 

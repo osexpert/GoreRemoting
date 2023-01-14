@@ -71,6 +71,9 @@ namespace GrpcRemoting.RpcMessaging
 				var arg = args[i];
 				var parameterInfo = parameterInfos[i];
 
+				if (parameterInfo.IsRefParameterForReal())
+					throw new NotSupportedException("ref parameter not supported");
+
 				var useParamArray =
 					args.Length > parameterInfos.Length &&
 					i == parameterInfos.Length - 1 &&
@@ -93,7 +96,7 @@ namespace GrpcRemoting.RpcMessaging
 				yield return
 					new MethodCallParameterMessage()
 					{
-						IsOut = parameterInfo.IsOut,
+						IsOut = parameterInfo.IsOutParameterForReal(),
 						ParameterName = parameterInfo.Name,
 						ParameterTypeName = parameterInfo.ParameterType.FullName + "," + parameterInfo.ParameterType.Assembly.GetName().Name,
 						Value = parameterValue,
@@ -136,18 +139,18 @@ namespace GrpcRemoting.RpcMessaging
 				var arg = args[i];
 				var parameterInfo = parameterInfos[i];
 
-				if (!parameterInfo.IsOut)
-					continue;
+				if (parameterInfo.IsOutParameterForReal())
+				{
+					var isArgNull = arg == null;
 
-				var isArgNull = arg == null;
-
-				outParameters.Add(
-					new MethodCallOutParameterMessage()
-					{
-						ParameterName = parameterInfo.Name,
-						OutValue = arg,
-						IsOutValueNull = isArgNull
-					});
+					outParameters.Add(
+						new MethodCallOutParameterMessage()
+						{
+							ParameterName = parameterInfo.Name,
+							OutValue = arg,
+							IsOutValueNull = isArgNull
+						});
+				}
 			}
 
 			message.OutParameters = outParameters.ToArray();
@@ -156,5 +159,22 @@ namespace GrpcRemoting.RpcMessaging
 			return message;
 		}
 	
+	}
+
+	public static class ParameterInfoExtensions
+	{
+		/// <summary>
+		/// https://stackoverflow.com/a/38110036/2671330
+		/// </summary>
+		/// <param name="pi"></param>
+		/// <returns></returns>
+		public static bool IsRefParameterForReal(this ParameterInfo pi) => pi.ParameterType.IsByRef && !pi.IsOut;
+
+		/// <summary>
+		/// https://stackoverflow.com/a/38110036/2671330
+		/// </summary>
+		/// <param name="pi"></param>
+		/// <returns></returns>
+		public static bool IsOutParameterForReal(this ParameterInfo pi) => pi.ParameterType.IsByRef && pi.IsOut;
 	}
 }

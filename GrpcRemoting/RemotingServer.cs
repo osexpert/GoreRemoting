@@ -303,7 +303,7 @@ namespace GrpcRemoting
 		/// <returns></returns>
 		public Task DuplexCall(IAsyncStreamReader<byte[]> requestStream, IServerStreamWriter<byte[]> responseStream, ServerCallContext context)
 		{
-			var serializerName = context.RequestHeaders.GetValue(RemotingClient.SerializerHeaderKey);
+			var serializerName = context.RequestHeaders.GetValue(Constants.SerializerHeaderKey);
 
 			var serializer = _config.Serializers[serializerName];
 
@@ -347,26 +347,31 @@ namespace GrpcRemoting
 					// Native grpc works fine, as always.
 					// hack for grpd-dotnet bug(?): https://github.com/grpc/grpc-dotnet/issues/2010
 					var hdrs = context.RequestHeaders;
-					var agent = hdrs.GetValue("user-agent");
+					var agent = hdrs.GetValue(Constants.UserAgentHeaderKey);
 					if (agent != null)
 					{
-						if (agent.StartsWith("grpc-dotnet/"))
+						if (agent.StartsWith(Constants.DotnetClientAgentStart))
 						{
-							// dotnet client needs hangup hack
-							await responseStream.WriteAsync(new[] { RemotingClient.ClientHangupByte }).ConfigureAwait(false);
+							// dotnet client needs hangup hack.
+							// this hack does not work for the native client, it will still exhaust server resources after ca 240 echoes.
+							await responseStream.WriteAsync(new[] { Constants.ClientHangupByte }).ConfigureAwait(false);
 						}
-						else if (agent.StartsWith("grpc-csharp/"))
+						else if (agent.StartsWith(Constants.NativeClientAgentStart))
 						{
 							// needs very dirty hack
-							// This hack works with the native client when dotnet server is used
+							// This hack works with the native client when dotnet server is used.
+							// If this hack is used with the dotnet client, the dotnet client produce a TaskCancelled exception (that is handeled)
+							// when waiting on while (call.ResponseStream.MoveNext()). So this slows it down a bit. But the worst part is that the client
+							// hangs after a while (randomly, observed somewhere between 10-180k echoes until it happens. But is happens in 100% of cases)
+							// It seems to hang waiting on data. Probably a race condition in the cancellation logic, mass cancellation somehow triggers it I think.
+
 							//var ctx = context.GetHttpContext();
 							//var http2stream = ctx.Features.Get<IHttp2StreamIdFeature>();
 							//http2stream.GetType().GetMethod("OnEndStreamReceived", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).Invoke(http2stream, null);
+
 							_config.GrpcDotnetServerBidirStreamNotClosedHackAction?.Invoke(context);
 						}
 					}
-
-					//context. WRITE TRAILERS. Trailer = HEADER frame at the end with END_STREAM flag
 				}
 			}
 			catch (Exception e)
@@ -374,8 +379,6 @@ namespace GrpcRemoting
 				context.Status = new Status(StatusCode.Unknown, e.ToString());
 			}
 		}
-
-		public static readonly object GrpcDotnetBidirStreamNotClosedHackKey = new();
 	}
 
 	/// <summary>
@@ -388,12 +391,17 @@ namespace GrpcRemoting
 		/// </summary>
 		public static Method<byte[], byte[]> DuplexCall = GetDuplexCall("DuplexCall");
 
+		public static Method<byte[], byte[]> UnaryCall = GetUnaryCall("UnaryCall");
+
+		// TODO: if a method has no delegate arguments, we could use unary call "UnaryCall", because then there is just a singlem result.
+		// CON: DuplexCall will be less hot\tested less. PRO: can be faster?
+
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="name"></param>
 		/// <returns></returns>
-		public static Method<byte[], byte[]> GetDuplexCall(string name)
+		private static Method<byte[], byte[]> GetDuplexCall(string name)
 		{
 			return new Method<byte[], byte[]>(
 				type: MethodType.DuplexStreaming,
@@ -406,6 +414,21 @@ namespace GrpcRemoting
 					serializer: bytes => bytes,
 					deserializer: bytes => bytes));
 		}
-    }
+
+
+		private static Method<byte[], byte[]> GetUnaryCall(string name)
+		{
+			return new Method<byte[], byte[]>(
+				type: MethodType.Unary,
+				serviceName: "GrpcRemoting",
+				name: name,
+				requestMarshaller: Marshallers.Create(
+					serializer: bytes => bytes,
+					deserializer: bytes => bytes),
+				responseMarshaller: Marshallers.Create(
+					serializer: bytes => bytes,
+					deserializer: bytes => bytes));
+		}
+	}
 
 }
