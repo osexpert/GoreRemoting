@@ -15,6 +15,7 @@ using GrpcRemoting.Serialization;
 using GrpcRemoting.Serialization.Binary;
 using System.Xml.Linq;
 using System.Net.Http;
+using System.Threading;
 
 namespace GrpcRemoting
 {
@@ -156,6 +157,9 @@ namespace GrpcRemoting
 				out var parameterValues,
 				out var parameterTypes);
 
+			bool resultSent = false;
+			var resultSentLock = new object();
+
 			parameterValues = MapArguments(parameterValues, parameterTypes, /*async ??*/ delegateCallMsg =>
 			{
 				var delegateResultMessage = new WireResponseMessage()
@@ -168,6 +172,10 @@ namespace GrpcRemoting
 				// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
 				// These may seem to be 2 varianst of OneWay: 1 where we send and wait until sent, but do not care about result\exceptions.
 				// 2: we send and do not even wait for the sending to complete. (currently not implemented)
+				lock (resultSentLock)
+					if (resultSent)
+						throw new Exception("Too late, result sent");
+
 				reponse(serializer.Serialize(delegateResultMessage)).GetAwaiter().GetResult();
 
 				if (delegateCallMsg.OneWay)
@@ -255,7 +263,7 @@ namespace GrpcRemoting
 				exception = ex2.GetType().IsSerializable ? ex2 : new RemoteInvocationException(ex2.Message);
 
 				if (oneWay)
-					return;// Task.CompletedTask;
+					return;
 			}
 
 			MethodCallResultMessage resultMessage = null;
@@ -273,7 +281,7 @@ namespace GrpcRemoting
 				}
 
 				if (oneWay)
-					return;// Task.CompletedTask;
+					return;
 			}
 			else
 			{
@@ -286,10 +294,10 @@ namespace GrpcRemoting
 				ResponseType = ResponseType.Result
 			};
 
-			// async?
-			await reponse(serializer.Serialize(methodResultMessage)).ConfigureAwait(false);
+			lock (resultSentLock)
+				resultSent = true;
 
-			return;// Task.CompletedTask;
+			await reponse(serializer.Serialize(methodResultMessage)).ConfigureAwait(false);
 		}
 
         
@@ -350,13 +358,14 @@ namespace GrpcRemoting
 					var agent = hdrs.GetValue(Constants.UserAgentHeaderKey);
 					if (agent != null)
 					{
-						if (agent.StartsWith(Constants.DotnetClientAgentStart))
-						{
-							// dotnet client needs hangup hack.
-							// this hack does not work for the native client, it will still exhaust server resources after ca 240 echoes.
-							await responseStream.WriteAsync(new[] { Constants.ClientHangupByte }).ConfigureAwait(false);
-						}
-						else if (agent.StartsWith(Constants.NativeClientAgentStart))
+						//if (agent.StartsWith(Constants.DotnetClientAgentStart))
+						//{
+						//	// dotnet client needs hangup hack.
+						//	// this hack does not work for the native client, it will still exhaust server resources after ca 240 echoes.
+						//	//await responseStream.WriteAsync(new[] { Constants.ClientHangupByte }).ConfigureAwait(false);
+						//}
+						//else 
+						if (agent.StartsWith(Constants.NativeClientAgentStart))
 						{
 							// needs very dirty hack
 							// This hack works with the native client when dotnet server is used.

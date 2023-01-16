@@ -46,71 +46,63 @@ namespace GrpcRemoting
 		public MethodCallMessageBuilder MethodCallMessageBuilder = new();
         public ISerializerAdapter DefaultSerializer => _config.DefaultSerializer;
 
-        internal async Task InvokeAsync(byte[] req, Func<byte[], Func<byte[], Task>, Task> reponse, CallOptions callOpt)
-		{
-            //using (var call = _callInvoker.AsyncUnaryCall(GrpcRemoting.Descriptors.UnaryCall, null, callOpt, req))
-            //{
-            //    var res = call.GetAwaiter().GetResult();
-            //}
-
-			using (var call = _callInvoker.AsyncDuplexStreamingCall(GrpcRemoting.Descriptors.DuplexCall, null, callOpt))
-            {
-                await call.RequestStream.WriteAsync(req).ConfigureAwait(false);
-
-				while (await call.ResponseStream.MoveNext().ConfigureAwait(false))
-				{
-                    if (_config.EnableGrpcDotnetServerBidirStreamNotClosedHacks)
-                    {
-                        // Client hung up
-                        if (call.ResponseStream.Current.Length == 1)
-                        {
-                            if (call.ResponseStream.Current[0] == Constants.ClientHangupByte)
-                                break;
-                            else
-                                throw new Exception($"1 byte but not ClientHangupByte");
-                        }
-                    }
-
-					await reponse(call.ResponseStream.Current, bytes => call.RequestStream.WriteAsync(bytes)).ConfigureAwait(false);
-				}
-
-                await call.RequestStream.CompleteAsync().ConfigureAwait(false);
-			}
-        }
-
-		internal void Invoke(byte[] req, Func<byte[], Func<byte[], Task>, Task> reponse, CallOptions callOpt)
+		internal MethodCallResultMessage Invoke(byte[] req, Func<byte[], Func<byte[], Task>, Task<MethodCallResultMessage>> reponseHandler, CallOptions callOpt)
         {
 //            var res = _callInvoker.BlockingUnaryCall(GrpcRemoting.Descriptors.UnaryCall, null, callOpt, req);
 
 			using (var call = _callInvoker.AsyncDuplexStreamingCall(GrpcRemoting.Descriptors.DuplexCall, null, callOpt))
             {
-                call.RequestStream.WriteAsync(req).GetAwaiter().GetResult();
-
-				while (call.ResponseStream.MoveNext().GetAwaiter().GetResult())
+                try
                 {
-                    if (_config.EnableGrpcDotnetServerBidirStreamNotClosedHacks)
+                    call.RequestStream.WriteAsync(req).GetAwaiter().GetResult();
+
+                    while (call.ResponseStream.MoveNext().GetAwaiter().GetResult())
                     {
-                        // Client hung up
-                        // Hack for grpd-dotnet bug(?): https://github.com/grpc/grpc-dotnet/issues/2010
-                        // Initially checked for Length = 0 bytes (server sent 0 bytes as the signal), but I think it is safer to have an explicit hangup byte.
-                        // This assumes that we never send 1 bytes with data, except for the hangup sequence.
-                        // PS: only works with the dotnet client...
-                        if (call.ResponseStream.Current.Length == 1)
-                        {
-                            if (call.ResponseStream.Current[0] == Constants.ClientHangupByte)
-                                break;
-                            else
-                                throw new Exception($"1 byte but not ClientHangupByte");
-                        }
+                        var resultMsg = reponseHandler(call.ResponseStream.Current, bytes => call.RequestStream.WriteAsync(bytes)).GetAwaiter().GetResult();
+                        if (resultMsg != null)
+                            return resultMsg;
                     }
-
-                    reponse(call.ResponseStream.Current, bytes => call.RequestStream.WriteAsync(bytes)).GetAwaiter().GetResult();
-				}
-
-                call.RequestStream.CompleteAsync().GetAwaiter().GetResult();
+                }
+                finally
+                {
+                    call.RequestStream.CompleteAsync().GetAwaiter().GetResult();
+                }
 			}
+
+            //return null;
+            throw new Exception("No result message");
 		}
-    }
+
+		internal async Task<MethodCallResultMessage> InvokeAsync(byte[] req, Func<byte[], Func<byte[], Task>, Task<MethodCallResultMessage>> reponseHandler, CallOptions callOpt)
+		{
+			//using (var call = _callInvoker.AsyncUnaryCall(GrpcRemoting.Descriptors.UnaryCall, null, callOpt, req))
+			//{
+			//    var res = call.GetAwaiter().GetResult();
+			//}
+
+			using (var call = _callInvoker.AsyncDuplexStreamingCall(GrpcRemoting.Descriptors.DuplexCall, null, callOpt))
+			{
+				await call.RequestStream.WriteAsync(req).ConfigureAwait(false);
+
+				try
+				{
+					while (await call.ResponseStream.MoveNext().ConfigureAwait(false))
+					{
+						var resultMsg = await reponseHandler(call.ResponseStream.Current, bytes => call.RequestStream.WriteAsync(bytes)).ConfigureAwait(false);
+						if (resultMsg != null)
+							return resultMsg;
+					}
+				}
+				finally
+				{
+					await call.RequestStream.CompleteAsync().ConfigureAwait(false);
+				}
+			}
+
+			//return null;
+			throw new Exception("No result message");
+		}
+	}
 
 #if false
     /// <summary>

@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Grpc.Core;
 using GrpcRemoting.Tests.ExternalTypes;
@@ -262,7 +264,18 @@ namespace GrpcRemoting.Tests
             // because only then is the callback channel open.
             proxy.ServiceEvent += () => serviceEventCalled = true;
 
-            Assert.Throws<System.Threading.Channels.ChannelClosedException>(() => proxy.FireServiceEvent());
+            //Assert.Throws<System.Threading.Channels.ChannelClosedException>(() => proxy.FireServiceEvent());
+
+            Exception ex = null;
+            try
+            {
+                proxy.FireServiceEvent();
+            }
+            catch (Exception e)
+            {
+                ex = e;
+            }
+            Assert.Equal("Too late, result sent", ex.Message);
 
             Assert.False(serviceEventCalled);
         }
@@ -460,6 +473,136 @@ namespace GrpcRemoting.Tests
 			var r = proxy.EchoOut(out var outstr);
             Assert.Equal("result", r);
 			Assert.Equal("I am out", outstr);
+		}
+
+
+
+		public interface IDelegateTest
+		{
+            string Test(Func<string, string> echo);
+		}
+
+
+		public class DelegateTest : IDelegateTest
+		{
+			public string Test(Func<string, string> echo)
+			{
+
+				var t = new Thread(() =>
+                {
+
+					Test_Thread_Started = true;
+
+					try
+                    {
+						Exception ex = null;
+
+
+						while (true)
+                        {
+
+							try
+                            {
+
+								var r = echo("hi");
+                                Assert.Equal("hihi", r);
+
+								Test_Thread_DidRun = true;
+                            }
+                            catch (Exception e)
+                            {
+                                ex = e;
+
+
+								// various exceptions seen here
+								// Exception: "No delegate request data"
+								// e can sometimes be null!
+
+								//                        var eWasNull = e == null;
+								//                        var masIsNoReqData = e?.Message == "No delegate request data";
+								//                        var mess = e?.Message;
+								//                        var messIsNull = mess == null;
+								//                        var inner = e?.InnerException;
+								//                        var b = eWasNull || messIsNull || masIsNoReqData;
+								//Assert.True(b);
+
+								Test_Thread_Callback_Failed = true;
+                                //Assert.True(e is ChannelClosedException);
+
+                                break;
+                            }
+
+						}
+
+						Assert.Equal("Too late, result sent", ex.Message);
+
+
+					}
+                    finally
+                    {
+
+						Test_Thread_Done = true;
+                    }
+				});
+
+
+				t.Start();
+
+				Thread.Sleep(100);
+
+				while (!Test_Thread_Started)
+					Thread.Sleep(10);
+
+				Test_HasReturned = true;
+                return "bollocks";
+			}
+		}
+
+        volatile static bool Test_HasReturned = false;
+		volatile static bool Test_Thread_Started = false;
+		volatile static bool Test_Thread_DidRun = false;
+		volatile static bool Test_Thread_Callback_Failed = false;
+        volatile static bool Test_Thread_Done = false;
+
+		[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+		public static extern void OutputDebugString(string message);
+
+		[Fact]
+        public async Task Delegate_callback_after_return()
+        {
+			var serverConfig = new ServerConfig()
+		    {
+		    };
+
+			await using var server = new NativeServer(9198, serverConfig);
+			server.RegisterService<IDelegateTest, DelegateTest>();
+			server.Start();
+
+			await using var client = new NativeClient(9198, new ClientConfig());
+
+			var proxy = client.CreateProxy<IDelegateTest>();
+
+            bool wasHere = false;
+
+			var res = proxy.Test((e) =>
+            {
+
+				wasHere = true;
+				return e + "hi";
+            });
+
+			Assert.Equal("bollocks", res);
+
+			Assert.True(wasHere);
+			Assert.True(Test_HasReturned);
+			Assert.True(Test_Thread_DidRun);
+
+			while (!Test_Thread_Done)
+            {
+				Thread.Sleep(10);
+            }
+			Assert.True(Test_Thread_Done);
+			Assert.True(Test_Thread_Callback_Failed);
 		}
 	}
 }

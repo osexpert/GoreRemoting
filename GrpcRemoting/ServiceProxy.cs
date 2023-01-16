@@ -50,18 +50,18 @@ namespace GrpcRemoting
 
 			var bytes = serializer.Serialize(wireCallMsg);
 
-			MethodCallResultMessage resultMessage = null;
-			
-			_client.Invoke(bytes, async (callback, res) =>
-			{
-				resultMessage = await HandleResponseAsync(serializer, callback, res, args).ConfigureAwait(false);
-			}, new CallOptions(headers: headers));
+			var resultMessage = _client.Invoke(bytes, 
+				(callback, res) => HandleResponseAsync(serializer, callback, res, args), 
+				new CallOptions(headers: headers));
 
-			if (resultMessage == null)
-			{
-				invocation.ReturnValue = null;
-				return;
-			}
+//			if (resultMessage == null)
+	//			throw new Exception("No result message");
+			//{
+			//	// When does this happen?? Can it ever??
+			//	throw new Exception("When does this happen?? Can it ever??");
+			//	invocation.ReturnValue = null;
+			//	return;
+			//}
 
 			if (resultMessage.Exception != null)
 			{
@@ -81,6 +81,55 @@ namespace GrpcRemoting
             //CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
         }
 
+		protected override async ValueTask InterceptAsync(IAsyncInvocation invocation)
+		{
+			var args = invocation.Arguments;
+			var targetMethod = invocation.Method;
+
+			var arguments = MapArguments(args);
+
+			var serializer = _client.DefaultSerializer;
+
+			var headers = new Metadata();
+
+			_client.BeforeMethodCall(typeof(T), targetMethod, headers, ref serializer);
+
+			headers.Add(Constants.SerializerHeaderKey, serializer.Name);
+
+			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
+				serializer: serializer, 
+				remoteServiceName: _serviceName, 
+				targetMethod: targetMethod, 
+				args: arguments);
+
+			var wireCallMsg = new WireCallMessage() { Data = callMessage };
+
+			var bytes = serializer.Serialize(wireCallMsg);
+
+			var resultMessage =  await _client.InvokeAsync(bytes,
+				(callback, req) => HandleResponseAsync(serializer, callback, req, args.ToArray()),
+				new CallOptions(headers: headers)).ConfigureAwait(false);
+
+//			if (resultMessage == null)
+	//			throw new Exception("No result message");
+			//{
+			//	// When does this happen? Can it ever?
+			//	throw new Exception("When does this happen?? Can it ever??");
+			//	invocation.Result = null;
+			//	return;
+			//}
+
+			if (resultMessage.Exception != null)
+			{
+				throw resultMessage.Exception.Capture();
+			}
+
+			// out|ref not possible with async
+
+			invocation.Result = resultMessage.ReturnValue;
+
+            //CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
+        }
 		private async Task<MethodCallResultMessage> HandleResponseAsync(ISerializerAdapter serializer, byte[] callback, Func<byte[], Task> res, object[] args)
 		{
 			var callbackData = serializer.Deserialize<WireResponseMessage>(callback);
@@ -133,57 +182,6 @@ namespace GrpcRemoting
 
 			return null;
 		}
-
-		protected override async ValueTask InterceptAsync(IAsyncInvocation invocation)
-		{
-			var args = invocation.Arguments;
-			var targetMethod = invocation.Method;
-
-			var arguments = MapArguments(args);
-
-			var serializer = _client.DefaultSerializer;
-
-			var headers = new Metadata();
-
-			_client.BeforeMethodCall(typeof(T), targetMethod, headers, ref serializer);
-
-			headers.Add(Constants.SerializerHeaderKey, serializer.Name);
-
-			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
-				serializer: serializer, 
-				remoteServiceName: _serviceName, 
-				targetMethod: targetMethod, 
-				args: arguments);
-
-			var wireCallMsg = new WireCallMessage() { Data = callMessage };
-
-			var bytes = serializer.Serialize(wireCallMsg);
-
-			MethodCallResultMessage resultMessage = null;
-
-			//await?
-			await _client.InvokeAsync(bytes, async (callback, reqq) =>
-			{
-				resultMessage = await HandleResponseAsync(serializer, callback, reqq, args.ToArray()).ConfigureAwait(false);
-			}, new CallOptions(headers: headers)).ConfigureAwait(false);
-
-			if (resultMessage == null)
-			{
-				invocation.Result = null;
-				return;
-			}
-
-			if (resultMessage.Exception != null)
-			{
-				throw resultMessage.Exception.Capture();
-			}
-
-			// out|ref not possible with async
-
-			invocation.Result = resultMessage.ReturnValue;
-
-            //CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
-        }
 
 		/// <summary>
 		/// Maps non serializable arguments into a serializable form.
