@@ -48,8 +48,6 @@ namespace GrpcRemoting
 
 		internal MethodCallResultMessage Invoke(byte[] req, Func<byte[], Func<byte[], Task>, Task<MethodCallResultMessage>> reponseHandler, CallOptions callOpt)
         {
-//            var res = _callInvoker.BlockingUnaryCall(GrpcRemoting.Descriptors.UnaryCall, null, callOpt, req);
-
 			using (var call = _callInvoker.AsyncDuplexStreamingCall(GrpcRemoting.Descriptors.DuplexCall, null, callOpt))
             {
                 try
@@ -69,17 +67,11 @@ namespace GrpcRemoting
                 }
 			}
 
-            //return null;
             throw new Exception("No result message");
 		}
 
 		internal async Task<MethodCallResultMessage> InvokeAsync(byte[] req, Func<byte[], Func<byte[], Task>, Task<MethodCallResultMessage>> reponseHandler, CallOptions callOpt)
 		{
-			//using (var call = _callInvoker.AsyncUnaryCall(GrpcRemoting.Descriptors.UnaryCall, null, callOpt, req))
-			//{
-			//    var res = call.GetAwaiter().GetResult();
-			//}
-
 			using (var call = _callInvoker.AsyncDuplexStreamingCall(GrpcRemoting.Descriptors.DuplexCall, null, callOpt))
 			{
 				await call.RequestStream.WriteAsync(req).ConfigureAwait(false);
@@ -99,7 +91,6 @@ namespace GrpcRemoting
 				}
 			}
 
-			//return null;
 			throw new Exception("No result message");
 		}
 	}

@@ -54,19 +54,8 @@ namespace GrpcRemoting
 				(callback, res) => HandleResponseAsync(serializer, callback, res, args), 
 				new CallOptions(headers: headers));
 
-//			if (resultMessage == null)
-	//			throw new Exception("No result message");
-			//{
-			//	// When does this happen?? Can it ever??
-			//	throw new Exception("When does this happen?? Can it ever??");
-			//	invocation.ReturnValue = null;
-			//	return;
-			//}
-
 			if (resultMessage.Exception != null)
-			{
 				throw resultMessage.Exception.Capture();
-			}
 
 			var parameterInfos = targetMethod.GetParameters();
 
@@ -110,19 +99,8 @@ namespace GrpcRemoting
 				(callback, req) => HandleResponseAsync(serializer, callback, req, args.ToArray()),
 				new CallOptions(headers: headers)).ConfigureAwait(false);
 
-//			if (resultMessage == null)
-	//			throw new Exception("No result message");
-			//{
-			//	// When does this happen? Can it ever?
-			//	throw new Exception("When does this happen?? Can it ever??");
-			//	invocation.Result = null;
-			//	return;
-			//}
-
 			if (resultMessage.Exception != null)
-			{
 				throw resultMessage.Exception.Capture();
-			}
 
 			// out|ref not possible with async
 
@@ -130,6 +108,7 @@ namespace GrpcRemoting
 
             //CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
         }
+
 		private async Task<MethodCallResultMessage> HandleResponseAsync(ISerializerAdapter serializer, byte[] callback, Func<byte[], Task> res, object[] args)
 		{
 			var callbackData = serializer.Deserialize<WireResponseMessage>(callback);

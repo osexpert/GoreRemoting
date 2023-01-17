@@ -6,8 +6,7 @@ namespace GrpcRemoting
 {
 	public static class Constants
 	{
-		//internal const byte ClientHangupByte = 0x42;
-	
+
 		public const string HeaderPrefix = "grem-";
 		public const string SessionIdHeaderKey = "grem-session-id";
 		internal const string SerializerHeaderKey = "grem-serializer";

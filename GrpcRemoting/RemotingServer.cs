@@ -158,7 +158,7 @@ namespace GrpcRemoting
 				out var parameterTypes);
 
 			bool resultSent = false;
-			var resultSentLock = new object();
+			var responseLock = new ReaderWriterLockSlim();
 
 			parameterValues = MapArguments(parameterValues, parameterTypes, /*async ??*/ delegateCallMsg =>
 			{
@@ -172,26 +172,33 @@ namespace GrpcRemoting
 				// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
 				// These may seem to be 2 varianst of OneWay: 1 where we send and wait until sent, but do not care about result\exceptions.
 				// 2: we send and do not even wait for the sending to complete. (currently not implemented)
-				lock (resultSentLock)
+				responseLock.EnterReadLock();
+				try
+				{
 					if (resultSent)
 						throw new Exception("Too late, result sent");
 
-				reponse(serializer.Serialize(delegateResultMessage)).GetAwaiter().GetResult();
+					reponse(serializer.Serialize(delegateResultMessage)).GetAwaiter().GetResult();
 
-				if (delegateCallMsg.OneWay)
-				{
-					// fire and forget. no result, not even exception
-					return null;
-				}
-				else
-				{
-					// we want result or exception
-					byte[] data = req().GetAwaiter().GetResult();
-					var msg = serializer.Deserialize<DelegateCallResultMessage>(data);
-					if (msg.Exception != null)
-						throw msg.Exception.Capture();
+					if (delegateCallMsg.OneWay)
+					{
+						// fire and forget. no result, not even exception
+						return null;
+					}
 					else
-						return msg.Result;
+					{
+						// we want result or exception
+						byte[] data = req().GetAwaiter().GetResult();
+						var msg = serializer.Deserialize<DelegateCallResultMessage>(data);
+						if (msg.Exception != null)
+							throw msg.Exception.Capture();
+						else
+							return msg.Result;
+					}
+				}
+				finally
+				{
+					responseLock.ExitReadLock();
 				}
 			});
 
@@ -294,8 +301,10 @@ namespace GrpcRemoting
 				ResponseType = ResponseType.Result
 			};
 
-			lock (resultSentLock)
-				resultSent = true;
+			// This will block new delegates and wait until existing ones have left. We then get exlusive lock and set the flag.
+			responseLock.EnterWriteLock();
+			resultSent = true;
+			responseLock.ExitWriteLock();
 
 			await reponse(serializer.Serialize(methodResultMessage)).ConfigureAwait(false);
 		}
@@ -347,41 +356,6 @@ namespace GrpcRemoting
 				resp => responseStreamWrapped.WriteAsync(resp).AsTask(), context).ConfigureAwait(false);
 
 				await responseStreamWrapped.CompleteAsync().ConfigureAwait(false);
-
-				if (_config.EnableGrpcDotnetServerBidirStreamNotClosedHacks)
-				{
-
-					// tell client to hang up...because its not possible to hangup from the server without leaking http2 streams in grpc-dotnet....
-					// Native grpc works fine, as always.
-					// hack for grpd-dotnet bug(?): https://github.com/grpc/grpc-dotnet/issues/2010
-					var hdrs = context.RequestHeaders;
-					var agent = hdrs.GetValue(Constants.UserAgentHeaderKey);
-					if (agent != null)
-					{
-						//if (agent.StartsWith(Constants.DotnetClientAgentStart))
-						//{
-						//	// dotnet client needs hangup hack.
-						//	// this hack does not work for the native client, it will still exhaust server resources after ca 240 echoes.
-						//	//await responseStream.WriteAsync(new[] { Constants.ClientHangupByte }).ConfigureAwait(false);
-						//}
-						//else 
-						if (agent.StartsWith(Constants.NativeClientAgentStart))
-						{
-							// needs very dirty hack
-							// This hack works with the native client when dotnet server is used.
-							// If this hack is used with the dotnet client, the dotnet client produce a TaskCancelled exception (that is handeled)
-							// when waiting on while (call.ResponseStream.MoveNext()). So this slows it down a bit. But the worst part is that the client
-							// hangs after a while (randomly, observed somewhere between 10-180k echoes until it happens. But is happens in 100% of cases)
-							// It seems to hang waiting on data. Probably a race condition in the cancellation logic, mass cancellation somehow triggers it I think.
-
-							//var ctx = context.GetHttpContext();
-							//var http2stream = ctx.Features.Get<IHttp2StreamIdFeature>();
-							//http2stream.GetType().GetMethod("OnEndStreamReceived", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).Invoke(http2stream, null);
-
-							_config.GrpcDotnetServerBidirStreamNotClosedHackAction?.Invoke(context);
-						}
-					}
-				}
 			}
 			catch (Exception e)
 			{

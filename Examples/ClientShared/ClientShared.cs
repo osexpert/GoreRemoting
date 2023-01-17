@@ -104,7 +104,9 @@ namespace ClientShared
     {
         void SendMessage(string mess);
         string Echo(string s);
-        void TestProgress(Action<string> progress);
+		Task<string> EchoAsync(string s);
+
+		void TestProgress(Action<string> progress);
         Task GetMessages(Action<string> message);
         void CompleteGetMessages();
         void GetFile(string file, Action<byte[], int, int> write, Action<string> progress);

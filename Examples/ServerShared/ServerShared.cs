@@ -11,7 +11,9 @@ namespace ServerShared
     interface ITestService
     {
         string Echo(string s);
-        void TestProgress(Action<string> progress);
+		Task<string> EchoAsync(string s);
+
+		void TestProgress(Action<string> progress);
         Task GetMessages(Action<string> message);
         void CompleteGetMessages();
         void SendMessage(string mess);
@@ -57,7 +59,13 @@ namespace ServerShared
             return s;
         }
 
-        public void CompleteGetMessages()
+		public async Task<string> EchoAsync(string s)
+		{
+			Console.WriteLine("Enter Echo: " + s);
+			return s;
+		}
+
+		public void CompleteGetMessages()
         {
             if (pMessageGetters.TryGetValue(pSessionID, out var mg))
                 mg.Completed.SetResult(true);

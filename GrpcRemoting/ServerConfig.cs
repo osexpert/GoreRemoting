@@ -17,9 +17,6 @@ namespace GrpcRemoting
         /// </summary>
         public Func<Type, Metadata, object> CreateInstance;
 
-		public bool EnableGrpcDotnetServerBidirStreamNotClosedHacks;
-        public Action<ServerCallContext> GrpcDotnetServerBidirStreamNotClosedHackAction;
-
 		static ISerializerAdapter _binaryFormatter = new BinarySerializerAdapter();
 
         public Dictionary<string, ISerializerAdapter> Serializers = Init();
