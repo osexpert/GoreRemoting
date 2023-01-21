@@ -147,9 +147,9 @@ namespace GrpcRemoting
 
 						DelegateCallResultMessage msg = null;
 						if (exception != null)
-							msg = new DelegateCallResultMessage() { Exception = exception };
+							msg = new DelegateCallResultMessage{ Position = delegateMsg.Position, Exception = exception };
 						else
-							msg = new DelegateCallResultMessage() { Result = result };
+							msg = new DelegateCallResultMessage{ Position = delegateMsg.Position, Result = result };
 
 						var data = serializer.Serialize(msg);
 						await res(data).ConfigureAwait(false);
@@ -169,12 +169,27 @@ namespace GrpcRemoting
 		/// <returns>Array of arguments (includes mapped ones)</returns>
 		private object[] MapArguments(IEnumerable<object> arguments)
 		{
+			bool delegateHasResult = false;
+
 			return arguments.Select(argument =>
 			{
 				var type = argument?.GetType();
 
 				if (MapDelegateArgument(type, argument, out var mappedArgument))
+				{
+					if (mappedArgument.HasResult)
+					{
+						if (!delegateHasResult)
+							delegateHasResult = true;
+						else
+						{
+							// We could probably support more than 1, but it would complicate the logic. With max 1 the logic is easier.
+							throw new Exception("Only one delegate with result is supported");
+						}
+					}
+
 					return mappedArgument;
+				}
 				else
 					return argument;
 
@@ -188,11 +203,11 @@ namespace GrpcRemoting
 		/// <param name="argument">Argument to be wrapped</param>
 		/// <param name="mappedArgument">Out: Mapped argument</param>
 		/// <returns>True if mapping applied, otherwise false</returns>
-		private bool MapDelegateArgument(Type argumentType, object argument, out object mappedArgument)
+		private bool MapDelegateArgument(Type argumentType, object argument, out RemoteDelegateInfo mappedArgument)
 		{
 			if (argumentType == null || !typeof(Delegate).IsAssignableFrom(argumentType))
 			{
-				mappedArgument = argument;
+				mappedArgument = null;
 				return false;
 			}
 

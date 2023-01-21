@@ -190,6 +190,9 @@ namespace GrpcRemoting
 						// we want result or exception
 						byte[] data = req().GetAwaiter().GetResult();
 						var msg = serializer.Deserialize<DelegateCallResultMessage>(data);
+						if (msg.Position != delegateCallMsg.Position)
+							throw new Exception("Incorrect result position");
+
 						if (msg.Exception != null)
 							throw msg.Exception.Capture();
 						else
@@ -374,7 +377,7 @@ namespace GrpcRemoting
 		/// </summary>
 		public static Method<byte[], byte[]> DuplexCall = GetDuplexCall("DuplexCall");
 
-		public static Method<byte[], byte[]> UnaryCall = GetUnaryCall("UnaryCall");
+		private static Method<byte[], byte[]> UnaryCall = GetUnaryCall("UnaryCall");
 
 		// TODO: if a method has no delegate arguments, we could use unary call "UnaryCall", because then there is just a singlem result.
 		// CON: DuplexCall will be less hot\tested less. PRO: can be faster?

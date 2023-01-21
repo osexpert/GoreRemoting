@@ -20,6 +20,8 @@ namespace GrpcRemoting.RpcMessaging
 	[Serializable]
 	public class DelegateCallResultMessage
 	{
+		public int Position { get; set; }
+
 		public object Result { get; set; }
 
 		public Exception Exception { get; set; }

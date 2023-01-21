@@ -548,7 +548,7 @@ namespace GrpcRemoting.Tests
 
 				t.Start();
 
-				Thread.Sleep(100);
+				Thread.Sleep(1000);
 
 				while (!Test_Thread_Started)
 					Thread.Sleep(10);
@@ -603,6 +603,218 @@ namespace GrpcRemoting.Tests
             }
 			Assert.True(Test_Thread_Done);
 			Assert.True(Test_Thread_Callback_Failed);
+		}
+
+
+        [Serializable]
+		public class S1
+        {
+            public string s1;
+            public S1(string s)
+            {
+                s1 = s;
+            }
+        }
+
+		[Serializable]
+		public class S2
+        {
+			public string s2;
+			public S2(string s)
+			{
+				s2 = s;
+			}
+		}
+
+		[Serializable]
+		public class S3
+        {
+			public string s3;
+			public S3(string s)
+			{
+				s3 = s;
+			}
+		}
+
+		[Serializable]
+		public class R1
+        {
+			public string r1;
+			public R1(string r)
+			{
+				r1 = r;
+			}
+		}
+
+		[Serializable]
+		public class R2 {
+			public string r2;
+			public R2(string r)
+			{
+				r2 = r;
+			}
+		}
+
+		[Serializable]
+		public class R3 {
+			public string r3;
+			public R3(string r)
+			{
+				r3 = r;
+			}
+		}
+
+		public interface IDelegateTest2
+		{
+			string Test(Func<S1, R1> echo, Func<S2, R2> echo2, Func<S3, R3> echo3);
+            string Test(Action<S1> echo, Func<S2, R2> echo2, Action<S3> echo3);
+		}
+
+
+		public class DelegateTest2 : IDelegateTest2
+		{
+
+			volatile bool run = true;
+
+            public string Test(Func<S1, R1> echo, Func<S2, R2> echo2, Func<S3, R3> echo3)
+            {
+                // can't get here
+                Assert.True(false);
+
+                throw new NotImplementedException();
+            }
+
+			public string Test(Action<S1> echo, Func<S2, R2> echo2, Action<S3> echo3)
+			{
+				int i=0, i1=0, i2=0;
+                var t1 = new Thread(() =>
+                {
+                    while (run)
+                    {
+                        //var r = 
+                        echo(new S1("hello"));
+                        //Assert.Equal("hello", r.r1);
+                        i++;
+                    }
+                });
+                t1.Start();
+				var t2 = new Thread(() =>
+				{
+                    while (run)
+                    {
+                        var r = echo2(new S2("Yhello"));
+                        Assert.Equal("Yhellohi", r.r2);
+                        i1++;
+                    }
+				});
+				t2.Start();
+				var t3 = new Thread(() =>
+				{
+                    while (run)
+                    {
+                        //var r = 
+                        echo3(new S3("Xhello"));
+                        //Assert.Equal("Xhello", r.r3);
+                        i2++;
+                    }
+				});
+				t3.Start();
+
+                Thread.Sleep(1000);
+
+				Assert.True(i > 0);
+				Assert.True(i1 > 0);
+				Assert.True(i2 > 0);
+
+
+				run = false;
+
+                t1.Join();
+				t2.Join();
+				t3.Join();
+
+				return "רזו";
+			}
+		}
+
+        [Fact]
+		public async Task MultipleDelegateCallback()
+        {
+			var serverConfig = new ServerConfig()
+			{
+			};
+
+			await using var server = new NativeServer(9198, serverConfig);
+			server.RegisterService<IDelegateTest2, DelegateTest2>();
+			server.Start();
+
+			await using var client = new NativeClient(9198, new ClientConfig());
+
+			var proxy = client.CreateProxy<IDelegateTest2>();
+
+			bool wasHere = false;
+			bool wasHere2 = false;
+			bool wasHere3 = false;
+
+            Exception ex1 = null;
+            try
+            {
+                var res1 = proxy.Test((e) =>
+                {
+
+                    wasHere = true;
+                    return new(e.s1 + "hi");
+                }, (e2) =>
+                {
+
+                    wasHere2 = true;
+                    return new(e2.s2 + "hi");
+                }, (e3) =>
+                {
+
+                    wasHere3 = true;
+                    return new(e3.s3 + "hi");
+                });
+
+                Assert.Equal("רזו", res1);
+            }
+            catch (Exception e)
+            {
+                ex1 = e;
+            }
+
+			Assert.False(wasHere);
+			Assert.False(wasHere2);
+			Assert.False(wasHere3);
+
+			Assert.True(ex1.Message == "Only one delegate with result is supported");
+
+			wasHere = false;
+			wasHere2 = false;
+			wasHere3 = false;
+
+			var res = proxy.Test((e) =>
+			{
+
+				wasHere = true;
+				//return new(e + "hi");
+			}, (e2) =>
+			{
+
+				wasHere2 = true;
+				return new(e2.s2 + "hi");
+			}, (e3) =>
+			{
+
+				wasHere3 = true;
+				//return new(e3 + "hi");
+			});
+
+			Assert.Equal("רזו", res);
+
+			Assert.True(wasHere);
+			Assert.True(wasHere2);
+			Assert.True(wasHere3);
 		}
 	}
 }

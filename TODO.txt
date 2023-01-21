@@ -23,10 +23,20 @@ and then client call RequestStream.CompleteAsync() before the server call return
 BUT this does not help when using the native client -> dotnet server, in this case the dot net server still fails.
 So native client -> dotnet server seems to be most incompatible and no know hack or workaround here.
 
-TODO: compression. use headers? (Metadata). Compress if over 1000 bytes? (at least good for json). Deflate
-But grpc has native compression too? Is it enabled by default?
+TODO: compression. use headers? (Metadata). Compress if over 1000 bytes? (at least good for data over web sockets). Deflate
+But grpc has native compression too? Is it enabled by default? Find out...
 
 FlagsAttribute subclass: nativeremotingclient, dotnetremotingclient ???
 
 TODO: add possibility to change formatter based on interface method attributes.
 Then can gradually migrate from BinaryFormatter to eg. MemoryPack etc.
+
+Support multiple delegates with result:
+only 1 thread allowed to read result from client, others wait on something else.
+Then in rcv, desser (or use a header), find position, if mine, good. else some other is waiting on it (in a list). loop the list, find waiter with same position, release waiter\give him the data.
+So it will be a cooperative read stream, where all can read, but only one at a time, and the result can be for any of the waiters (but we have Position so we know who). IF result for a Position we don't have => Exception\fatal
+doable, but complicated and value is questionable.
+Can a StreamRequestQueue help? Not sure how.
+
+StreamResponseQueue: how does it work? Is it correctly tuned? Should it be unbouded\bounded, if bounded, how many? etc. Currently only taken directly from SO.
+
