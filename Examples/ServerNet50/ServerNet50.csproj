@@ -6,9 +6,9 @@
 	<IsPackable>false</IsPackable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Include="..\..\..\GrpcRemoting\Examples\ServerShared\ServerShared.cs" Link="ServerShared.cs" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Include="..\ServerShared\ServerShared.cs" Link="ServerShared.cs" />
+	</ItemGroup>
 	
 	<ItemGroup>
 		<PackageReference Include="Grpc.AspNetCore.Server" Version="2.51.0" />

@@ -29,8 +29,11 @@ https://github.com/max-ieremenko/ServiceModel.Grpc
 protobuf-net.Grpc  
 https://github.com/protobuf-net/protobuf-net.Grpc  
 
-SignalR.Strong  
+SignalR.Strong
 https://github.com/mehmetakbulut/SignalR.Strong  
+
+MagicOnion RPC framework based on gRPC
+https://github.com/Cysharp/MagicOnion
 
 The examples:
 
