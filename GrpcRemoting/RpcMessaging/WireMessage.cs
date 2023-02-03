@@ -3,18 +3,6 @@
 namespace GrpcRemoting.RpcMessaging
 {
 
-	/// <summary>
-	/// Serializable message to transport RPC invocation details and their results over the wire. 
-	/// </summary>
-	[Serializable]
-	public class WireCallMessage
-	{
-		/// <summary>
-		/// Gets or sets the raw data of the message content and its RSA signatures (only if message encryption is enabled).
-		/// </summary>
-		public object Data { get; set; }
-	}
-
 	public enum ResponseType
 	{
 		/// <summary>
@@ -30,14 +18,25 @@ namespace GrpcRemoting.RpcMessaging
 	[Serializable]
 	public class WireResponseMessage
 	{
+		public WireResponseMessage(DelegateCallMessage callMsg)
+		{
+			Delegate = callMsg;
+			ResponseType = ResponseType.Delegate;
+		}
+
+		public WireResponseMessage(MethodCallResultMessage resultMessage)
+		{
+			Result = resultMessage;
+			ResponseType = ResponseType.Result;
+		}
+
 		/// <summary>
 		/// Gets or sets the type of the message.
 		/// </summary>
 		public ResponseType ResponseType { get; set; }
 
-		/// <summary>
-		/// Gets or sets the raw data of the message content and its RSA signatures (only if message encryption is enabled).
-		/// </summary>
-		public object Data { get; set; }
+		public MethodCallResultMessage Result { get; set; }
+
+		public DelegateCallMessage Delegate { get; set; }
 	}
 }

@@ -147,9 +147,7 @@ namespace GrpcRemoting
 
         private async Task DuplexCall(ISerializerAdapter serializer, byte[] request, Func<Task<byte[]>> req, Func<byte[], Task> reponse, ServerCallContext context)
 		{
-            var wireMessage = serializer.Deserialize<WireCallMessage>(request);
-
-			var callMessage = (MethodCallMessage)wireMessage.Data;
+            var callMessage = serializer.Deserialize<MethodCallMessage>(request);
 
 			//CallContext.RestoreFromSnapshot(callMessage.CallContextSnapshot);
 
@@ -162,11 +160,7 @@ namespace GrpcRemoting
 
 			parameterValues = MapArguments(parameterValues, parameterTypes, /*async ??*/ delegateCallMsg =>
 			{
-				var delegateResultMessage = new WireResponseMessage()
-				{
-					Data = delegateCallMsg,
-					ResponseType = ResponseType.Delegate
-				};
+				var delegateResultMessage = new WireResponseMessage(delegateCallMsg);
 
 				// send respose to client and client will call the delegate via DelegateProxy
 				// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
@@ -298,11 +292,7 @@ namespace GrpcRemoting
 				resultMessage = new MethodCallResultMessage { Exception = exception };
 			}
 
-			var methodResultMessage = new WireResponseMessage()
-			{
-				Data = resultMessage,
-				ResponseType = ResponseType.Result
-			};
+			var methodResultMessage = new WireResponseMessage(resultMessage);
 
 			// This will block new delegates and wait until existing ones have left. We then get exlusive lock and set the flag.
 			responseLock.EnterWriteLock();

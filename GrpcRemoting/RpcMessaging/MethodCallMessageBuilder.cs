@@ -89,18 +89,14 @@ namespace GrpcRemoting.RpcMessaging
 					}
 				}
 
-				var isArgNull = arg == null;
-
 				object parameterValue =	useParamArray ? paramArrayValues.ToArray() : arg;
 
 				yield return
 					new MethodCallParameterMessage()
 					{
-						IsOut = parameterInfo.IsOutParameterForReal(),
 						ParameterName = parameterInfo.Name,
 						ParameterTypeName = parameterInfo.ParameterType.FullName + "," + parameterInfo.ParameterType.Assembly.GetName().Name,
-						Value = parameterValue,
-						IsValueNull = isArgNull
+						Value = parameterValue
 					};
 			}
 		}
@@ -122,13 +118,10 @@ namespace GrpcRemoting.RpcMessaging
 			if (serializer == null)
 				throw new ArgumentNullException(nameof(serializer));
 
-			var isReturnValueNull = returnValue == null;
-
 			var parameterInfos = method.GetParameters();
 
 			var message = new MethodCallResultMessage()
 			{
-				IsReturnValueNull = isReturnValueNull,
 				ReturnValue = returnValue
 			};
 
@@ -141,14 +134,11 @@ namespace GrpcRemoting.RpcMessaging
 
 				if (parameterInfo.IsOutParameterForReal())
 				{
-					var isArgNull = arg == null;
-
 					outParameters.Add(
 						new MethodCallOutParameterMessage()
 						{
 							ParameterName = parameterInfo.Name,
-							OutValue = arg,
-							IsOutValueNull = isArgNull
+							OutValue = arg
 						});
 				}
 			}

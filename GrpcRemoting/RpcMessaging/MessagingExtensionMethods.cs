@@ -30,7 +30,7 @@ namespace GrpcRemoting.RpcMessaging
                 if (parameterType == null)
                     throw new Exception("Parameter type not found: " + parameter.ParameterTypeName);
                 parameterTypes[i] = parameterType;
-                parameterValues[i] = parameter.IsValueNull ? null : parameter.Value;
+                parameterValues[i] = parameter.Value;
             }
         }
     }

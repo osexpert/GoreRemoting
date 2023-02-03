@@ -46,9 +46,7 @@ namespace GrpcRemoting
 				targetMethod: targetMethod, 
 				args: arguments);
 
-			var wireCallMsg = new WireCallMessage() { Data = callMessage };
-
-			var bytes = serializer.Serialize(wireCallMsg);
+			var bytes = serializer.Serialize(callMessage);
 
 			var resultMessage = _client.Invoke(bytes, 
 				(callback, res) => HandleResponseAsync(serializer, callback, res, args), 
@@ -62,7 +60,7 @@ namespace GrpcRemoting
 			foreach (var outParameterValue in resultMessage.OutParameters)
 			{
 				var parameterInfo = parameterInfos.First(p => p.Name == outParameterValue.ParameterName);
-				args[parameterInfo.Position] = outParameterValue.IsOutValueNull ? null : outParameterValue.OutValue;
+				args[parameterInfo.Position] = outParameterValue.OutValue;
 			}
 
 			invocation.ReturnValue = resultMessage.ReturnValue;
@@ -91,9 +89,7 @@ namespace GrpcRemoting
 				targetMethod: targetMethod, 
 				args: arguments);
 
-			var wireCallMsg = new WireCallMessage() { Data = callMessage };
-
-			var bytes = serializer.Serialize(wireCallMsg);
+			var bytes = serializer.Serialize(callMessage);
 
 			var resultMessage =  await _client.InvokeAsync(bytes,
 				(callback, req) => HandleResponseAsync(serializer, callback, req, args.ToArray()),
@@ -116,11 +112,11 @@ namespace GrpcRemoting
 			switch (callbackData.ResponseType)
 			{
 				case ResponseType.Result:
-					return (MethodCallResultMessage)callbackData.Data;
+					return callbackData.Result;
 
 				case ResponseType.Delegate:
 					{
-						var delegateMsg = (DelegateCallMessage)callbackData.Data;
+						var delegateMsg = callbackData.Delegate;
 
 						var delegt = (Delegate)args[delegateMsg.Position];
 
