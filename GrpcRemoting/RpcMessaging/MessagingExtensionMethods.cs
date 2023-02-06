@@ -15,23 +15,23 @@ namespace GrpcRemoting.RpcMessaging
         /// <param name="callMessage">MethodCallMessage object</param>
         /// <param name="parameterValues">Out: Unwrapped parameter values</param>
         /// <param name="parameterTypes">Out: Unwrapped parameter types</param>
-        public static void UnwrapParametersFromDeserializedMethodCallMessage(
-            this MethodCallMessage callMessage, 
-            out object[] parameterValues,
-            out Type[] parameterTypes)
+        public static (object[] parameterValues, Type[] parameterTypes) UnwrapParametersFromDeserializedMethodCallMessage(
+            this MethodCallMessage callMessage)
         {
-            parameterTypes = new Type[callMessage.Parameters.Length];
-            parameterValues = new object[callMessage.Parameters.Length];
+            var parameterTypes = new Type[callMessage.Arguments.Length];
+            var parameterValues = new object[callMessage.Arguments.Length];
 
-            for (int i = 0; i < callMessage.Parameters.Length; i++)
+            for (int i = 0; i < callMessage.Arguments.Length; i++)
             {
-                var parameter = callMessage.Parameters[i];
-                var parameterType = Type.GetType(parameter.ParameterTypeName);
+                var parameter = callMessage.Arguments[i];
+                var parameterType = Type.GetType(parameter.TypeName);
                 if (parameterType == null)
-                    throw new Exception("Parameter type not found: " + parameter.ParameterTypeName);
+                    throw new Exception("Parameter type not found: " + parameter.TypeName);
                 parameterTypes[i] = parameterType;
                 parameterValues[i] = parameter.Value;
             }
+
+            return (parameterValues, parameterTypes);
         }
     }
 }

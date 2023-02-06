@@ -22,16 +22,20 @@ namespace GrpcRemoting.RpcMessaging
         /// <summary>
         /// Gets or sets an array of messages that describes the parameters that should be passed to the remote method.
         /// </summary>
-        public MethodCallParameterMessage[] Parameters { get; set; }
-        
-        /// <summary>
-        /// Gets or sets an array of call context entries that should be send to the server.
-        /// </summary>
-        //public CallContextEntry[] CallContextSnapshot { get; set; }
-        
-        /// <summary>
-        /// Gets or sets an array of generic type parameter names.
-        /// </summary>
-        public string[] GenericArgumentTypeNames { get; set; }
+        //public MethodCallParameterMessage[] Parameters { get; set; }
+
+        public MethodCallArgument[] Arguments { get; set; }
+
+		/// <summary>
+		/// Gets or sets an array of call context entries that should be send to the server.
+		/// </summary>
+		//public CallContextEntry[] CallContextSnapshot { get; set; }
+
+		/// <summary>
+		/// Gets or sets an array of generic type parameter names.
+		/// </summary>
+		//public string[] GenericArgumentTypeNames { get; set; }
+
+        public bool IsGenericMethod { get; set; }
     }
 }

@@ -35,17 +35,12 @@ namespace GrpcRemoting.RpcMessaging
 
 			args ??= new object[0];
 
-			var genericArgumentTypeNames =
-				targetMethod.GetGenericArguments()
-					.Select(arg => arg.FullName + "," + arg.Assembly.GetName().Name)
-					.ToArray();
-
 			var message = new MethodCallMessage()
 			{
 				ServiceName = remoteServiceName,
 				MethodName = targetMethod.Name,
-				Parameters = BuildMethodParameterInfos(serializer, targetMethod, args).ToArray(),
-				GenericArgumentTypeNames = genericArgumentTypeNames,
+				Arguments = BuildMethodParameterInfos(serializer, targetMethod, args).ToArray(),
+				IsGenericMethod = targetMethod.IsGenericMethod
 				//CallContextSnapshot = CallContext.GetSnapshot()
 			};
 
@@ -59,12 +54,13 @@ namespace GrpcRemoting.RpcMessaging
 		/// <param name="targetMethod">Target method information</param>
 		/// <param name="args">Array of arguments, which should passed a parameters</param>
 		/// <returns>Enumerable of method call parameter messages</returns>
-		public IEnumerable<MethodCallParameterMessage> BuildMethodParameterInfos(
+		public IEnumerable<MethodCallArgument> BuildMethodParameterInfos(
 			ISerializerAdapter serializer,
 			MethodInfo targetMethod,
 			object[] args)
 		{
 			var parameterInfos = targetMethod.GetParameters();
+			var genericArgumentTypes = targetMethod.GetGenericArguments();
 
 			for (var i = 0; i < parameterInfos.Length; i++)
 			{
@@ -75,7 +71,7 @@ namespace GrpcRemoting.RpcMessaging
 					throw new NotSupportedException("ref parameter not supported");
 
 				var useParamArray =
-					args.Length > parameterInfos.Length &&
+					args.Length > parameterInfos.Length && // more args than params? not possible...unless...BSON?
 					i == parameterInfos.Length - 1 &&
 					parameterInfos[i].GetCustomAttribute<ParamArrayAttribute>() != null;
 
@@ -83,6 +79,7 @@ namespace GrpcRemoting.RpcMessaging
 
 				if (useParamArray)
 				{
+					// will never happen for binary formatter?
 					for (var j = i; j < args.Length; j++)
 					{
 						paramArrayValues.Add(args[j]);
@@ -91,11 +88,13 @@ namespace GrpcRemoting.RpcMessaging
 
 				object parameterValue =	useParamArray ? paramArrayValues.ToArray() : arg;
 
+				Type paramType = targetMethod.IsGenericMethod ? genericArgumentTypes[i] : parameterInfo.ParameterType;
+
 				yield return
-					new MethodCallParameterMessage()
+					new MethodCallArgument()
 					{
 						ParameterName = parameterInfo.Name,
-						ParameterTypeName = parameterInfo.ParameterType.FullName + "," + parameterInfo.ParameterType.Assembly.GetName().Name,
+						TypeName = paramType.FullName + "," + paramType.Assembly.GetName().Name,
 						Value = parameterValue
 					};
 			}
@@ -125,7 +124,7 @@ namespace GrpcRemoting.RpcMessaging
 				ReturnValue = returnValue
 			};
 
-			var outParameters = new List<MethodCallOutParameterMessage>();
+			var outArguments = new List<MethodCallOutArgument>();
 
 			for (var i = 0; i < args.Length; i++)
 			{
@@ -134,8 +133,8 @@ namespace GrpcRemoting.RpcMessaging
 
 				if (parameterInfo.IsOutParameterForReal())
 				{
-					outParameters.Add(
-						new MethodCallOutParameterMessage()
+					outArguments.Add(
+						new MethodCallOutArgument()
 						{
 							ParameterName = parameterInfo.Name,
 							OutValue = arg
@@ -143,7 +142,7 @@ namespace GrpcRemoting.RpcMessaging
 				}
 			}
 
-			message.OutParameters = outParameters.ToArray();
+			message.OutArguments = outArguments.ToArray();
 			//message.CallContextSnapshot = CallContext.GetSnapshot();
 
 			return message;

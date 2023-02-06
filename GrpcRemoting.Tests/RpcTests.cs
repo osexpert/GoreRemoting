@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -341,7 +342,9 @@ namespace GrpcRemoting.Tests
         {
             T Echo<T>(T value);
 
-            void a();
+			List<T> Echo2<T>(List<T> value);
+
+			void a();
 		}
 
         public class GenericEchoService : IGenericEchoService
@@ -355,7 +358,12 @@ namespace GrpcRemoting.Tests
             {
                 // test smallest payload
             }
-        }
+
+			public List<T> Echo2<T>(List<T> value)
+			{
+                return value;
+			}
+		}
 
         #endregion
         
@@ -376,10 +384,18 @@ namespace GrpcRemoting.Tests
             var proxy = client.CreateProxy<IGenericEchoService>();
 
             var result = proxy.Echo("Yay");
-            
             Assert.Equal("Yay", result);
 
-            proxy.a();
+			var result2 = proxy.Echo(42);
+			Assert.Equal(42, result2);
+
+            var result3 = proxy.Echo2(new List<int> { 1, 2, 3 });
+			Assert.Equal(3, result3.Count);
+			Assert.Equal(1, result3[0]);
+			Assert.Equal(2, result3[1]);
+			Assert.Equal(3, result3[2]);
+
+			proxy.a();
         }
         
         #region Service with enum as operation argument
@@ -815,6 +831,66 @@ namespace GrpcRemoting.Tests
 			Assert.True(wasHere);
 			Assert.True(wasHere2);
 			Assert.True(wasHere3);
+		}
+
+		public interface IVarArgTest
+        {
+            int[] Test(int a, params int[] b);
+
+            Task<int> Test(Func<int, Task<int>> lol);
+        }
+
+		public class VarArgTest : IVarArgTest
+		{
+			public int[] Test(int a, params int[] b)
+			{
+                var l = new List<int>();
+                l.Add(a);
+                l.AddRange(b);
+                return l.ToArray();
+			}
+
+			public async Task<int> Test(Func<int, Task<int>> lol)
+			{
+                var res = await lol(42);
+
+                return res;
+			}
+		}
+
+		[Fact]
+        public async Task DoVarArgTest()
+        {
+			await using var server = new NativeServer(9198, new ServerConfig());
+			server.RegisterService<IVarArgTest, VarArgTest>();
+			server.Start();
+
+			await using var client = new NativeClient(9198, new ClientConfig());
+
+			var proxy = client.CreateProxy<IVarArgTest>();
+            var r1 = proxy.Test(1);
+            Assert.Single(r1);
+			Assert.Equal(1, r1[0]);
+
+			var r2 = proxy.Test(1,2,3);
+			Assert.Equal(3, r2.Length);
+			Assert.Equal(1, r2[0]);
+			Assert.Equal(2, r2[1]);
+			Assert.Equal(3, r2[2]);
+
+			var r3 = proxy.Test(1, 2);
+            Assert.Equal(2, r3.Length);
+			Assert.Equal(1, r3[0]);
+			Assert.Equal(2, r3[1]);
+
+
+            var v = await proxy.Test(async (a) =>
+            {
+                Assert.Equal(42, a);
+                await Task.CompletedTask;
+                return 422;
+            });
+            Assert.Equal(422, v);
 		}
 	}
 }

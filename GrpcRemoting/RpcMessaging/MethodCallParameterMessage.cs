@@ -7,7 +7,7 @@ namespace GrpcRemoting.RpcMessaging
     /// Serializable message that describes a parameter of an remote method call. 
     /// </summary>
     [Serializable]
-    public class MethodCallParameterMessage
+    public class MethodCallArgument
     {
         /// <summary>
         /// Gets or sets the name of the parameter.
@@ -17,7 +17,7 @@ namespace GrpcRemoting.RpcMessaging
         /// <summary>
         /// Gets or sets the type name of the parameter.
         /// </summary>
-        public string ParameterTypeName { get; set; }
+        public string TypeName { get; set; }
         
         /// <summary>
         /// Gets or sets the parameter value.
