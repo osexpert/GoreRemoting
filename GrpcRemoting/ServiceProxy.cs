@@ -57,10 +57,10 @@ namespace GrpcRemoting
 
 			var parameterInfos = targetMethod.GetParameters();
 
-			foreach (var outParameterValue in resultMessage.OutParameters)
+			foreach (var outArgument in resultMessage.OutArguments)
 			{
-				var parameterInfo = parameterInfos.First(p => p.Name == outParameterValue.ParameterName);
-				args[parameterInfo.Position] = outParameterValue.OutValue;
+				var parameterInfo = parameterInfos.First(p => p.Name == outArgument.ParameterName);
+				args[parameterInfo.Position] = outArgument.OutValue;
 			}
 
 			invocation.ReturnValue = resultMessage.ReturnValue;

@@ -151,14 +151,12 @@ namespace GrpcRemoting
 
 			//CallContext.RestoreFromSnapshot(callMessage.CallContextSnapshot);
 
-			callMessage.UnwrapParametersFromDeserializedMethodCallMessage(
-				out var parameterValues,
-				out var parameterTypes);
+			(var parameterValues, var parameterTypes) = callMessage.UnwrapParametersFromDeserializedMethodCallMessage();
 
 			bool resultSent = false;
 			var responseLock = new ReaderWriterLockSlim();
 
-			parameterValues = MapArguments(parameterValues, parameterTypes, /*async ??*/ delegateCallMsg =>
+			parameterValues = MapArguments(parameterValues, /*async ??*/ delegateCallMsg =>
 			{
 				var delegateResultMessage = new WireResponseMessage(delegateCallMsg);
 
@@ -202,24 +200,18 @@ namespace GrpcRemoting
 			var serviceInterfaceType = GetServiceType(callMessage.ServiceName);
 			MethodInfo method;
 
-			if (callMessage.GenericArgumentTypeNames != null && callMessage.GenericArgumentTypeNames.Length > 0)
+			if (callMessage.IsGenericMethod)
 			{
 				var methods = serviceInterfaceType.GetMethods();
 
+				// only 1 method with that name is supported. no overloading support
 				method =
 					methods.SingleOrDefault(m =>
 						m.IsGenericMethod &&
 						m.Name.Equals(callMessage.MethodName, StringComparison.Ordinal));
 
 				if (method != null)
-				{
-					Type[] genericArguments =
-						callMessage.GenericArgumentTypeNames
-							.Select(typeName => Type.GetType(typeName))
-							.ToArray();
-
-					method = method.MakeGenericMethod(genericArguments);
-				}
+					method = method.MakeGenericMethod(parameterTypes);
 			}
 			else
 			{
