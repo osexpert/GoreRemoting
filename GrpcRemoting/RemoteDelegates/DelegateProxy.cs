@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Threading.Tasks;
 
 namespace GrpcRemoting.RemoteDelegates
 {
@@ -12,12 +13,15 @@ namespace GrpcRemoting.RemoteDelegates
     {
 	    private Func<object[], object> _callInterceptionHandler;
 
-	    /// <summary>
-	    /// Creates a new instance of the DelegateProxy class.
-	    /// </summary>
-	    /// <param name="delegateType">Delegate type to be proxied</param>
-	    /// <param name="callInterceptionHandler">Function to be called when intercepting calls on the delegate</param>
-	    internal DelegateProxy(Type delegateType, Func<object[], object> callInterceptionHandler)
+		MethodInfo _taskFromResult;
+		bool _isTask;
+
+		/// <summary>
+		/// Creates a new instance of the DelegateProxy class.
+		/// </summary>
+		/// <param name="delegateType">Delegate type to be proxied</param>
+		/// <param name="callInterceptionHandler">Function to be called when intercepting calls on the delegate</param>
+		internal DelegateProxy(Type delegateType, Func<object[], object> callInterceptionHandler)
 	    {
 		    _callInterceptionHandler = 
 			    callInterceptionHandler ??
@@ -34,12 +38,21 @@ namespace GrpcRemoting.RemoteDelegates
 				    delegateType: delegateType,
 				    interceptMethod: interceptMethod,
 				    interceptor: this);
-	    }
 
-	    /// <summary>
-	    /// Gets the proxied delegate.
-	    /// </summary>
-	    public Delegate ProxiedDelegate { get; private set; }
+			if (ProxiedDelegate.Method.ReturnType != null && typeof(Task).IsAssignableFrom(ProxiedDelegate.Method.ReturnType))
+			{
+				_isTask = true;
+				var taskReturnType = ProxiedDelegate.Method.ReturnType;
+				var theType = taskReturnType.GenericTypeArguments.Single();
+				_taskFromResult = typeof(Task).GetMethods().Single(m => m.Name == "FromResult" && m.IsGenericMethod).MakeGenericMethod(theType);
+			}
+
+		}
+
+		/// <summary>
+		/// Gets the proxied delegate.
+		/// </summary>
+		public Delegate ProxiedDelegate { get; private set; }
 
 	    /// <summary>
 	    /// Method called by delegate proxy, when the proxies delegate is called.
@@ -49,7 +62,12 @@ namespace GrpcRemoting.RemoteDelegates
 	    private object Intercept(params object[] args)
 	    {
 		    // Redirect call to interception handler
-		    return _callInterceptionHandler?.Invoke(args);
+		    var res = _callInterceptionHandler?.Invoke(args);
+
+			if (_isTask)
+				return _taskFromResult!.Invoke(null, new[] { res });
+			else
+				return res;
 	    }
 
 	    /// <summary>
@@ -81,8 +99,8 @@ namespace GrpcRemoting.RemoteDelegates
 		    
 		    if (invokeMethod == null)
 			    throw new NotSupportedException("Provided delegate type has no 'Invoke' method.");
-		    
-		    var parameterTypeList = 
+
+			var parameterTypeList = 
 			    invokeMethod
 				    .GetParameters()
 				    .Select(p => p.ParameterType)

@@ -128,6 +128,35 @@ namespace GrpcRemoting
 						{
 							// FIXME: but we need to know if the delegate has a result or not???!!!
 							result = delegt.DynamicInvoke(delegateMsg.Arguments);
+
+							var returnType = delegt.Method.ReturnType;
+
+							// TODO: dedup code
+							// TODO: check if result is Task etc.
+							if (result != null && typeof(Task).IsAssignableFrom(returnType))// && returnType.IsGenericType) WHY GENERIC???
+							{
+								//throw new NotImplementedException("Async delegates not supported");
+								var resultTask = (Task)result;
+								await resultTask.ConfigureAwait(false);
+
+								if (returnType.IsGenericType)
+									result = returnType.GetProperty("Result")?.GetValue(resultTask);
+								else
+									result = null;
+							}
+							else if (result != null && returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
+							{
+throw new NotImplementedException("wip");
+								//throw new NotImplementedException("Async delegates not supported");
+								var resultTask = (ValueTask)result;
+								await resultTask.ConfigureAwait(false);
+
+								if (returnType.IsGenericType)
+									result = returnType.GetProperty("Result")?.GetValue(resultTask);
+								else
+									result = null;
+							}
+
 						}
 						catch (Exception ex) when (!delegateMsg.OneWay) // PS: not eating exceptions here. what happen to the exception??
 						{

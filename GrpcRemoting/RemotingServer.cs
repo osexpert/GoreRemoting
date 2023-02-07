@@ -58,17 +58,15 @@ namespace GrpcRemoting
 		/// Maps non serializable arguments into a serializable form.
 		/// </summary>
 		/// <param name="arguments">Array of parameter values</param>
-		/// <param name="argumentTypes">Array of parameter types</param>
 		/// <param name="callDelegate"></param>
 		/// <returns>Array of arguments (includes mapped ones)</returns>
-		private object[] MapArguments(object[] arguments, Type[] argumentTypes, Func<DelegateCallMessage, object> callDelegate)
+		private object[] MapArguments(object[] arguments, Func<DelegateCallMessage, object> callDelegate)
 		{
 			object[] mappedArguments = new object[arguments.Length];
 
 			for (int i = 0; i < arguments.Length; i++)
 			{
 				var argument = arguments[i];
-				var type = argumentTypes[i];
 
 				if (MapDelegateArgument(argument, i, out var mappedArgument, callDelegate))
 					mappedArguments[i] = mappedArgument;
@@ -242,6 +240,21 @@ namespace GrpcRemoting
 				if (result != null && typeof(Task).IsAssignableFrom(returnType))// && returnType.IsGenericType) WHY GENERIC???
 				{
 					var resultTask = (Task)result;
+					await resultTask.ConfigureAwait(false);
+
+					if (returnType.IsGenericType)
+						result = returnType.GetProperty("Result")?.GetValue(resultTask);
+					else
+						result = null;
+				}
+			// TODO: non generic ValueTask too!
+			//https://stackoverflow.com/questions/61311463/how-to-detect-generic-value-task-type-valuetaskt-using-reflection
+				else if (result != null && returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
+				{
+throw new NotImplementedException("wip");
+
+					// TODO: how to case to generic type?
+					var resultTask = (ValueTask)result;
 					await resultTask.ConfigureAwait(false);
 
 					if (returnType.IsGenericType)

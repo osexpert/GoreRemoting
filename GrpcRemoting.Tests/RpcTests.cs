@@ -838,7 +838,9 @@ namespace GrpcRemoting.Tests
             int[] Test(int a, params int[] b);
 
             Task<int> Test(Func<int, Task<int>> lol);
-        }
+
+			ValueTask<int> Test2(Func<int, ValueTask<int>> lol);
+		}
 
 		public class VarArgTest : IVarArgTest
 		{
@@ -852,9 +854,38 @@ namespace GrpcRemoting.Tests
 
 			public async Task<int> Test(Func<int, Task<int>> lol)
 			{
-                var res = await lol(42);
+                try
+                {
+					await Task.Delay(1000);
+					var res = await lol(42);
+					await Task.Delay(1000);
+					Assert.Equal(422, res);
+					return res;
+				}
+                catch (Exception e)
+                {
+                    throw;
+                }
 
-                return res;
+                
+			}
+
+			public async ValueTask<int> Test2(Func<int, ValueTask<int>> lol)
+			{
+				try
+				{
+                    await Task.Delay(1000);
+					var res = await lol(42);
+					await Task.Delay(1000);
+					Assert.Equal(422, res);
+					return res;
+				}
+				catch (Exception e)
+				{
+					throw;
+				}
+
+
 			}
 		}
 
@@ -888,9 +919,19 @@ namespace GrpcRemoting.Tests
             {
                 Assert.Equal(42, a);
                 await Task.CompletedTask;
-                return 422;
+				await Task.Delay(1000);
+				return 422;
             });
             Assert.Equal(422, v);
+
+			//var v2 = await proxy.Test2(async (a) =>
+			//{
+			//	Assert.Equal(42, a);
+			//	await Task.CompletedTask;
+			// await Task.Delay(1000);
+			//	return 422;
+			//});
+			//Assert.Equal(422, v2);
 		}
 	}
 }
