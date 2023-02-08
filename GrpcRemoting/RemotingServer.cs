@@ -163,7 +163,7 @@ namespace GrpcRemoting
 			var responseLock = new AsyncReaderWriterLockSlim();
 
 			parameterValues = MapArguments(parameterValues,
-				/*async ??*/ delegateCallMsg =>
+				delegateCallMsg =>
 			{
 				var delegateResultMessage = new WireResponseMessage(delegateCallMsg);
 
@@ -218,6 +218,7 @@ namespace GrpcRemoting
 
 					await reponse(serializer.Serialize(delegateResultMessage)).ConfigureAwait(false);
 
+					// FIXME: Task, ValueTask etc? as well as void?
 					if (delegateCallMsg.OneWay)
 					{
 						// fire and forget. no result, not even exception
@@ -299,7 +300,7 @@ namespace GrpcRemoting
 			//https://stackoverflow.com/questions/61311463/how-to-detect-generic-value-task-type-valuetaskt-using-reflection
 				else if (result != null && returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
 				{
-throw new NotImplementedException("wip");
+					throw new NotImplementedException("wip");
 
 					// TODO: how to case to generic type?
 					var resultTask = (ValueTask)result;

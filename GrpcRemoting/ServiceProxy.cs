@@ -156,7 +156,7 @@ namespace GrpcRemoting
 							}
 							else if (result != null && returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
 							{
-throw new NotImplementedException("wip");
+								throw new NotImplementedException("wip");
 								//throw new NotImplementedException("Async delegates not supported");
 								var resultTask = (ValueTask)result;
 								await resultTask.ConfigureAwait(false);
@@ -251,7 +251,7 @@ throw new NotImplementedException("wip");
 			var remoteDelegateInfo =
 				new RemoteDelegateInfo(
 					delegateTypeName: argumentType.FullName, 
-					hasResult: delegateReturnType != typeof(void));
+					hasResult: delegateReturnType != typeof(void)); // FIXME: task etc...
 
 			mappedArgument = remoteDelegateInfo;
 			return true;

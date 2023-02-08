@@ -6,16 +6,12 @@ namespace GrpcRemoting.RemoteDelegates
     /// <summary>
     /// Describes a remote delegate.
     /// </summary>
-    [DataContract]
     [Serializable]
     public class RemoteDelegateInfo
     {
-        [DataMember]
         private string _delegateTypeName;
 
-        [DataMember]
         private bool _hasResult;
-
 
         /// <summary>
         /// Creates a new instance of the RemoteDelegateInfo class.

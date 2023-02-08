@@ -11,49 +11,40 @@ using System.Threading.Tasks;
 
 namespace stakx.DynamicProxy
 {
-	//public interface IInterceptor
-	//{
-	//	void Intercept(IInvocation invocation);
-	//}
-
 	public interface IInvocation2
 	{
-		MethodInfo Method { get;  }
+		MethodInfo Method { get; }
 		object ReturnValue { get; set; }
-		object[] Arguments { get;  }
+		object[] Arguments { get; }
 	}
 
 	public class Invocation2 : IInvocation2
 	{
-        public MethodInfo Method => _i.Method;
+		public MethodInfo Method => _i.Method;
 
-        public object ReturnValue
-        {
-            get => _i.ReturnValue;
-            set => _i.ReturnValue = value;
-        }
+		public object ReturnValue
+		{
+			get => _i.ReturnValue;
+			set => _i.ReturnValue = value;
+		}
 
-        public object[] Arguments => _i.Arguments;
+		public object[] Arguments => _i.Arguments;
 
 
-        IInvocation _i;
+		IInvocation _i;
 
 		public Invocation2(IInvocation i)
-        {
-            _i = i;
-        }
+		{
+			_i = i;
+		}
 	}
 
 
 	public class Invocation3 : IInvocation2
 	{
 		public MethodInfo Method { get; set; }
-
 		public object ReturnValue { get; set; }
-
 		public object[] Arguments { get; set; }
-
-
 		public Invocation3()
 		{
 		}
