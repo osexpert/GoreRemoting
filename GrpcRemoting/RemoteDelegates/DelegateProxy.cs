@@ -1,4 +1,5 @@
-﻿using System;
+﻿using stakx.DynamicProxy;
+using System;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -6,28 +7,40 @@ using System.Threading.Tasks;
 
 namespace GrpcRemoting.RemoteDelegates
 {
+
+
+
 	/// <summary>
 	/// Proxy for intercepting calls on a specified delegate type. 
 	/// </summary>
 	public sealed class DelegateProxy //: IDelegateProxy
     {
 	    private Func<object[], object> _callInterceptionHandler;
+		private Func<object[], Task<object>> _ascallInterceptionHandler;
 
 		MethodInfo _taskFromResult;
 		bool _isTask;
+
+		AsyncInterceptor _aInc;
 
 		/// <summary>
 		/// Creates a new instance of the DelegateProxy class.
 		/// </summary>
 		/// <param name="delegateType">Delegate type to be proxied</param>
 		/// <param name="callInterceptionHandler">Function to be called when intercepting calls on the delegate</param>
-		internal DelegateProxy(Type delegateType, Func<object[], object> callInterceptionHandler)
+		internal DelegateProxy(Type delegateType, Func<object[], object> callInterceptionHandler, Func<object[], Task<object>> ascallInterceptionHandler)
 	    {
-		    _callInterceptionHandler = 
+			_aInc = new AsyncInterceptor(InterceptSync, InterceptAsync);
+
+			_callInterceptionHandler = 
 			    callInterceptionHandler ??
 					throw new ArgumentNullException(nameof(callInterceptionHandler));
 
-		    var interceptMethod = 
+			_ascallInterceptionHandler =
+				ascallInterceptionHandler ??
+					throw new ArgumentNullException(nameof(ascallInterceptionHandler));
+
+			var interceptMethod = 
 			    this.GetType()
 					.GetMethod(
 						name: nameof(Intercept), 
@@ -44,10 +57,38 @@ namespace GrpcRemoting.RemoteDelegates
 				_isTask = true;
 				var taskReturnType = ProxiedDelegate.Method.ReturnType;
 				var theType = taskReturnType.GenericTypeArguments.Single();
+				_taskReturnType = taskReturnType;
 				_taskFromResult = typeof(Task).GetMethods().Single(m => m.Name == "FromResult" && m.IsGenericMethod).MakeGenericMethod(theType);
+
+				//_invAsyMeth = this.GetType()
+				//	.GetMethod(
+				//		name: nameof(InterceptAsync),
+				//		bindingAttr: BindingFlags.NonPublic | BindingFlags.InvokeMethod).MakeGenericMethod(theType);
 			}
 
 		}
+
+
+
+		void InterceptSync(IInvocation2 invocation)
+		{
+			var res = _callInterceptionHandler(invocation.Arguments);
+			invocation.ReturnValue = res;
+			//CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
+		}
+
+		async ValueTask InterceptAsync(IAsyncInvocation invocation)
+		{
+			var res = await _ascallInterceptionHandler(invocation.Arguments.ToArray());
+			invocation.Result = res;
+			//CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
+		}
+
+
+
+
+		Type _taskReturnType;
+		//MethodInfo _invAsyMeth;
 
 		/// <summary>
 		/// Gets the proxied delegate.
@@ -61,26 +102,87 @@ namespace GrpcRemoting.RemoteDelegates
 	    /// <returns>Return value provided by call interception handler</returns>
 	    private object Intercept(params object[] args)
 	    {
-		    // Redirect call to interception handler
-		    var res = _callInterceptionHandler?.Invoke(args);
+			var invo = new Invocation3();
+			invo.Arguments = args;
+			invo.Method = ProxiedDelegate.Method; // but only need ret type?
+
+			_aInc.Intercept(invo);
+
+			return invo.ReturnValue;
+
+
+			// Redirect call to interception handler
+			object res = null;
 
 			if (_isTask)
-				return _taskFromResult!.Invoke(null, new[] { res });
+			{
+				//InterceptAsync
+				res = _ascallInterceptionHandler!.Invoke(args);
+
+			}
+			else
+				res = _callInterceptionHandler!.Invoke(args);
+
+			if (_isTask)
+			{
+				var ress = InterceptAsync((dynamic)res);
+				//return ress;
+				return _taskFromResult!.Invoke(null, new[] { ress.Result });
+			}
 			else
 				return res;
 	    }
 
-	    /// <summary>
-	    /// Creates a delegate for intercepting calls on a specified delegate type. 
-	    /// </summary>
-	    /// <param name="delegateType">The delegate type to proxy</param>
-	    /// <param name="interceptMethod">Method to call when intercepting calls on the proxied delegate</param>
-	    /// <param name="interceptor">Object on which the intercept method is called</param>
-	    /// <returns>Proxied delegate</returns>
-	    /// <exception cref="ArgumentNullException">Thrown if any argument is null</exception>
-	    /// <exception cref="NotSupportedException">Thrown if delegate type has no 'Invoke' method</exception>
-	    /// <exception cref="ArgumentException">Thrown if argument 'delegateType' is not a delegate</exception>
-	    private Delegate CreateProxiedDelegate(Type delegateType, MethodInfo interceptMethod, object interceptor)
+		private async Task InterceptAsync(Task task)
+		{
+			await task.ConfigureAwait(false);
+			// do the logging here, as continuation work for Task...
+		}
+
+		private async Task<T> InterceptAsync<T>(Task<T> task)
+		{
+			//T result = 
+			await task.ConfigureAwait(false);
+			// do the logging here, as continuation work for Task<T>...
+
+			if (_taskReturnType.IsGenericType)
+			{
+				var res = typeof(Task<object>).GetProperty("Result")?.GetValue(task);
+				return (T)res; // int as object
+				//return (T)_taskReturnType.GetProperty("Result")?.GetValue(task);
+			}
+			else
+				return default(T);// result = null;
+
+
+			//return result;
+		}
+
+
+		private async Task InterceptAsync(Task task, params object[] args)
+		{
+			await task.ConfigureAwait(false);
+			// do the logging here, as continuation work for Task...
+		}
+
+		private async Task<T> InterceptAsync<T>(Task<T> task, params object[] args)
+		{
+			T result = await task.ConfigureAwait(false);
+			// do the logging here, as continuation work for Task<T>...
+			return result;
+		}
+
+		/// <summary>
+		/// Creates a delegate for intercepting calls on a specified delegate type. 
+		/// </summary>
+		/// <param name="delegateType">The delegate type to proxy</param>
+		/// <param name="interceptMethod">Method to call when intercepting calls on the proxied delegate</param>
+		/// <param name="interceptor">Object on which the intercept method is called</param>
+		/// <returns>Proxied delegate</returns>
+		/// <exception cref="ArgumentNullException">Thrown if any argument is null</exception>
+		/// <exception cref="NotSupportedException">Thrown if delegate type has no 'Invoke' method</exception>
+		/// <exception cref="ArgumentException">Thrown if argument 'delegateType' is not a delegate</exception>
+		private Delegate CreateProxiedDelegate(Type delegateType, MethodInfo interceptMethod, object interceptor)
 	    {
             if (delegateType == null)
                 throw new ArgumentNullException(nameof(delegateType));

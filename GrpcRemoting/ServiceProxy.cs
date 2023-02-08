@@ -14,18 +14,28 @@ using stakx.DynamicProxy;
 
 namespace GrpcRemoting
 {
-	public class ServiceProxy<T> : AsyncInterceptor
+	public class ServiceProxy<T> : IInterceptor // AsyncInterceptor
 	{
 		RemotingClient _client;
 		string _serviceName;
+
+		AsyncInterceptor _aInc;
 
 		public ServiceProxy(RemotingClient client)
 		{
 			_client = client;
 			_serviceName = typeof(T).Name;
+			_aInc = new(InterceptSync, InterceptAsync);
 		}
 
-		protected override void Intercept(IInvocation invocation)
+		void IInterceptor.Intercept(IInvocation invocation)
+		{
+			var i2 = new Invocation2(invocation);
+			_aInc.Intercept(i2);
+			invocation.ReturnValue = i2.ReturnValue;
+		}
+
+		void InterceptSync(IInvocation2 invocation)
 		{
 			var args = invocation.Arguments;
 			var targetMethod = invocation.Method;
@@ -68,7 +78,7 @@ namespace GrpcRemoting
             //CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
         }
 
-		protected override async ValueTask InterceptAsync(IAsyncInvocation invocation)
+		async ValueTask InterceptAsync(IAsyncInvocation invocation)
 		{
 			var args = invocation.Arguments;
 			var targetMethod = invocation.Method;

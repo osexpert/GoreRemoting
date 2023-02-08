@@ -16,6 +16,7 @@ using GrpcRemoting.Serialization.Binary;
 using System.Xml.Linq;
 using System.Net.Http;
 using System.Threading;
+using KPreisser;
 
 namespace GrpcRemoting
 {
@@ -60,7 +61,7 @@ namespace GrpcRemoting
 		/// <param name="arguments">Array of parameter values</param>
 		/// <param name="callDelegate"></param>
 		/// <returns>Array of arguments (includes mapped ones)</returns>
-		private object[] MapArguments(object[] arguments, Func<DelegateCallMessage, object> callDelegate)
+		private object[] MapArguments(object[] arguments, Func<DelegateCallMessage, object> callDelegate, Func<DelegateCallMessage, Task<object>> ascallDelegate)
 		{
 			object[] mappedArguments = new object[arguments.Length];
 
@@ -68,7 +69,7 @@ namespace GrpcRemoting
 			{
 				var argument = arguments[i];
 
-				if (MapDelegateArgument(argument, i, out var mappedArgument, callDelegate))
+				if (MapDelegateArgument(argument, i, out var mappedArgument, callDelegate, ascallDelegate))
 					mappedArguments[i] = mappedArgument;
 				else
 					mappedArguments[i] = argument;
@@ -87,7 +88,8 @@ namespace GrpcRemoting
 		/// <param name="callDelegate"></param>
 		/// <returns>True if mapping applied, otherwise false</returns>
 		/// <exception cref="ArgumentNullException">Thrown if no session is provided</exception>
-		private bool MapDelegateArgument(object argument, int position, out object mappedArgument, Func<DelegateCallMessage, object> callDelegate)
+		private bool MapDelegateArgument(object argument, int position, out object mappedArgument, Func<DelegateCallMessage, object> callDelegate,
+			Func<DelegateCallMessage, Task<object>> ascallDelegate)
 		{
 			if (!(argument is RemoteDelegateInfo remoteDelegateInfo))
 			{
@@ -107,9 +109,15 @@ namespace GrpcRemoting
 
             // Forge a delegate proxy and initiate remote delegate invocation, when it is invoked
             var delegateProxy =
-				new DelegateProxy(delegateType, delegateArgs => 
+				new DelegateProxy(delegateType, 
+				delegateArgs => 
 				{
 					var r = callDelegate(new DelegateCallMessage { Arguments = delegateArgs, Position = position, OneWay = !remoteDelegateInfo.HasResult });
+					return r;
+				},
+				delegateArgs => // async
+				{
+					var r = ascallDelegate(new DelegateCallMessage { Arguments = delegateArgs, Position = position, OneWay = !remoteDelegateInfo.HasResult });
 					return r;
 				});
 
@@ -152,9 +160,10 @@ namespace GrpcRemoting
 			(var parameterValues, var parameterTypes) = callMessage.UnwrapParametersFromDeserializedMethodCallMessage();
 
 			bool resultSent = false;
-			var responseLock = new ReaderWriterLockSlim();
+			var responseLock = new AsyncReaderWriterLockSlim();
 
-			parameterValues = MapArguments(parameterValues, /*async ??*/ delegateCallMsg =>
+			parameterValues = MapArguments(parameterValues,
+				/*async ??*/ delegateCallMsg =>
 			{
 				var delegateResultMessage = new WireResponseMessage(delegateCallMsg);
 
@@ -187,6 +196,45 @@ namespace GrpcRemoting
 							throw msg.Exception.Capture();
 						else
 							return msg.Result;
+					}
+				}
+				finally
+				{
+					responseLock.ExitReadLock();
+				}
+			}, async delegateCallMsg =>
+			{
+				var delegateResultMessage = new WireResponseMessage(delegateCallMsg);
+
+				// send respose to client and client will call the delegate via DelegateProxy
+				// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
+				// These may seem to be 2 varianst of OneWay: 1 where we send and wait until sent, but do not care about result\exceptions.
+				// 2: we send and do not even wait for the sending to complete. (currently not implemented)
+				await responseLock.EnterReadLockAsync().ConfigureAwait(false);
+				try
+				{
+					if (resultSent)
+						throw new Exception("Too late, result sent");
+
+					await reponse(serializer.Serialize(delegateResultMessage)).ConfigureAwait(false);
+
+					if (delegateCallMsg.OneWay)
+					{
+						// fire and forget. no result, not even exception
+						return null;
+					}
+					else
+					{
+						// we want result or exception
+						byte[] data = await req().ConfigureAwait(false);
+						var msg = serializer.Deserialize<DelegateCallResultMessage>(data);
+						if (msg.Position != delegateCallMsg.Position)
+							throw new Exception("Incorrect result position");
+
+						if (msg.Exception != null)
+							throw msg.Exception.Capture();
+						else
+							return msg.Result; // Task?
 					}
 				}
 				finally
@@ -300,7 +348,7 @@ throw new NotImplementedException("wip");
 			var methodResultMessage = new WireResponseMessage(resultMessage);
 
 			// This will block new delegates and wait until existing ones have left. We then get exlusive lock and set the flag.
-			responseLock.EnterWriteLock();
+			await responseLock.EnterWriteLockAsync().ConfigureAwait(false);
 			resultSent = true;
 			responseLock.ExitWriteLock();
 

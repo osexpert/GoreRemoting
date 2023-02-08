@@ -1,0 +1,2 @@
+﻿https://github.com/stakx/DynamicProxy.AsyncInterceptor
+commit 79b5654507e5d3181e1133fd3c587e5ad107b16d

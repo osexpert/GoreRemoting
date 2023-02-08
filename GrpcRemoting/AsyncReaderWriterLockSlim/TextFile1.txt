@@ -1,0 +1,2 @@
+﻿https://github.com/kpreisser/AsyncReaderWriterLockSlim
+commit 5ea3b295eb6b2065bf045c0d448e0b30d2a71a16
