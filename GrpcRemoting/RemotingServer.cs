@@ -284,33 +284,7 @@ namespace GrpcRemoting
 				var service = GetService(callMessage.ServiceName, context);
 				result = method.Invoke(service, parameterValues);
 
-				var returnType = method.ReturnType;
-
-				if (result != null && typeof(Task).IsAssignableFrom(returnType))// && returnType.IsGenericType) WHY GENERIC???
-				{
-					var resultTask = (Task)result;
-					await resultTask.ConfigureAwait(false);
-
-					if (returnType.IsGenericType)
-						result = returnType.GetProperty("Result")?.GetValue(resultTask);
-					else
-						result = null;
-				}
-			// TODO: non generic ValueTask too!
-			//https://stackoverflow.com/questions/61311463/how-to-detect-generic-value-task-type-valuetaskt-using-reflection
-				else if (result != null && returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
-				{
-					throw new NotImplementedException("wip");
-
-					// TODO: how to case to generic type?
-					var resultTask = (ValueTask)result;
-					await resultTask.ConfigureAwait(false);
-
-					if (returnType.IsGenericType)
-						result = returnType.GetProperty("Result")?.GetValue(resultTask);
-					else
-						result = null;
-				}
+				result = await TaskResultHelper.GetTaskResult(method, result);
 			}
 			catch (Exception ex)
 			{

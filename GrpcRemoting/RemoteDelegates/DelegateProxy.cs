@@ -47,7 +47,7 @@ namespace GrpcRemoting.RemoteDelegates
 			_aInc = new AsyncInterceptor(InterceptSync, InterceptAsync);
 		}
 
-		void InterceptSync(IInvocation2 invocation)
+		void InterceptSync(ISyncInvocation invocation)
 		{
 			var res = _callInterceptionHandler(invocation.Arguments);
 			invocation.ReturnValue = res;
@@ -73,9 +73,7 @@ namespace GrpcRemoting.RemoteDelegates
 	    /// <returns>Return value provided by call interception handler</returns>
 	    private object Intercept(params object[] args)
 	    {
-			var invo = new Invocation3();
-			invo.Arguments = args;
-			invo.Method = ProxiedDelegate.Method;
+			var invo = new SyncInvocation(ProxiedDelegate.Method, args);
 
 			_aInc.Intercept(invo);
 

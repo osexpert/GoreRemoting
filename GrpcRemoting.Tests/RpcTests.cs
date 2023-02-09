@@ -924,14 +924,14 @@ namespace GrpcRemoting.Tests
             });
             Assert.Equal(422, v);
 
-			//var v2 = await proxy.Test2(async (a) =>
-			//{
-			//	Assert.Equal(42, a);
-			//	await Task.CompletedTask;
-			// await Task.Delay(1000);
-			//	return 422;
-			//});
-			//Assert.Equal(422, v2);
-		}
+            var v2 = await proxy.Test2(async (a) =>
+            {
+                Assert.Equal(42, a);
+                await Task.CompletedTask;
+                await Task.Delay(1000);
+                return 422;
+            });
+            Assert.Equal(422, v2);
+        }
 	}
 }

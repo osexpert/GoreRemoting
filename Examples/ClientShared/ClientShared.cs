@@ -29,6 +29,10 @@ namespace ClientShared
             testServ.TestProgress(pro =>
             {
                 Console.WriteLine("Progress: " + pro);
+            }, async lol =>
+            {
+				Console.WriteLine("eye");
+				return "eye";
             });
 
 
@@ -106,7 +110,7 @@ namespace ClientShared
         string Echo(string s);
 		Task<string> EchoAsync(string s);
 
-		void TestProgress(Action<string> progress);
+		void TestProgress(Action<string> progress, Func<string, Task<string>> echo);
         Task GetMessages(Action<string> message);
         void CompleteGetMessages();
         void GetFile(string file, Action<byte[], int, int> write, Action<string> progress);

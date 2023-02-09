@@ -13,7 +13,7 @@ namespace ServerShared
         string Echo(string s);
 		Task<string> EchoAsync(string s);
 
-		void TestProgress(Action<string> progress);
+		void TestProgress(Action<string> progress, Func<string, Task<string>> echo);
         Task GetMessages(Action<string> message);
         void CompleteGetMessages();
         void SendMessage(string mess);
@@ -32,7 +32,7 @@ namespace ServerShared
             pSessionID = sessionID;
         }
 
-        public void TestProgress(Action<string> progress)
+        public void TestProgress(Action<string> progress, Func<string, Task<string>> echo)
         {
             Task.Run(() =>
             {
@@ -50,7 +50,17 @@ namespace ServerShared
                     progress("bye");
             });
 
-            Thread.Sleep(1000);
+			Task.Run(async () =>
+			{
+                for (int i = 0; i < 1000; i++)
+                {
+                    var res = await echo("bye");
+                    if (res != "eye")
+                        throw new Exception();
+                }
+			});
+
+			Thread.Sleep(1000);
         }
 
         public string Echo(string s)

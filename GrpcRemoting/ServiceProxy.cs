@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
@@ -30,12 +31,14 @@ namespace GrpcRemoting
 
 		void IInterceptor.Intercept(IInvocation invocation)
 		{
-			var i2 = new Invocation2(invocation);
+			var i2 = new SyncInvocation(invocation.Method, invocation.Arguments);
+
 			_aInc.Intercept(i2);
+
 			invocation.ReturnValue = i2.ReturnValue;
 		}
 
-		void InterceptSync(IInvocation2 invocation)
+		void InterceptSync(ISyncInvocation invocation)
 		{
 			var args = invocation.Arguments;
 			var targetMethod = invocation.Method;
@@ -139,34 +142,7 @@ namespace GrpcRemoting
 							// FIXME: but we need to know if the delegate has a result or not???!!!
 							result = delegt.DynamicInvoke(delegateMsg.Arguments);
 
-							var returnType = delegt.Method.ReturnType;
-
-							// TODO: dedup code
-							// TODO: check if result is Task etc.
-							if (result != null && typeof(Task).IsAssignableFrom(returnType))// && returnType.IsGenericType) WHY GENERIC???
-							{
-								//throw new NotImplementedException("Async delegates not supported");
-								var resultTask = (Task)result;
-								await resultTask.ConfigureAwait(false);
-
-								if (returnType.IsGenericType)
-									result = returnType.GetProperty("Result")?.GetValue(resultTask);
-								else
-									result = null;
-							}
-							else if (result != null && returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
-							{
-								throw new NotImplementedException("wip");
-								//throw new NotImplementedException("Async delegates not supported");
-								var resultTask = (ValueTask)result;
-								await resultTask.ConfigureAwait(false);
-
-								if (returnType.IsGenericType)
-									result = returnType.GetProperty("Result")?.GetValue(resultTask);
-								else
-									result = null;
-							}
-
+							result = await TaskResultHelper.GetTaskResult(delegt.Method, result);
 						}
 						catch (Exception ex) when (!delegateMsg.OneWay) // PS: not eating exceptions here. what happen to the exception??
 						{
@@ -272,4 +248,58 @@ namespace GrpcRemoting
 		}
 
     }
+
+	internal static class TaskResultHelper
+	{
+		public static async Task<object> GetTaskResult(MethodInfo method, object result)
+		{
+			if (result != null)
+			{
+				var returnType = method.ReturnType;
+
+				if (returnType == typeof(Task))
+				{
+					var resultTask = (Task)result;
+					await resultTask.ConfigureAwait(false);
+					result = null;
+				}
+				else if (returnType == typeof(ValueTask))
+				{
+					var resultTask = (ValueTask)result;
+					await resultTask.ConfigureAwait(false);
+					result = null;
+				}
+				else if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
+				{
+					var resultTask = (Task)result;
+					await resultTask.ConfigureAwait(false);
+
+					if (returnType.IsGenericType)
+						result = returnType.GetProperty("Result")?.GetValue(result);
+					else
+						result = null;
+				}
+				else if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
+				{
+					//await ToTask((dynamic)result).ConfigureAwait(false);
+
+					var resultTask = (dynamic)result;
+					await resultTask.ConfigureAwait(false);
+
+					if (returnType.IsGenericType)
+						result = returnType.GetProperty("Result")?.GetValue(result);
+					else
+						result = null;
+				}
+
+			}
+
+			return result;
+		}
+
+		//private static Task<T> ToTask<T>(ValueTask<T> task)
+		//{
+		//	return task.AsTask();
+		//}
+	}
 }

@@ -1,7 +1,6 @@
 // Copyright (c) 2020 stakx
 // License available at https://github.com/stakx/DynamicProxy.AsyncInterceptor/blob/master/LICENSE.md.
 
-using Castle.DynamicProxy;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -11,59 +10,61 @@ using System.Threading.Tasks;
 
 namespace stakx.DynamicProxy
 {
-	public interface IInvocation2
+	public interface ISyncInvocation
 	{
 		MethodInfo Method { get; }
 		object ReturnValue { get; set; }
 		object[] Arguments { get; }
 	}
 
-	public class Invocation2 : IInvocation2
-	{
-		public MethodInfo Method => _i.Method;
+	//public class Invocation2 : IInvocation2
+	//{
+	//	public MethodInfo Method => _i.Method;
 
-		public object ReturnValue
-		{
-			get => _i.ReturnValue;
-			set => _i.ReturnValue = value;
-		}
+	//	public object ReturnValue
+	//	{
+	//		get => _i.ReturnValue;
+	//		set => _i.ReturnValue = value;
+	//	}
 
-		public object[] Arguments => _i.Arguments;
-
-
-		IInvocation _i;
-
-		public Invocation2(IInvocation i)
-		{
-			_i = i;
-		}
-	}
+	//	public object[] Arguments => _i.Arguments;
 
 
-	public class Invocation3 : IInvocation2
+	//	Castle.DynamicProxy.IInvocation _i;
+
+	//	public Invocation2(IInvocation i)
+	//	{
+	//		_i = i;
+	//	}
+	//}
+
+
+	public class SyncInvocation : ISyncInvocation
 	{
 		public MethodInfo Method { get; set; }
 		public object ReturnValue { get; set; }
 		public object[] Arguments { get; set; }
-		public Invocation3()
+		public SyncInvocation(MethodInfo met, object[] args)
 		{
+			Method = met;
+			Arguments = args;
 		}
 	}
 
 
 	public partial class AsyncInterceptor //: IInterceptor
     {
-        public AsyncInterceptor(Action<IInvocation2> sync, Func<IAsyncInvocation, ValueTask> asyncc)
+        public AsyncInterceptor(Action<ISyncInvocation> sync, Func<IAsyncInvocation, ValueTask> asyncc)
         {
             _sync = sync;
             _asyncc = asyncc;
 
         }
 
-        Action<IInvocation2> _sync;
+        Action<ISyncInvocation> _sync;
         Func<IAsyncInvocation, ValueTask> _asyncc;
 
-		public void Intercept(IInvocation2 invocation)
+		public void Intercept(ISyncInvocation invocation)
         {
             var returnType = invocation.Method.ReturnType;
             var builder = AsyncMethodBuilder.TryCreate(returnType);

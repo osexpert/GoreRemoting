@@ -14,10 +14,10 @@ namespace stakx.DynamicProxy
     {
         private sealed class AsyncInvocation : IAsyncInvocation
         {
-            private readonly IInvocation2 invocation;
+            private readonly ISyncInvocation invocation;
             //private readonly IInvocationProceedInfo proceed;
 
-            public AsyncInvocation(IInvocation2 invocation)
+            public AsyncInvocation(ISyncInvocation invocation)
             {
                 this.invocation = invocation;
                 //this.proceed = invocation.CaptureProceedInfo();
