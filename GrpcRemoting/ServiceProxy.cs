@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.Serialization;
 using System.Text;
@@ -251,55 +252,65 @@ namespace GrpcRemoting
 
 	internal static class TaskResultHelper
 	{
-		public static async Task<object> GetTaskResult(MethodInfo method, object result)
+		public static async Task<object> GetTaskResult(MethodInfo method, object resultIn)
 		{
-			if (result != null)
+			object resultOut = resultIn;
+
+			if (resultIn != null)
 			{
 				var returnType = method.ReturnType;
 
 				if (returnType == typeof(Task))
 				{
-					var resultTask = (Task)result;
+					var resultTask = (Task)resultIn;
 					await resultTask.ConfigureAwait(false);
-					result = null;
+					resultOut = null;
 				}
 				else if (returnType == typeof(ValueTask))
 				{
-					var resultTask = (ValueTask)result;
+					var resultTask = (ValueTask)resultIn;
 					await resultTask.ConfigureAwait(false);
-					result = null;
+					resultOut = null;
 				}
-				else if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
+				else if (returnType.IsGenericType)
 				{
-					var resultTask = (Task)result;
-					await resultTask.ConfigureAwait(false);
+					if (returnType.GetGenericTypeDefinition() == typeof(Task<>))
+					{
+						var resultTask = (Task)resultIn;
+						await resultTask.ConfigureAwait(false);
 
-					if (returnType.IsGenericType)
-						result = returnType.GetProperty("Result")?.GetValue(result);
-					else
-						result = null;
+						resultOut = returnType.GetProperty("Result")?.GetValue(resultIn); // why ?
+					}
+					else if (returnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
+					{
+						//await ToTask((dynamic)result).ConfigureAwait(false);
+
+						//var resultTask = (dynamic)result;
+						//await resultTask.ConfigureAwait(false);
+
+						var valueTaskToTask = typeof(TaskResultHelper)
+							.GetMethod(nameof(ValueTaskToTask), BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.InvokeMethod)
+							.MakeGenericMethod(returnType.GenericTypeArguments.Single());
+
+						await (Task)valueTaskToTask.Invoke(null, new[] { resultIn });
+
+						resultOut = returnType.GetProperty("Result")?.GetValue(resultIn); // why ?
+					}
 				}
-				else if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
-				{
-					//await ToTask((dynamic)result).ConfigureAwait(false);
-
-					var resultTask = (dynamic)result;
-					await resultTask.ConfigureAwait(false);
-
-					if (returnType.IsGenericType)
-						result = returnType.GetProperty("Result")?.GetValue(result);
-					else
-						result = null;
-				}
-
 			}
 
-			return result;
+			return resultOut;
 		}
 
 		//private static Task<T> ToTask<T>(ValueTask<T> task)
 		//{
 		//	return task.AsTask();
 		//}
+
+		private static Task ValueTaskToTask<T>(ValueTask<T> task)
+		{
+			return task.AsTask();
+		}
+
 	}
 }
