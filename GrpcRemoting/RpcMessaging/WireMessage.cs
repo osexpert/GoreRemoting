@@ -13,21 +13,31 @@ namespace GrpcRemoting.RpcMessaging
 		/// Delegate
 		/// </summary>
 		Delegate,
+		/// <summary>
+		/// Iterator (IEnumerable yield)
+		/// </summary>
+		Iterator,
 	}
 
 	[Serializable]
 	public class WireResponseMessage
 	{
-		public WireResponseMessage(DelegateCallMessage callMsg)
+		public WireResponseMessage(DelegateCallbackMessage callMsg)
 		{
 			Delegate = callMsg;
 			ResponseType = ResponseType.Delegate;
 		}
 
-		public WireResponseMessage(MethodCallResultMessage resultMessage)
+		public WireResponseMessage(MethodResultMessage resultMessage)
 		{
 			Result = resultMessage;
 			ResponseType = ResponseType.Result;
+		}
+
+		public WireResponseMessage(IteratorCallbackMessage iterMessage)
+		{
+			Iterator = iterMessage;
+			ResponseType = ResponseType.Iterator;
 		}
 
 		/// <summary>
@@ -35,8 +45,28 @@ namespace GrpcRemoting.RpcMessaging
 		/// </summary>
 		public ResponseType ResponseType { get; set; }
 
-		public MethodCallResultMessage Result { get; set; }
+		public MethodResultMessage Result { get; set; }
 
-		public DelegateCallMessage Delegate { get; set; }
+		public DelegateCallbackMessage Delegate { get; set; }
+
+		public IteratorCallbackMessage Iterator { get; set; }
+	}
+
+	[Serializable]
+	public class IteratorCallbackMessage
+	{
+		public object Data { get; set; }
+
+		// TODO: should this have final result info too? and exception info? Or use a MethodCallResultMessage for that?
+	}
+
+	[Serializable]
+	public class IteratorCallbackAckMessage
+	{
+		//public object Data { get; set; }
+
+		// TODO: should this have final result info too? and exception info? Or use a MethodCallResultMessage for that?
+
+		public Exception Exception { get; set; }
 	}
 }

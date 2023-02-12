@@ -10,6 +10,7 @@ using GrpcRemoting.Tests.ExternalTypes;
 using GrpcRemoting.Tests.Tools;
 using Xunit;
 using Xunit.Abstractions;
+using static GrpcRemoting.Tests.RpcTests;
 
 namespace GrpcRemoting.Tests
 {
@@ -840,6 +841,23 @@ namespace GrpcRemoting.Tests
             Task<int> Test(Func<int, Task<int>> lol);
 
 			ValueTask<int> Test2(Func<int, ValueTask<int>> lol);
+
+
+            Task<int> Test3(Func<int> f, Action a, Func<Task> a2, Func<ValueTask> vt);
+            Task Test4(Action a, Func<Task<int>> a2, Func<ValueTask> vt);
+            ValueTask<int> Test5(Func<int> f, Action a, Func<Task> a2, Func<ValueTask<int>> vt);
+            ValueTask Test6(Action f, Action a, Func<Task> a2, Func<ValueTask<int>> vt);
+
+
+            Task Throw1(Action a);
+			Task Throw2(Func<Task> a);
+			Task Throw3(Func<ValueTask> a);
+			Task Throw4(Func<int> a);
+			Task Throw5(Func<int, int> a);
+			Task Throw6(Func<int, Task> a);
+			Task Throw7(Func<int, Task<int>> a);
+			Task Throw8(Func<int, ValueTask> a);
+			Task Throw9(Func<int, ValueTask<int>> a);
 		}
 
 		public class VarArgTest : IVarArgTest
@@ -887,7 +905,171 @@ namespace GrpcRemoting.Tests
 
 
 			}
+
+			public async Task<int> Test3(Func<int> f, Action a, Func<Task> a2, Func<ValueTask> vt)
+			{
+                var r1 = f();
+                Assert.Equal(42, r1);
+                a();
+                await a2();
+                await vt();
+                return 44;
+			}
+
+			public async Task Test4(Action a, Func<Task<int>> a2, Func<ValueTask> vt)
+			{
+				a();
+                var i1 = await a2();
+                Assert.Equal(42, i1);
+				await vt();
+			}
+
+			public async ValueTask<int> Test5(Func<int> f, Action a, Func<Task> a2, Func<ValueTask<int>> vt)
+			{
+				var r1 = f();
+				Assert.Equal(42, r1);
+				a();
+				await a2();
+				await vt();
+				return 44;
+			}
+
+			public async ValueTask Test6(Action f, Action a, Func<Task> a2, Func<ValueTask<int>> vt)
+			{
+				f();
+				a();
+                await a2();
+				var r = await vt();
+				Assert.Equal(42, r);
+			}
+
+			public async Task Throw1(Action a)
+			{
+				await Task.CompletedTask;
+                try
+                {
+                    a();
+                }
+				catch (Exception e)
+				{
+					throw1Ex = e;
+				}
+			}
+
+			public async Task Throw2(Func<Task> a)
+			{
+                try
+                {
+                    await a();
+                }
+				catch (Exception e)
+				{
+					throw2Ex = e;
+				}
+			}
+
+			public async Task Throw3(Func<ValueTask> a)
+			{
+                try
+                {
+                    await a();
+                }
+				catch (Exception e)
+				{
+					throw3Ex = e;
+				}
+			}
+
+			public async Task Throw4(Func<int> a)
+			{
+				await Task.CompletedTask;
+                try
+                {
+                    var i = a();
+                }
+				catch (Exception e)
+				{
+					throw4Ex = e;
+				}
+			}
+
+			public async Task Throw5(Func<int, int> a)
+			{
+				await Task.CompletedTask;
+                try
+                {
+                    var i = a(42);
+                }
+				catch (Exception e)
+				{
+					throw5Ex = e;
+				}
+			}
+
+			public async Task Throw6(Func<int, Task> a)
+			{
+				await Task.CompletedTask;
+                try
+                {
+                    await a(42);
+                }
+				catch (Exception e)
+				{
+					throw6Ex = e;
+				}
+			}
+
+			public async Task Throw7(Func<int, Task<int>> a)
+			{
+				await Task.CompletedTask;
+                try
+                {
+                    var i = await a(42);
+                }
+				catch (Exception e)
+				{
+					throw7Ex = e;
+				}
+			}
+
+			public async Task Throw8(Func<int, ValueTask> a)
+			{
+				await Task.CompletedTask;
+                try
+                {
+                    await a(42);
+                }
+                catch (Exception e)
+                {
+					throw8Ex = e;
+				}
+			}
+
+			public async Task Throw9(Func<int, ValueTask<int>> a)
+			{
+				await Task.CompletedTask;
+                try
+                {
+                    var i = await a(42);
+                }
+                catch (Exception e)
+                {
+                    throw9Ex = e;
+                }
+			}
+
+			
 		}
+
+        static Exception throw1Ex;
+		static Exception throw2Ex;
+		static Exception throw3Ex;
+		static Exception throw4Ex;
+		static Exception throw5Ex;
+		static Exception throw6Ex;
+		static Exception throw7Ex;
+		static Exception throw8Ex;
+		static Exception throw9Ex;
 
 		[Fact]
         public async Task DoVarArgTest()
@@ -899,39 +1081,231 @@ namespace GrpcRemoting.Tests
 			await using var client = new NativeClient(9198, new ClientConfig());
 
 			var proxy = client.CreateProxy<IVarArgTest>();
-            var r1 = proxy.Test(1);
-            Assert.Single(r1);
-			Assert.Equal(1, r1[0]);
-
-			var r2 = proxy.Test(1,2,3);
-			Assert.Equal(3, r2.Length);
-			Assert.Equal(1, r2[0]);
-			Assert.Equal(2, r2[1]);
-			Assert.Equal(3, r2[2]);
-
-			var r3 = proxy.Test(1, 2);
-            Assert.Equal(2, r3.Length);
-			Assert.Equal(1, r3[0]);
-			Assert.Equal(2, r3[1]);
-
-
-            var v = await proxy.Test(async (a) =>
             {
-                Assert.Equal(42, a);
-                await Task.CompletedTask;
-				await Task.Delay(1000);
-				return 422;
-            });
-            Assert.Equal(422, v);
+                var r1 = proxy.Test(1);
+                Assert.Single(r1);
+                Assert.Equal(1, r1[0]);
+            }
 
-            var v2 = await proxy.Test2(async (a) =>
+			{
+                var r2 = proxy.Test(1, 2, 3);
+                Assert.Equal(3, r2.Length);
+                Assert.Equal(1, r2[0]);
+                Assert.Equal(2, r2[1]);
+                Assert.Equal(3, r2[2]);
+            }
+
             {
-                Assert.Equal(42, a);
-                await Task.CompletedTask;
-                await Task.Delay(1000);
-                return 422;
+                var r3 = proxy.Test(1, 2);
+                Assert.Equal(2, r3.Length);
+                Assert.Equal(1, r3[0]);
+                Assert.Equal(2, r3[1]);
+            }
+
+            {
+                var v = await proxy.Test(async (a) =>
+                {
+                    Assert.Equal(42, a);
+                    await Task.CompletedTask;
+                    await Task.Delay(1000);
+                    return 422;
+                });
+                Assert.Equal(422, v);
+            }
+
+            {
+                var v2 = await proxy.Test2(async (a) =>
+                {
+                    Assert.Equal(42, a);
+                    await Task.CompletedTask;
+                    await Task.Delay(1000);
+                    return 422;
+                });
+                Assert.Equal(422, v2);
+            }
+
+            {
+                bool t3_called1 = false;
+                bool t3_called2 = false;
+                bool t3_called3 = false;
+                var i3r = await proxy.Test3(() => 42, () =>
+                {
+                    t3_called1 = true;
+                },
+                async () =>
+                {
+                    await Task.CompletedTask;
+                    t3_called2 = true;
+                },
+                async () =>
+                {
+                    await Task.CompletedTask;
+                    t3_called3 = true;
+                });
+                Assert.True(t3_called1);
+                Assert.True(t3_called2);
+                Assert.True(t3_called3);
+                Assert.Equal(44, i3r);
+            }
+
+            {
+                bool t4_called1 = false;
+                bool t4_called2 = false;
+                bool t4_called3 = false;
+                await proxy.Test4(() =>
+                {
+                    t4_called1 = true;
+                },
+                async () =>
+                {
+                    await Task.CompletedTask;
+                    t4_called2 = true;
+                    return 42;
+                },
+                async () =>
+                {
+                    await Task.CompletedTask;
+                    t4_called3 = true;
+                });
+                Assert.True(t4_called1);
+                Assert.True(t4_called2);
+                Assert.True(t4_called3);
+            }
+
+            bool t5_failed = false;
+            try
+            {
+                bool t5_called1 = false;
+                bool t5_called2 = false;
+                bool t5_called3 = false;
+                bool t5_called4 = false;
+                var t5ir = await proxy.Test5(() =>
+                {
+                    t5_called1 = true;
+                    return 42;
+                },
+                () =>
+                {
+                    t5_called2 = true;
+                }
+                ,
+                async () =>
+                {
+                    await Task.CompletedTask;
+                    t5_called3 = true;
+
+                },
+                async () =>
+                {
+                    await Task.CompletedTask;
+                    t5_called4 = true;
+                    return 42;
+                });
+                Assert.True(t5_called1);
+                Assert.True(t5_called2);
+                Assert.True(t5_called3);
+                Assert.True(t5_called4);
+                Assert.Equal(44, t5ir);
+            }
+            catch (Exception e)
+            {
+                t5_failed = e.Message == "Only one delegate with result is supported";
+			}
+            Assert.True(t5_failed);
+
+            {
+                bool t6_called1 = false;
+                bool t6_called2 = false;
+                bool t6_called3 = false;
+                bool t6_called4 = false;
+                await proxy.Test6(() =>
+                {
+                    t6_called1 = true;
+                },
+                () =>
+                {
+                    t6_called2 = true;
+                }
+                ,
+                async () =>
+                {
+                    await Task.CompletedTask;
+                    t6_called3 = true;
+
+                },
+                async () =>
+                {
+                    await Task.CompletedTask;
+                    t6_called4 = true;
+                    return 42;
+                });
+                Assert.True(t6_called1);
+                Assert.True(t6_called2);
+                Assert.True(t6_called3);
+                Assert.True(t6_called4);
+            }
+
+
+            await proxy.Throw1(() =>
+            {
+                throw new Exception("test");
             });
-            Assert.Equal(422, v2);
-        }
+
+            await proxy.Throw2(async () =>
+            {
+                await Task.CompletedTask;
+				throw new Exception("test");
+			});
+
+			await proxy.Throw3(async () =>
+			{
+				await Task.CompletedTask;
+				throw new Exception("test");
+			});
+
+			await proxy.Throw4(() =>
+			{
+				throw new Exception("test");
+			});
+
+			await proxy.Throw5(i =>
+			{
+				throw new Exception("test");
+			});
+
+			await proxy.Throw6(async i =>
+			{
+				await Task.CompletedTask;
+				throw new Exception("test");
+			});
+
+			await proxy.Throw7(async i =>
+			{
+				await Task.CompletedTask;
+				throw new Exception("test");
+			});
+
+			await proxy.Throw8(async i =>
+			{
+				await Task.CompletedTask;
+				throw new Exception("test");
+			});
+
+			await proxy.Throw9(async i =>
+			{
+				await Task.CompletedTask;
+				throw new Exception("test");
+			});
+
+            Assert.Null(throw1Ex);
+			Assert.Null(throw2Ex);
+			Assert.Null(throw3Ex);
+			Assert.Equal("test", throw4Ex.Message);
+			Assert.Equal("test", throw5Ex.Message);
+			Assert.Null(throw6Ex);
+			Assert.Equal("test", throw7Ex.Message);
+			Assert.Null(throw8Ex);
+			Assert.Equal("test", throw9Ex.Message);
+		}
 	}
 }

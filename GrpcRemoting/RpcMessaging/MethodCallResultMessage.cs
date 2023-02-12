@@ -7,7 +7,7 @@ namespace GrpcRemoting.RpcMessaging
     /// Serializable message that describes the result of a remote method call.
     /// </summary>
     [Serializable]
-    public class MethodCallResultMessage
+    public class MethodResultMessage
     {
         /// <summary>
         /// Gets or sets the return value of the invoked method.

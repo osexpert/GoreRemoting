@@ -16,7 +16,24 @@ Idea in the future is to support MessagePack or MemoryPack in addition.
 Idea is to make it possible to specify formatter on a per method basis, so slowly can migrate away from BinaryFormatter, method by method.
 GrpcRemoting does not use .proto files but simply interfaces. Look at the examples for info, there is no documentation.  
 
-Other Rpc framework maybe of interest:
+Delegates:
+Delegates that return void, Task, ValueTask are all threated as OneWay. Then it will not wait for any result and any exceptions thrown are eaten.
+You can have max one delegate with result (eg. int, Task<int>, ValueTask<int>) else will get runtime exception.
+If you need to force a delegate to be non-OneWay, then just make it return something (eg. a bool or Task<bool>). But again, max one delegate with result.
+
+TODO:
+It could be possible to support more than 1. AND maybe OneWay could be an opt-in instead of the default.
+Instead of eating exceptions from delegates, maybe could have an optino to throw them or some way to get notified about them.
+
+TODO:
+IEnumerable<T> with yield
+IAsyncEnumerable<T> with yield
+Delegate arguments currently provide the same functionality, but still would be nice to support it.
+
+Methods:
+OneWay methods not supported. Methods always wait for result.
+
+Other Rpc framework of interest:
 
 StreamJsonRpc  
 https://github.com/microsoft/vs-streamjsonrpc  

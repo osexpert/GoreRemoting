@@ -119,7 +119,7 @@ namespace GrpcRemoting
             //CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
         }
 
-		private async Task<MethodCallResultMessage> HandleResponseAsync(ISerializerAdapter serializer, byte[] callback, Func<byte[], Task> res, object[] args)
+		private async Task<MethodResultMessage> HandleResponseAsync(ISerializerAdapter serializer, byte[] callback, Func<byte[], Task> res, object[] args)
 		{
 			var callbackData = serializer.Deserialize<WireResponseMessage>(callback);
 
@@ -145,19 +145,26 @@ namespace GrpcRemoting
 
 							result = await TaskResultHelper.GetTaskResult(delegt.Method, result);
 						}
-						catch (Exception ex) when (!delegateMsg.OneWay) // PS: not eating exceptions here. what happen to the exception??
+						catch (Exception ex)
 						{
-							Exception ex2 = null;
-							if (ex is TargetInvocationException tie)
-								ex2 = tie.InnerException;
+							if (delegateMsg.OneWay)
+							{
+								// eat...
+							}
+							else
+							{
+								Exception ex2 = ex;
+								if (ex is TargetInvocationException tie)
+									ex2 = tie.InnerException;
 
-							exception = ex2.GetType().IsSerializable ? ex2 : new RemoteInvocationException(ex2.Message);
+								exception = ex2.GetType().IsSerializable ? ex2 : new RemoteInvocationException(ex2.Message);
+							}
 						}
 
 						if (delegateMsg.OneWay)
 							return null;
 
-						DelegateCallResultMessage msg = null;
+						DelegateCallResultMessage msg;
 						if (exception != null)
 							msg = new DelegateCallResultMessage{ Position = delegateMsg.Position, Exception = exception };
 						else
@@ -165,13 +172,19 @@ namespace GrpcRemoting
 
 						var data = serializer.Serialize(msg);
 						await res(data).ConfigureAwait(false);
-					}
-					break;
-				default:
-					throw new Exception();
-			}
 
-			return null;
+						return null;
+					}
+				case ResponseType.Iterator:
+					{
+						throw new NotImplementedException("iterator");
+						//var iter = callbackData.Iterator;
+
+						return null;
+					}
+				default:
+					throw new Exception("Unknown repose type: " + callbackData.ResponseType);
+			}
 		}
 
 		/// <summary>
@@ -227,8 +240,10 @@ namespace GrpcRemoting
 
 			var remoteDelegateInfo =
 				new RemoteDelegateInfo(
-					delegateTypeName: argumentType.FullName, 
-					hasResult: delegateReturnType != typeof(void)); // FIXME: task etc...
+					delegateTypeName: argumentType.FullName,
+					// TODO: use a OneWay attribute instead?
+					hasResult: !(delegateReturnType == typeof(void) || delegateReturnType == typeof(Task) || delegateReturnType == typeof(ValueTask))
+					);
 
 			mappedArgument = remoteDelegateInfo;
 			return true;
@@ -279,7 +294,7 @@ namespace GrpcRemoting
 						var resultTask = (Task)resultIn;
 						await resultTask.ConfigureAwait(false);
 
-						resultOut = returnType.GetProperty("Result")?.GetValue(resultIn); // why ?
+						resultOut = returnType.GetProperty("Result")?.GetValue(resultIn); // why '?' ?
 					}
 					else if (returnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
 					{
@@ -294,7 +309,7 @@ namespace GrpcRemoting
 
 						await (Task)valueTaskToTask.Invoke(null, new[] { resultIn });
 
-						resultOut = returnType.GetProperty("Result")?.GetValue(resultIn); // why ?
+						resultOut = returnType.GetProperty("Result")?.GetValue(resultIn); // why '?' ?
 					}
 				}
 			}

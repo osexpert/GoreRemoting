@@ -108,7 +108,7 @@ namespace GrpcRemoting.RpcMessaging
 		/// <param name="args">Arguments</param>
 		/// <param name="returnValue">Returned return value</param>
 		/// <returns>Method call result message</returns>
-		public MethodCallResultMessage BuildMethodCallResultMessage(
+		public MethodResultMessage BuildMethodCallResultMessage(
 			ISerializerAdapter serializer,
 			MethodInfo method,
 			object[] args,
@@ -119,7 +119,7 @@ namespace GrpcRemoting.RpcMessaging
 
 			var parameterInfos = method.GetParameters();
 
-			var message = new MethodCallResultMessage()
+			var message = new MethodResultMessage()
 			{
 				ReturnValue = returnValue
 			};

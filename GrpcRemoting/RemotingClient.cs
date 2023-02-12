@@ -46,7 +46,7 @@ namespace GrpcRemoting
 		public MethodCallMessageBuilder MethodCallMessageBuilder = new();
         public ISerializerAdapter DefaultSerializer => _config.DefaultSerializer;
 
-		internal MethodCallResultMessage Invoke(byte[] req, Func<byte[], Func<byte[], Task>, Task<MethodCallResultMessage>> reponseHandler, CallOptions callOpt)
+		internal MethodResultMessage Invoke(byte[] req, Func<byte[], Func<byte[], Task>, Task<MethodResultMessage>> reponseHandler, CallOptions callOpt)
         {
 			using (var call = _callInvoker.AsyncDuplexStreamingCall(GrpcRemoting.Descriptors.DuplexCall, null, callOpt))
             {
@@ -70,7 +70,7 @@ namespace GrpcRemoting
             throw new Exception("No result message");
 		}
 
-		internal async Task<MethodCallResultMessage> InvokeAsync(byte[] req, Func<byte[], Func<byte[], Task>, Task<MethodCallResultMessage>> reponseHandler, CallOptions callOpt)
+		internal async Task<MethodResultMessage> InvokeAsync(byte[] req, Func<byte[], Func<byte[], Task>, Task<MethodResultMessage>> reponseHandler, CallOptions callOpt)
 		{
 			using (var call = _callInvoker.AsyncDuplexStreamingCall(GrpcRemoting.Descriptors.DuplexCall, null, callOpt))
 			{
