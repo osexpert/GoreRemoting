@@ -159,10 +159,6 @@ namespace GrpcRemoting.Tests
 
 			List<string> i2 = new();
 
-			//var a = new AsyncEnumerableAdapter<string>(bb => proxy.Jild4(x => bb(x), 42));
-
-			//await proxy.Jild4(a.Produce, 42);
-
 			await foreach (var i in AsyncEnumerableAdapter.Consume<string>(bb => proxy.Jild4(x => bb(x), 42)))
 			{
 				i2.Add(i);

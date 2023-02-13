@@ -8,6 +8,7 @@ GrpcRemoting is (just like CoreRemoting) a way to migrate from .NET Remoting.
 Some limitations:  
 Method that return IEnumerable and yield (crashes)  
 Method that return IAsyncEnumerable and yield (crashes)  
+But has AsyncEnumerableAdapter that can be used to adapt from methods that uses delegate as argument.
 
 CoreRemoting use websockets while GrpcRemoting is a rewrite (sort of) to use Grpc instead.  
 GrpcRemoting only support BinaryFormatter, while CoreRemoting also supported BSON.
@@ -25,15 +26,10 @@ TODO:
 It could be possible to support more than 1. AND maybe OneWay could be an opt-in instead of the default.
 Instead of eating exceptions from delegates, maybe could have an optino to throw them or some way to get notified about them.
 
-TODO:
-IEnumerable<T> with yield
-IAsyncEnumerable<T> with yield
-Delegate arguments currently provide the same functionality, but still would be nice to support it.
-
 Methods:
 OneWay methods not supported. Methods always wait for result.
 
-Other Rpc framework of interest:
+Other Rpc framework maybe of interest:
 
 StreamJsonRpc  
 https://github.com/microsoft/vs-streamjsonrpc  

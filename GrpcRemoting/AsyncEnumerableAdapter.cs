@@ -10,57 +10,32 @@ namespace GrpcRemoting
 #if NETSTANDARD2_1
 	public static class AsyncEnumerableAdapter
 	{
-
-		//Func<Func<T, Task>, Task> _value;
-
-		//public AsyncEnumerableAdapter(Func<Func<T, Task>, Task> i)
-		//{
-		//	_value = value				;
-		//}
-
-
-
-		//public IAsyncEnumerable<T> Consume()
-		//{
-		//	return Consume<T>(_value);
-		//}
-
-		//public Task Produce(T arg)
-		//{
-		//	throw new NotImplementedException();
-		//}
-
-		public static IAsyncEnumerable<T> Consume<T>(Func<Func<T, Task>, Task> i)
+		public static IAsyncEnumerable<T> Consume<T>(Func<Func<T, Task>, Task> dataSource)
 		{
-			Channel<T> c = Channel.CreateUnbounded<T>();
+			Channel<T> channel = Channel.CreateUnbounded<T>();
 
 			Task.Run(async () =>
 			{
 				try
 				{
-					await i((w) => c.Writer.WriteAsync(w).AsTask()).ConfigureAwait(false);
-					c.Writer.Complete();
+					await dataSource(data => channel.Writer.WriteAsync(data).AsTask()).ConfigureAwait(false);
+					channel.Writer.Complete();
 				}
 				catch (Exception e)
 				{
-					c.Writer.Complete(e);
+					channel.Writer.Complete(e);
 				}
 			});
 
-
-			return c.Reader.ReadAllAsync();
+			return channel.Reader.ReadAllAsync();
 		}
 
-		public static async Task Produce<T>(Func<IAsyncEnumerable<T>> jild3Int, Func<T, Task> outt)
+		public static async Task Produce<T>(Func<IAsyncEnumerable<T>> source, Func<T, Task> target)
 		{
-			await foreach (var a in jild3Int().ConfigureAwait(false))
-				await outt(a).ConfigureAwait(false);
+			await foreach (var a in source().ConfigureAwait(false))
+				await target(a).ConfigureAwait(false);
 		}
 
-		//public static IAsyncEnumerable<T> Consume4(Func<Func<T, Task>, Task> i)
-		//{
-		//	return Consume(i);
-		//}
 	}
 
 #endif
