@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace GrpcRemoting.RpcMessaging
 {
 	[Serializable]
-	public class DelegateCallbackMessage
+	public class DelegateCallMessage
 	{
 		public int Position { get; set; }
 
@@ -18,7 +18,7 @@ namespace GrpcRemoting.RpcMessaging
 
 
 	[Serializable]
-	public class DelegateCallResultMessage
+	public class DelegateResultMessage
 	{
 		public int Position { get; set; }
 

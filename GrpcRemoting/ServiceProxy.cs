@@ -164,21 +164,14 @@ namespace GrpcRemoting
 						if (delegateMsg.OneWay)
 							return null;
 
-						DelegateCallResultMessage msg;
+						DelegateResultMessage msg;
 						if (exception != null)
-							msg = new DelegateCallResultMessage{ Position = delegateMsg.Position, Exception = exception };
+							msg = new DelegateResultMessage{ Position = delegateMsg.Position, Exception = exception };
 						else
-							msg = new DelegateCallResultMessage{ Position = delegateMsg.Position, Result = result };
+							msg = new DelegateResultMessage{ Position = delegateMsg.Position, Result = result };
 
 						var data = serializer.Serialize(msg);
 						await res(data).ConfigureAwait(false);
-
-						return null;
-					}
-				case ResponseType.Iterator:
-					{
-						throw new NotImplementedException("iterator");
-						//var iter = callbackData.Iterator;
 
 						return null;
 					}
@@ -186,6 +179,7 @@ namespace GrpcRemoting
 					throw new Exception("Unknown repose type: " + callbackData.ResponseType);
 			}
 		}
+
 
 		/// <summary>
 		/// Maps non serializable arguments into a serializable form.

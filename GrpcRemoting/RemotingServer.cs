@@ -61,7 +61,7 @@ namespace GrpcRemoting
 		/// <param name="arguments">Array of parameter values</param>
 		/// <param name="callDelegate"></param>
 		/// <returns>Array of arguments (includes mapped ones)</returns>
-		private object[] MapArguments(object[] arguments, Func<DelegateCallbackMessage, object> callDelegate, Func<DelegateCallbackMessage, Task<object>> ascallDelegate)
+		private object[] MapArguments(object[] arguments, Func<DelegateCallMessage, object> callDelegate, Func<DelegateCallMessage, Task<object>> ascallDelegate)
 		{
 			object[] mappedArguments = new object[arguments.Length];
 
@@ -88,8 +88,8 @@ namespace GrpcRemoting
 		/// <param name="callDelegate"></param>
 		/// <returns>True if mapping applied, otherwise false</returns>
 		/// <exception cref="ArgumentNullException">Thrown if no session is provided</exception>
-		private bool MapDelegateArgument(object argument, int position, out object mappedArgument, Func<DelegateCallbackMessage, object> callDelegate,
-			Func<DelegateCallbackMessage, Task<object>> callDelegateAsync)
+		private bool MapDelegateArgument(object argument, int position, out object mappedArgument, Func<DelegateCallMessage, object> callDelegate,
+			Func<DelegateCallMessage, Task<object>> callDelegateAsync)
 		{
 			if (!(argument is RemoteDelegateInfo remoteDelegateInfo))
 			{
@@ -112,12 +112,12 @@ namespace GrpcRemoting
 				new DelegateProxy(delegateType, 
 				delegateArgs => 
 				{
-					var r = callDelegate(new DelegateCallbackMessage { Arguments = delegateArgs, Position = position, OneWay = !remoteDelegateInfo.HasResult });
+					var r = callDelegate(new DelegateCallMessage { Arguments = delegateArgs, Position = position, OneWay = !remoteDelegateInfo.HasResult });
 					return r;
 				},
 				delegateArgs => // async
 				{
-					var r = callDelegateAsync(new DelegateCallbackMessage { Arguments = delegateArgs, Position = position, OneWay = !remoteDelegateInfo.HasResult });
+					var r = callDelegateAsync(new DelegateCallMessage { Arguments = delegateArgs, Position = position, OneWay = !remoteDelegateInfo.HasResult });
 					return r;
 				});
 
@@ -187,7 +187,7 @@ namespace GrpcRemoting
 					{
 						// we want result or exception
 						byte[] data = req().GetAwaiter().GetResult();
-						var msg = serializer.Deserialize<DelegateCallResultMessage>(data);
+						var msg = serializer.Deserialize<DelegateResultMessage>(data);
 						if (msg.Position != delegateCallMsg.Position)
 							throw new Exception("Incorrect result position");
 
@@ -227,7 +227,7 @@ namespace GrpcRemoting
 					{
 						// we want result or exception
 						byte[] data = await req().ConfigureAwait(false);
-						var msg = serializer.Deserialize<DelegateCallResultMessage>(data);
+						var msg = serializer.Deserialize<DelegateResultMessage>(data);
 						if (msg.Position != delegateCallMsg.Position)
 							throw new Exception("Incorrect result position");
 
@@ -283,59 +283,6 @@ namespace GrpcRemoting
 				var service = GetService(callMessage.ServiceName, context);
 				result = method.Invoke(service, parameterValues);
 
-#if false // iterator
-				if (method.ReturnType.IsGenericType)
-				{
-					if (method.ReturnType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-					//				method.ReturnType.GetGenericArguments().Length == 1) // can it be other than 1? use  // .Single?
-					{
-						// MEN det kan da være en helt vanlig metode også??
-
-						// lag ny metode generisk som er i denne klassen
-
-						// denne vil sende en melding tilbake for hvert iterasjon
-						// når feridig får man valig result.
-
-						foreach (var val in (IEnumerable)result)
-						{
-							// send to server
-							var iteratorResultMessage = new WireResponseMessage(new IteratorCallbackMessage() { Data = val });
-							await reponse(serializer.Serialize(iteratorResultMessage)).ConfigureAwait(false);
-
-							byte[] data = await req().ConfigureAwait(false);
-							var msg = serializer.Deserialize<IteratorCallbackAckMessage>(data);
-							if (msg.Exception != null)
-								throw msg.Exception.Capture();
-						}
-
-
-						result = null;
-					}
-					else if (method.ReturnType.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))
-					{
-
-						var handleIenum = typeof(RemotingServer)
-							.GetMethod(nameof(IAsyncEnumerableToObject), BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.InvokeMethod)
-							.MakeGenericMethod(method.ReturnType.GenericTypeArguments.Single());
-
-						var r = (IAsyncEnumerable<object>)handleIenum.Invoke(null, new[] { result });
-						await foreach (var val in r)
-						{
-							// send to server
-							var iteratorResultMessage = new WireResponseMessage(new IteratorCallbackMessage() { Data = val });
-							await reponse(serializer.Serialize(iteratorResultMessage)).ConfigureAwait(false);
-
-							byte[] data = await req().ConfigureAwait(false);
-							var msg = serializer.Deserialize<IteratorCallbackAckMessage>(data);
-							if (msg.Exception != null)
-								throw msg.Exception.Capture();
-						}
-
-						result = null;
-					}
-				}
-#endif
-
 				result = await TaskResultHelper.GetTaskResult(method, result);
 			}
 			catch (Exception ex)
@@ -382,17 +329,6 @@ namespace GrpcRemoting
 
 			await reponse(serializer.Serialize(methodResultMessage)).ConfigureAwait(false);
 		}
-
-		//https://stackoverflow.com/questions/13418267/how-to-write-interceptor-for-methods-returning-ienumerable
-		//https://gist.github.com/orient-man/4109938
-		// streamjsonrpc \src\StreamJsonRpc\ProxyGeneration.cs AsyncEnumerableProxy
-		//private static async IAsyncEnumerable<object> IAsyncEnumerableToObject<T>(IAsyncEnumerable<T> enumerable)
-		//{
-		//	await foreach (var v in enumerable)
-		//	{
-		//		yield return v;
-		//	}
-		//}
 
 
 		/// <summary>

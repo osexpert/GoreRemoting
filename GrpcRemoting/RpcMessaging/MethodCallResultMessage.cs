@@ -22,7 +22,7 @@ namespace GrpcRemoting.RpcMessaging
         /// <summary>
         /// Gets or sets an array of out parameters.
         /// </summary>
-        public MethodCallOutArgument[] OutArguments { get; set; } 
+        public MethodOutArgument[] OutArguments { get; set; } 
         
         /// <summary>
         /// Gets or sets a snapshot of the call context that flows from server back to the client. 

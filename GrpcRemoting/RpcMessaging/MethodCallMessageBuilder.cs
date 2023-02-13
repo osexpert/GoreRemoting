@@ -124,7 +124,7 @@ namespace GrpcRemoting.RpcMessaging
 				ReturnValue = returnValue
 			};
 
-			var outArguments = new List<MethodCallOutArgument>();
+			var outArguments = new List<MethodOutArgument>();
 
 			for (var i = 0; i < args.Length; i++)
 			{
@@ -134,7 +134,7 @@ namespace GrpcRemoting.RpcMessaging
 				if (parameterInfo.IsOutParameterForReal())
 				{
 					outArguments.Add(
-						new MethodCallOutArgument()
+						new MethodOutArgument()
 						{
 							ParameterName = parameterInfo.Name,
 							OutValue = arg

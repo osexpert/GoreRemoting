@@ -1,8 +1,11 @@
 ﻿using GrpcRemoting.Tests.Tools;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Xunit;
 using static GrpcRemoting.Tests.RpcTests;
@@ -19,6 +22,8 @@ namespace GrpcRemoting.Tests
 			IAsyncEnumerable<string> Jild2();
 
 			IEnumerable<Task<string>> Jild3();
+
+			Task Jild4(Func<string, Task> outt, int t);
 
 			Tuple<string, int> RetCom1();
 			(string, int) RetCom2();
@@ -53,6 +58,28 @@ namespace GrpcRemoting.Tests
 				await Task.CompletedTask;
 				yield return "1";
 				yield return "2";
+			}
+
+			public Task Jild4(Func<string, Task> outt, int t)
+			{
+				//return Jild3Int().ViaFuncAsync(outt);
+
+				return AsyncEnumerableAdapter.Produce(() => Jild3Int(t), outt);
+			}
+
+			private async IAsyncEnumerable<string> Jild3Int(int x)
+			{
+				await Task.CompletedTask;
+				yield return "1";
+				yield return "2";
+
+				//while (true)
+				//{
+				//	yield return Random.Shared.Next().ToString();// "2";
+
+				//	await Task.Delay(1000);
+				//}
+
 			}
 
 			public async Task<Tuple<string, int>> RetACom1()
@@ -128,6 +155,29 @@ namespace GrpcRemoting.Tests
 			//Assert.Equal("1", i2[0]);
 			//Assert.Equal("2", i2[1]);
 
+
+
+			List<string> i2 = new();
+
+			//var a = new AsyncEnumerableAdapter<string>(bb => proxy.Jild4(x => bb(x), 42));
+
+			//await proxy.Jild4(a.Produce, 42);
+
+			await foreach (var i in AsyncEnumerableAdapter.Consume<string>(bb => proxy.Jild4(x => bb(x), 42)))
+			{
+				i2.Add(i);
+
+				//Console.WriteLine(i);
+				//OutputDebugString(i);
+				//Debug.WriteLine(i);
+			}
+
+			Assert.Equal(2, i2.Count);
+			Assert.Equal("1", i2[0]);
+			Assert.Equal("2", i2[1]);
+
+
+
 			var r1 = proxy.RetCom1();
 			var r2 = proxy.RetCom2();
 			var r3 = proxy.RetCom3();
@@ -142,4 +192,6 @@ namespace GrpcRemoting.Tests
 			Assert.True(ra3.Item1 == "1" && ra3.Item2 == 2);
 		}
 	}
+
+	
 }
