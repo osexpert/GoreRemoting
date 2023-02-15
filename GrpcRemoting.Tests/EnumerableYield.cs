@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Xunit;
@@ -36,6 +37,9 @@ namespace GrpcRemoting.Tests
 
 			//Task<IAsyncEnumerable<string>> Jild3();
 			//Task<IEnumerable<string>> Jild4();
+
+
+			Task TestCancel(Func<string, Task> outt, CancellationToken cancel);
 		}
 
 
@@ -65,9 +69,27 @@ namespace GrpcRemoting.Tests
 				//return Jild3Int().ViaFuncAsync(outt);
 
 				return AsyncEnumerableAdapter.Produce(() => Jild3Int(t), outt);
+
+
+//				return AsyncEnumerableAdapter.Produce(cancel => Jild3Int(t, cancel), outt, new CancellationToken());
 			}
 
 			private async IAsyncEnumerable<string> Jild3Int(int x)
+			{
+				await Task.CompletedTask;
+				yield return "1";
+				yield return "2";
+		
+				//while (true)
+				//{
+				//	yield return Random.Shared.Next().ToString();// "2";
+
+				//	await Task.Delay(1000);
+				//}
+
+			}
+
+			private async IAsyncEnumerable<string> Jild3Int(int x, CancellationToken cancel)
 			{
 				await Task.CompletedTask;
 				yield return "1";
@@ -81,6 +103,7 @@ namespace GrpcRemoting.Tests
 				//}
 
 			}
+
 
 			public async Task<Tuple<string, int>> RetACom1()
 			{
@@ -118,6 +141,17 @@ namespace GrpcRemoting.Tests
 			public IEnumerable<Task<string>> Jild3()
 			{
 				throw new NotImplementedException();
+			}
+
+			public async Task TestCancel(Func<string, Task> outt, CancellationToken cancel)
+			{
+				while (true)
+				{
+					await outt(Random.Shared.Next().ToString());
+					await outt(Random.Shared.Next().ToString());
+					await outt(Random.Shared.Next().ToString());
+					await Task.Delay(1000000, cancel);
+				}
 			}
 		}
 
@@ -186,6 +220,31 @@ namespace GrpcRemoting.Tests
 			Assert.True(ra1.Item1 == "1" && ra1.Item2 == 2);
 			Assert.True(ra2.Item1 == "1" && ra2.Item2 == 2);
 			Assert.True(ra3.Item1 == "1" && ra3.Item2 == 2);
+
+
+			var t1 = DateTime.Now;
+			var fiveSec = new CancellationTokenSource(5000);
+			int hit1 = 0;
+			bool wasC = false;
+			try
+			{
+				await proxy.TestCancel(async s =>
+				{
+					await Task.CompletedTask;
+					hit1++;
+
+				}, fiveSec.Token);
+			}
+			catch (TaskCanceledException)
+			{
+				wasC = true;
+			}
+
+			var td = DateTime.Now - t1;
+			Assert.True(td.TotalSeconds < 10);
+			Assert.True(hit1 == 3);
+			Assert.True(wasC);
+
 		}
 	}
 

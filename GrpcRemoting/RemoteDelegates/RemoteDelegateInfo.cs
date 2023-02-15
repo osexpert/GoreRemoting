@@ -34,4 +34,9 @@ namespace GrpcRemoting.RemoteDelegates
         /// </summary>
         public bool HasResult => _hasResult;
     }
+
+    [Serializable]
+    public class CancellationTokenDummy
+    {
+    }
 }

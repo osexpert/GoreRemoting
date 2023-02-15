@@ -13,24 +13,24 @@ namespace GrpcRemoting.RemoteDelegates
 	public sealed class DelegateProxy //: IDelegateProxy
     {
 	    private Func<object[], object> _callInterceptionHandler;
-		private Func<object[], Task<object>> _ascallInterceptionHandler;
+		private Func<object[], Task<object>> _callInterceptionAsyncHandler;
 
-		AsyncInterceptor _aInc;
+		AsyncInterceptor _aInterceptor;
 
 		/// <summary>
 		/// Creates a new instance of the DelegateProxy class.
 		/// </summary>
 		/// <param name="delegateType">Delegate type to be proxied</param>
 		/// <param name="callInterceptionHandler">Function to be called when intercepting calls on the delegate</param>
-		internal DelegateProxy(Type delegateType, Func<object[], object> callInterceptionHandler, Func<object[], Task<object>> ascallInterceptionHandler)
+		internal DelegateProxy(Type delegateType, Func<object[], object> callInterceptionHandler, Func<object[], Task<object>> callInterceptionAsyncHandler)
 	    {
 			_callInterceptionHandler = 
 			    callInterceptionHandler ??
 					throw new ArgumentNullException(nameof(callInterceptionHandler));
 
-			_ascallInterceptionHandler =
-				ascallInterceptionHandler ??
-					throw new ArgumentNullException(nameof(ascallInterceptionHandler));
+			_callInterceptionAsyncHandler =
+				callInterceptionAsyncHandler ??
+					throw new ArgumentNullException(nameof(callInterceptionAsyncHandler));
 
 			var interceptMethod = 
 			    this.GetType()
@@ -44,7 +44,7 @@ namespace GrpcRemoting.RemoteDelegates
 				    interceptMethod: interceptMethod,
 				    interceptor: this);
 
-			_aInc = new AsyncInterceptor(InterceptSync, InterceptAsync);
+			_aInterceptor = new AsyncInterceptor(InterceptSync, InterceptAsync);
 		}
 
 		void InterceptSync(ISyncInvocation invocation)
@@ -56,7 +56,7 @@ namespace GrpcRemoting.RemoteDelegates
 
 		async ValueTask InterceptAsync(IAsyncInvocation invocation)
 		{
-			var res = await _ascallInterceptionHandler(invocation.Arguments.ToArray()).ConfigureAwait(false);
+			var res = await _callInterceptionAsyncHandler(invocation.Arguments.ToArray()).ConfigureAwait(false);
 			invocation.Result = res;
 			//CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
 		}
@@ -73,11 +73,9 @@ namespace GrpcRemoting.RemoteDelegates
 	    /// <returns>Return value provided by call interception handler</returns>
 	    private object Intercept(params object[] args)
 	    {
-			var invo = new SyncInvocation(ProxiedDelegate.Method, args);
-
-			_aInc.Intercept(invo);
-
-			return invo.ReturnValue;
+			var sin = new SyncInvocation(ProxiedDelegate.Method, args);
+			_aInterceptor.Intercept(sin);
+			return sin.ReturnValue;
 	    }
 
 		/// <summary>

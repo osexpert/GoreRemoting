@@ -61,7 +61,7 @@ namespace GrpcRemoting
 		/// <param name="arguments">Array of parameter values</param>
 		/// <param name="callDelegate"></param>
 		/// <returns>Array of arguments (includes mapped ones)</returns>
-		private object[] MapArguments(object[] arguments, Func<DelegateCallMessage, object> callDelegate, Func<DelegateCallMessage, Task<object>> ascallDelegate)
+		private object[] MapArguments(object[] arguments, Func<DelegateCallMessage, object> callDelegate, Func<DelegateCallMessage, Task<object>> callDelegateAsync)
 		{
 			object[] mappedArguments = new object[arguments.Length];
 
@@ -69,7 +69,7 @@ namespace GrpcRemoting
 			{
 				var argument = arguments[i];
 
-				if (MapDelegateArgument(argument, i, out var mappedArgument, callDelegate, ascallDelegate))
+				if (MapDelegateArgument(argument, i, out var mappedArgument, callDelegate, callDelegateAsync))
 					mappedArguments[i] = mappedArgument;
 				else
 					mappedArguments[i] = argument;
@@ -158,11 +158,13 @@ namespace GrpcRemoting
 
 			(var parameterValues, var parameterTypes) = callMessage.UnwrapParametersFromDeserializedMethodCallMessage();
 
+			parameterValues = MapCancellationTokenArguments(parameterValues, ServerCallContext context);
+
 			bool resultSent = false;
 			var responseLock = new AsyncReaderWriterLockSlim();
 
 			parameterValues = MapArguments(parameterValues,
-				delegateCallMsg =>
+			delegateCallMsg =>
 			{
 				var delegateResultMessage = new WireResponseMessage(delegateCallMsg);
 
@@ -201,7 +203,8 @@ namespace GrpcRemoting
 				{
 					responseLock.ExitReadLock();
 				}
-			}, async delegateCallMsg =>
+			}, 
+			async delegateCallMsg =>
 			{
 				var delegateResultMessage = new WireResponseMessage(delegateCallMsg);
 
@@ -328,6 +331,25 @@ namespace GrpcRemoting
 			responseLock.ExitWriteLock();
 
 			await reponse(serializer.Serialize(methodResultMessage)).ConfigureAwait(false);
+		}
+
+		private object[] MapCancellationTokenArguments(object[] arguments, ServerCallContext context)
+		{
+			object[] mappedArguments = new object[arguments.Length];
+
+			for (int i = 0; i < arguments.Length; i++)
+			{
+				var argument = arguments[i];
+
+				if (argument is CancellationTokenDummy)
+				{
+					mappedArguments[i] = context.CancellationToken;
+				}
+				else
+					mappedArguments[i] = argument;
+			}
+
+			return mappedArguments;
 		}
 
 

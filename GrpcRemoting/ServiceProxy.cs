@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
 using Grpc.Core;
@@ -21,22 +22,20 @@ namespace GrpcRemoting
 		RemotingClient _client;
 		string _serviceName;
 
-		AsyncInterceptor _aInc;
+		AsyncInterceptor _aInterceptor;
 
 		public ServiceProxy(RemotingClient client)
 		{
 			_client = client;
 			_serviceName = typeof(T).Name;
-			_aInc = new(InterceptSync, InterceptAsync);
+			_aInterceptor = new(InterceptSync, InterceptAsync);
 		}
 
 		void IInterceptor.Intercept(IInvocation invocation)
 		{
-			var i2 = new SyncInvocation(invocation.Method, invocation.Arguments);
-
-			_aInc.Intercept(i2);
-
-			invocation.ReturnValue = i2.ReturnValue;
+			var sin = new SyncInvocation(invocation.Method, invocation.Arguments);
+			_aInterceptor.Intercept(sin);
+			invocation.ReturnValue = sin.ReturnValue;
 		}
 
 		void InterceptSync(ISyncInvocation invocation)
@@ -44,7 +43,7 @@ namespace GrpcRemoting
 			var args = invocation.Arguments;
 			var targetMethod = invocation.Method;
 
-			var arguments = MapArguments(args);
+			var arguments = MapArguments(args, out var cancel);
 
 			var serializer = _client.DefaultSerializer;
 
@@ -64,7 +63,7 @@ namespace GrpcRemoting
 
 			var resultMessage = _client.Invoke(bytes, 
 				(callback, res) => HandleResponseAsync(serializer, callback, res, args), 
-				new CallOptions(headers: headers));
+				new CallOptions(headers: headers, cancellationToken: cancel));
 
 			if (resultMessage.Exception != null)
 				throw resultMessage.Exception.Capture();
@@ -87,7 +86,7 @@ namespace GrpcRemoting
 			var args = invocation.Arguments;
 			var targetMethod = invocation.Method;
 
-			var arguments = MapArguments(args);
+			var arguments = MapArguments(args, out var cancel);
 
 			var serializer = _client.DefaultSerializer;
 
@@ -107,7 +106,7 @@ namespace GrpcRemoting
 
 			var resultMessage =  await _client.InvokeAsync(bytes,
 				(callback, req) => HandleResponseAsync(serializer, callback, req, args.ToArray()),
-				new CallOptions(headers: headers)).ConfigureAwait(false);
+				new CallOptions(headers: headers, cancellationToken: cancel)).ConfigureAwait(false);
 
 			if (resultMessage.Exception != null)
 				throw resultMessage.Exception.Capture();
@@ -186,11 +185,13 @@ namespace GrpcRemoting
 		/// </summary>
 		/// <param name="arguments">Arguments</param>
 		/// <returns>Array of arguments (includes mapped ones)</returns>
-		private object[] MapArguments(IEnumerable<object> arguments)
+		private object[] MapArguments(IEnumerable<object> arguments, out CancellationToken cancel)
 		{
 			bool delegateHasResult = false;
 
-			return arguments.Select(argument =>
+			CancellationToken lastCancel = default;
+
+			var res =  arguments.Select(argument =>
 			{
 				var type = argument?.GetType();
 
@@ -209,10 +210,31 @@ namespace GrpcRemoting
 
 					return mappedArgument;
 				}
+				else if (MapCancellationTokenArgument(type, argument, out var mappedArgument2))
+				{
+					lastCancel = (CancellationToken)argument;
+					return mappedArgument2;
+				}
 				else
 					return argument;
 
 			}).ToArray();
+
+			cancel = lastCancel;
+
+			return res;
+		}
+
+		private bool MapCancellationTokenArgument(Type argumentType, object argument, out object mappedArguments)
+		{
+			if (!typeof(CancellationToken).IsAssignableFrom(argumentType))
+			{
+				mappedArguments = null;
+				return false;
+			}
+
+			mappedArguments = new CancellationTokenDummy();
+			return true;
 		}
 
 		/// <summary>
