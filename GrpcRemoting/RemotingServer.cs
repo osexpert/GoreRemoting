@@ -158,7 +158,7 @@ namespace GrpcRemoting
 
 			(var parameterValues, var parameterTypes) = callMessage.UnwrapParametersFromDeserializedMethodCallMessage();
 
-			parameterValues = MapCancellationTokenArguments(parameterValues, ServerCallContext context);
+			parameterValues = MapCancellationTokenArguments(parameterValues, context);
 
 			bool resultSent = false;
 			var responseLock = new AsyncReaderWriterLockSlim();
