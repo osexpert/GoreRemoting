@@ -19,8 +19,8 @@ GrpcRemoting does not use .proto files but simply interfaces. Look at the exampl
 
 Delegates:
 Delegates that return void, Task, ValueTask are all threated as OneWay. Then it will not wait for any result and any exceptions thrown are eaten.
-You can have max one delegate with result (eg. int, Task<int>, ValueTask<int>) else will get runtime exception.
-If you need to force a delegate to be non-OneWay, then just make it return something (eg. a bool or Task<bool>). But again, max one delegate with result.
+You can have max one delegate with result (eg. int, Task\<int\>, ValueTask\<int\>) else will get runtime exception.
+If you need to force a delegate to be non-OneWay, then just make it return something (eg. a bool or Task\<bool\>). But again, max one delegate with result.
 
 TODO:
 It could be possible to support more than 1. AND maybe OneWay could be an opt-in instead of the default.
