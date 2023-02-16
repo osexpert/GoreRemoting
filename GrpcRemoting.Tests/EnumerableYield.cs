@@ -40,6 +40,7 @@ namespace GrpcRemoting.Tests
 
 
 			Task TestCancel(Func<string, Task> outt, CancellationToken cancel);
+			Task TestCancel2(CancellationToken c1, CancellationToken cancel);
 		}
 
 
@@ -153,6 +154,11 @@ namespace GrpcRemoting.Tests
 					await Task.Delay(1000000, cancel);
 				}
 			}
+
+			public Task TestCancel2(CancellationToken c1, CancellationToken cancel)
+			{
+				throw new NotImplementedException();
+			}
 		}
 
 		[Fact]
@@ -245,6 +251,16 @@ namespace GrpcRemoting.Tests
 			Assert.True(hit1 == 3);
 			Assert.True(wasC);
 
+			Exception cee = null;
+			try
+			{
+				await proxy.TestCancel2(CancellationToken.None, CancellationToken.None);
+			}
+			catch (Exception e)
+			{
+				cee = e;
+			}
+			Assert.Equal("More than one CancellationToken", cee.Message);
 		}
 	}
 

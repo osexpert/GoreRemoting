@@ -189,7 +189,7 @@ namespace GrpcRemoting
 		{
 			bool delegateHasResult = false;
 
-			CancellationToken lastCancel = default;
+			CancellationToken? lastCancel = null;
 
 			var res =  arguments.Select(argument =>
 			{
@@ -212,7 +212,11 @@ namespace GrpcRemoting
 				}
 				else if (MapCancellationTokenArgument(type, argument, out var mappedArgument2))
 				{
-					lastCancel = (CancellationToken)argument;
+					if (lastCancel != null)
+						throw new Exception("More than one CancellationToken");
+					else
+						lastCancel = (CancellationToken)argument;
+
 					return mappedArgument2;
 				}
 				else
@@ -220,7 +224,7 @@ namespace GrpcRemoting
 
 			}).ToArray();
 
-			cancel = lastCancel;
+			cancel = lastCancel ?? default;
 
 			return res;
 		}
