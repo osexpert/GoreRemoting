@@ -210,14 +210,14 @@ namespace GrpcRemoting
 
 					return mappedArgument;
 				}
-				else if (MapCancellationTokenArgument(type, argument, out var mappedArgument2))
+				else if (typeof(CancellationToken).IsAssignableFrom(type))
 				{
 					if (lastCancel != null)
 						throw new Exception("More than one CancellationToken");
 					else
 						lastCancel = (CancellationToken)argument;
 
-					return mappedArgument2;
+					return new CancellationTokenDummy();
 				}
 				else
 					return argument;
@@ -227,18 +227,6 @@ namespace GrpcRemoting
 			cancel = lastCancel ?? default;
 
 			return res;
-		}
-
-		private bool MapCancellationTokenArgument(Type argumentType, object argument, out object mappedArguments)
-		{
-			if (!typeof(CancellationToken).IsAssignableFrom(argumentType))
-			{
-				mappedArguments = null;
-				return false;
-			}
-
-			mappedArguments = new CancellationTokenDummy();
-			return true;
 		}
 
 		/// <summary>

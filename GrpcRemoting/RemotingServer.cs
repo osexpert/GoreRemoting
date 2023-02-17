@@ -61,7 +61,10 @@ namespace GrpcRemoting
 		/// <param name="arguments">Array of parameter values</param>
 		/// <param name="callDelegate"></param>
 		/// <returns>Array of arguments (includes mapped ones)</returns>
-		private object[] MapArguments(object[] arguments, Func<DelegateCallMessage, object> callDelegate, Func<DelegateCallMessage, Task<object>> callDelegateAsync)
+		private object[] MapArguments(object[] arguments, 
+			Func<DelegateCallMessage, object> callDelegate, 
+			Func<DelegateCallMessage, Task<object>> callDelegateAsync,
+			ServerCallContext context)
 		{
 			object[] mappedArguments = new object[arguments.Length];
 
@@ -71,6 +74,8 @@ namespace GrpcRemoting
 
 				if (MapDelegateArgument(argument, i, out var mappedArgument, callDelegate, callDelegateAsync))
 					mappedArguments[i] = mappedArgument;
+				else if (argument is CancellationTokenDummy)
+					mappedArguments[i] = context.CancellationToken;
 				else
 					mappedArguments[i] = argument;
 			}
@@ -158,8 +163,6 @@ namespace GrpcRemoting
 
 			(var parameterValues, var parameterTypes) = callMessage.UnwrapParametersFromDeserializedMethodCallMessage();
 
-			parameterValues = MapCancellationTokenArguments(parameterValues, context);
-
 			bool resultSent = false;
 			var responseLock = new AsyncReaderWriterLockSlim();
 
@@ -244,7 +247,8 @@ namespace GrpcRemoting
 				{
 					responseLock.ExitReadLock();
 				}
-			});
+			},
+			context);
 
 			var serviceInterfaceType = GetServiceType(callMessage.ServiceName);
 			MethodInfo method;
@@ -332,26 +336,6 @@ namespace GrpcRemoting
 
 			await reponse(serializer.Serialize(methodResultMessage)).ConfigureAwait(false);
 		}
-
-		private object[] MapCancellationTokenArguments(object[] arguments, ServerCallContext context)
-		{
-			object[] mappedArguments = new object[arguments.Length];
-
-			for (int i = 0; i < arguments.Length; i++)
-			{
-				var argument = arguments[i];
-
-				if (argument is CancellationTokenDummy)
-				{
-					mappedArguments[i] = context.CancellationToken;
-				}
-				else
-					mappedArguments[i] = argument;
-			}
-
-			return mappedArguments;
-		}
-
 
 		/// <summary>
 		/// 

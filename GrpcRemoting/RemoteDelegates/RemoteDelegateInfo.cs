@@ -39,4 +39,5 @@ namespace GrpcRemoting.RemoteDelegates
     public class CancellationTokenDummy
     {
     }
+
 }

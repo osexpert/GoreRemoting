@@ -41,6 +41,9 @@ namespace GrpcRemoting.Tests
 
 			Task TestCancel(Func<string, Task> outt, CancellationToken cancel);
 			Task TestCancel2(CancellationToken c1, CancellationToken cancel);
+
+			Task TestProg(Action<int> p);
+			
 		}
 
 
@@ -159,6 +162,19 @@ namespace GrpcRemoting.Tests
 			{
 				throw new NotImplementedException();
 			}
+
+			public async Task TestProg(Action<int> pReport)
+			{
+				await Task.CompletedTask;
+				ProTe(ProgressAdapter.Produce(pReport));
+			}
+
+			private void ProTe(IProgress<int> pReport)
+			{
+				pReport.Report(1);
+				pReport.Report(42);
+			}
+
 		}
 
 		[Fact]
@@ -261,6 +277,32 @@ namespace GrpcRemoting.Tests
 				cee = e;
 			}
 			Assert.Equal("More than one CancellationToken", cee.Message);
+
+			List<int> l = new();
+			var p = new GoodProgress<int>();
+			p.ProCha += (a, b) =>
+			{
+				l.Add(b);
+			};
+			await proxy.TestProg(ProgressAdapter.Consume(p));
+
+			//weird hack: ProgressChanged is called on background thread?
+			//await Task.Delay(100);
+
+			Assert.True(l.Count == 2);
+			Assert.True(l.Sum() == 43);
+
+		}
+
+		class GoodProgress<T> : IProgress<T>
+		{
+			public event EventHandler<T> ProCha;
+
+			public void Report(T value)
+			{
+				ProCha?.Invoke(this, value);
+								
+			}
 		}
 	}
 
