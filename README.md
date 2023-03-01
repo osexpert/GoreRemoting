@@ -1,33 +1,48 @@
-# GrpcRemoting
+# GoreRemoting
 
-GrpcRemoting is based on CoreRemoting  
+GoreRemoting is based on CoreRemoting  
 https://github.com/theRainbird/CoreRemoting  
 
-GrpcRemoting is (just like CoreRemoting) a way to migrate from .NET Remoting.  
+GoreRemoting is (just like CoreRemoting) a way to migrate from .NET Remoting.  
 
-Some limitations:  
+How it works:
+Services are always stateless\single call. If you need to store state, store in a session etc.
+You can send extra headers with every call from client to server, eg. a sessionId or a Token via BeforeMethodCall on client and CreateInstance on server (look in examples).
+Clients create proxies from service interfaces (typically in shared assembly).
+No support for MarshalByRef behaviour. Everything is by value.
+It is not possible to callback to clients directly, callbacks must happen as part of a call from client to server that awaits forever and keeps a stream open. The server can callback via a delegate argument (look in examples).
+Can have as many callback delegate arguments as you wish, but only one can return something from the client. Others must be void\Task\ValueTask and will be OneWay (no result or exception from client).
+Support CancellationToken (uses native Grpc support)
+AsyncEnumerableAdapter to adapt to IAsyncEnumerable providers\consumers via delegate.
+ProgressAdapter to adapt to IProgress providers\consumers via delegate.
+You can create own adapters based on same idea to emulate MarshalByRef behaviour via delegates.
+Can use both native Grpc and Grpc dotnet.
+Currently only uses BinaryFormatter.
+Support Task\ValueTask in service methods result and in result from delegate arguments (but max one with actual result).
+
+Limitations:
 Method that return IEnumerable and yield (crashes)  
 Method that return IAsyncEnumerable and yield (crashes)  
-But has AsyncEnumerableAdapter that can be used to adapt from methods that uses delegate as argument.
 
-CoreRemoting use websockets while GrpcRemoting is a rewrite (sort of) to use Grpc instead.  
-GrpcRemoting only support BinaryFormatter, while CoreRemoting also supported BSON.
+CoreRemoting use websockets while GoreRemoting is a rewrite (sort of) to use Grpc instead.  
+GoreRemoting only support BinaryFormatter, while CoreRemoting also supported BSON.
 Encryption, authentication, session management, DependencyInjection, Linq expression arguments are also remved (maybe some can be added back if demand).
 Idea in the future is to support MessagePack or MemoryPack in addition.
 Idea is to make it possible to specify formatter on a per method basis, so slowly can migrate away from BinaryFormatter, method by method.
-GrpcRemoting does not use .proto files but simply interfaces. Look at the examples for info, there is no documentation.  
+GoreRemoting does not use .proto files but simply interfaces. Look at the examples for info, there is no documentation.  
 
-Delegates:
+Delegate arguments:
 Delegates that return void, Task, ValueTask are all threated as OneWay. Then it will not wait for any result and any exceptions thrown are eaten.
 You can have max one delegate with result (eg. int, Task\<int\>, ValueTask\<int\>) else will get runtime exception.
 If you need to force a delegate to be non-OneWay, then just make it return something (eg. a bool or Task\<bool\>). But again, max one delegate with result.
 
-TODO:
-It could be possible to support more than 1. AND maybe OneWay could be an opt-in instead of the default.
-Instead of eating exceptions from delegates, maybe could have an optino to throw them or some way to get notified about them.
-
 Methods:
-OneWay methods not supported. Methods always wait for result.
+OneWay methods not supported. Methods always wait for result\exception.
+
+TODO:
+Maybe OneWay delegate could be an opt-in instead of the default (still only max one could be non-OneWay)
+Instead of eating exceptions from delegates, maybe could have an optino to throw them or some way to get notified about them (via subscribe to delegate)
+Add session management? (not in the core, but as example)
 
 Other Rpc framework maybe of interest:
 
