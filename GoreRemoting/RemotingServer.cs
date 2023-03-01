@@ -133,10 +133,6 @@ namespace GoreRemoting
 			return true;
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <exception cref="Exception"></exception>
 		public void RegisterService<TInterface, TService>()
         {
 			var iface = typeof(TInterface);
@@ -147,13 +143,6 @@ namespace GoreRemoting
             if (!_services.TryAdd(iface.Name, typeof(TService)))
 				throw new Exception("Service already added: " + iface.Name);
 		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="type"></param>
-		/// <param name="iface"></param>
-		//public void RegisterService(Type type, Type iface) => RegisterService(type, iface.Name);
 
         private async Task DuplexCall(ISerializerAdapter serializer, byte[] request, Func<Task<byte[]>> req, Func<byte[], Task> reponse, ServerCallContext context)
 		{

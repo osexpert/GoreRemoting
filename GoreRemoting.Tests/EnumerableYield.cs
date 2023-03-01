@@ -72,7 +72,7 @@ namespace GoreRemoting.Tests
 			{
 				//return Jild3Int().ViaFuncAsync(outt);
 
-				return AsyncEnumerableAdapter.Produce(() => Jild3Int(t), outt);
+				return AsyncEnumerableAdapter.ServerProduce(() => Jild3Int(t), outt);
 
 
 //				return AsyncEnumerableAdapter.Produce(cancel => Jild3Int(t, cancel), outt, new CancellationToken());
@@ -166,7 +166,7 @@ namespace GoreRemoting.Tests
 			public async Task TestProg(Action<int> pReport)
 			{
 				await Task.CompletedTask;
-				ProTe(ProgressAdapter.Produce(pReport));
+				ProTe(ProgressAdapter.ServerProduce<int>(pReport));
 			}
 
 			private void ProTe(IProgress<int> pReport)
@@ -215,7 +215,7 @@ namespace GoreRemoting.Tests
 
 			List<string> i2 = new();
 
-			await foreach (var i in AsyncEnumerableAdapter.Consume<string>(bb => proxy.Jild4(x => bb(x), 42)))
+			await foreach (var i in AsyncEnumerableAdapter.ClientConsume<string>(bb => proxy.Jild4(x => bb(x), 42)))
 			{
 				i2.Add(i);
 
@@ -284,7 +284,7 @@ namespace GoreRemoting.Tests
 			{
 				l.Add(b);
 			};
-			await proxy.TestProg(ProgressAdapter.Consume(p));
+			await proxy.TestProg(ProgressAdapter.ClientConsume(p));
 
 			//weird hack: ProgressChanged is called on background thread?
 			//await Task.Delay(100);

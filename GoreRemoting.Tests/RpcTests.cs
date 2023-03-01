@@ -581,8 +581,6 @@ namespace GoreRemoting.Tests
 		volatile static bool Test_Thread_Callback_Failed = false;
         volatile static bool Test_Thread_Done = false;
 
-		[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-		public static extern void OutputDebugString(string message);
 
 		[Fact]
         public async Task Delegate_callback_after_return()
@@ -880,7 +878,7 @@ namespace GoreRemoting.Tests
 					Assert.Equal(422, res);
 					return res;
 				}
-                catch (Exception e)
+                catch (Exception)
                 {
                     throw;
                 }
@@ -898,7 +896,7 @@ namespace GoreRemoting.Tests
 					Assert.Equal(422, res);
 					return res;
 				}
-				catch (Exception e)
+				catch (Exception)
 				{
 					throw;
 				}

@@ -62,6 +62,8 @@ namespace GoreRemoting.RpcMessaging
 			var parameterInfos = targetMethod.GetParameters();
 			var genericArgumentTypes = targetMethod.GetGenericArguments();
 
+			// TODO: throw if more args than params?
+
 			for (var i = 0; i < parameterInfos.Length; i++)
 			{
 				var arg = args[i];
