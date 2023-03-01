@@ -1,5 +1,5 @@
 ﻿using Grpc.AspNetCore.Server.Model;
-using GrpcRemoting;
+using GoreRemoting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Routing;

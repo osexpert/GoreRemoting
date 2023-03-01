@@ -3,7 +3,7 @@
 using System.Reflection;
 using System.Threading.Tasks;
 using System;
-using GrpcRemoting;
+using GoreRemoting;
 using System.IO;
 
 

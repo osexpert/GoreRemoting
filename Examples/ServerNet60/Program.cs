@@ -1,6 +1,6 @@
 ﻿using Grpc.AspNetCore.Server.Model;
 using Grpc.Core;
-using GrpcRemoting;
+using GoreRemoting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -56,8 +56,8 @@ namespace ServerNet60
                 c.SuppressCheckForUnhandledSecurityMetadata = true;
             });
 
-            services.AddSingleton<GrpcRemotingService>();
-            services.TryAddEnumerable(ServiceDescriptor.Singleton(typeof(IServiceMethodProvider<GrpcRemotingService>), new GrpcRemotingMethodProvider(server)));
+            services.AddSingleton<GoreRemotingService>();
+            services.TryAddEnumerable(ServiceDescriptor.Singleton(typeof(IServiceMethodProvider<GoreRemotingService>), new GoreRemotingMethodProvider(server)));
 
             builder.WebHost.ConfigureKestrel(kestrel =>
             {
@@ -85,7 +85,7 @@ namespace ServerNet60
 
             var app = builder.Build();
 
-            app.MapGrpcService<GrpcRemotingService>();
+            app.MapGrpcService<GoreRemotingService>();
             app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 
             _  = app.RunAsync();

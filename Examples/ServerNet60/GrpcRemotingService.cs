@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace ServerNet60
 {
-    internal class GrpcRemotingService
+    internal class GoreRemotingService
     {
-        // dummy class, methods added runtime by GrpcRemotingMethodProvider, I think
+        // dummy class, methods added runtime by GoreRemotingMethodProvider, I think
     }
 
 }

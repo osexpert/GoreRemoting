@@ -1,4 +1,4 @@
-﻿using GrpcRemoting;
+﻿using GoreRemoting;
 using System.Threading.Tasks;
 using System;
 using Grpc.Core;
@@ -40,7 +40,7 @@ namespace ServerNet48
                 Services =
                 {
                     ServerServiceDefinition.CreateBuilder()
-                        .AddMethod(GrpcRemoting.Descriptors.DuplexCall, remServer.DuplexCall)
+                        .AddMethod(GoreRemoting.Descriptors.DuplexCall, remServer.DuplexCall)
                         .Build()
                 }
             };

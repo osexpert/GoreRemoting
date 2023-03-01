@@ -1,7 +1,7 @@
 ﻿using ClientShared;
 using Grpc.Core;
-using GrpcRemoting;
-using GrpcRemoting.Serialization;
+using GoreRemoting;
+using GoreRemoting.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
