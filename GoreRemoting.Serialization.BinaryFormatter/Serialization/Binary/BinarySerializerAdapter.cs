@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 
 namespace GoreRemoting.Serialization.Binary
@@ -54,23 +55,35 @@ namespace GoreRemoting.Serialization.Binary
         /// <param name="graph">Object graph to be serialized</param>
         /// <typeparam name="T">Object type</typeparam>
         /// <returns>Serialized data</returns>
-        public byte[] Serialize<T>(T graph)
-        {
-            var binaryFormatter = GetFormatter();
-            return binaryFormatter.SerializeByteArray(graph);
-        }
+        //public byte[] Serialize<T>(T graph)
+        //{
+        //    var binaryFormatter = GetFormatter();
+        //    return binaryFormatter.SerializeByteArray(graph);
+        //}
 
-        /// <summary>
-        /// Serializes an object graph.
-        /// </summary>
-        /// <param name="type">Object type</param>
-        /// <param name="graph">Object graph to be serialized</param>
-        /// <returns>Serialized data</returns>
-        public byte[] Serialize(Type type, object graph)
-        {
-            var binaryFormatter = GetFormatter();
-            return binaryFormatter.SerializeByteArray(graph);
-        }
+		/// <summary>
+		/// Serializes an object graph.
+		/// </summary>
+		/// <param name="graph">Object graph to be serialized</param>
+		/// <typeparam name="T">Object type</typeparam>
+		/// <returns>Serialized data</returns>
+		public void Serialize<T>(Stream s, T graph)
+		{
+			var binaryFormatter = GetFormatter();
+			binaryFormatter.SerializeByteArray(s, graph);
+		}
+
+		/// <summary>
+		/// Serializes an object graph.
+		/// </summary>
+		/// <param name="type">Object type</param>
+		/// <param name="graph">Object graph to be serialized</param>
+		/// <returns>Serialized data</returns>
+		//public byte[] Serialize(Type type, object graph)
+  //      {
+  //          var binaryFormatter = GetFormatter();
+  //          return binaryFormatter.SerializeByteArray(graph);
+  //      }
 
         /// <summary>
         /// Deserializes raw data back into an object graph.
@@ -78,24 +91,41 @@ namespace GoreRemoting.Serialization.Binary
         /// <param name="rawData">Raw data that should be deserialized</param>
         /// <typeparam name="T">Object type</typeparam>
         /// <returns>Deserialized object graph</returns>
-        public T Deserialize<T>(byte[] rawData)
-        {
-            var binaryFormatter = GetFormatter();
-            return (T)binaryFormatter.DeserializeSafe(rawData);
-        }
+        //public T Deserialize<T>(byte[] rawData)
+        //{
+        //    var binaryFormatter = GetFormatter();
+        //    return (T)binaryFormatter.DeserializeSafe(rawData);
+        //}
 
-        /// <summary>
-        /// Deserializes raw data back into an object graph.
-        /// </summary>
-        /// <param name="type">Object type</param>
-        /// <param name="rawData">Raw data that should be deserialized</param>
-        /// <returns>Deserialized object graph</returns>
-        public object Deserialize(Type type, byte[] rawData)
-        {
-            var binaryFormatter = GetFormatter();
-            return binaryFormatter.DeserializeSafe(rawData);
-        }
+		/// <summary>
+		/// Deserializes raw data back into an object graph.
+		/// </summary>
+		/// <param name="rawData">Raw data that should be deserialized</param>
+		/// <typeparam name="T">Object type</typeparam>
+		/// <returns>Deserialized object graph</returns>
+		public T Deserialize<T>(Stream stream)
+		{
+			var binaryFormatter = GetFormatter();
+			return (T)binaryFormatter.DeserializeSafe(stream);
+		}
 
-        public string Name => "BinaryFormatter";
+		public Exception GetException(Exception ex2)
+		{
+            return ex2.GetType().IsSerializable ? ex2 : new RemoteInvocationException(ex2.Message);
+		}
+
+		/// <summary>
+		/// Deserializes raw data back into an object graph.
+		/// </summary>
+		/// <param name="type">Object type</param>
+		/// <param name="rawData">Raw data that should be deserialized</param>
+		/// <returns>Deserialized object graph</returns>
+		//public object Deserialize(Type type, byte[] rawData)
+		//      {
+		//          var binaryFormatter = GetFormatter();
+		//          return binaryFormatter.DeserializeSafe(rawData);
+		//      }
+
+		public string Name => "BinaryFormatter";
     }
 }

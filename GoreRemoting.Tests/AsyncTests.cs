@@ -1,3 +1,4 @@
+using GoreRemoting.Serialization.Binary;
 using GoreRemoting.Tests.Tools;
 using System;
 using System.IO;
@@ -47,16 +48,17 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                    //RegisterServicesAction = container =>
-                    //    container.RegisterService<IAsyncService, AsyncService>(
-                    //        lifetime: ServiceLifetime.Singleton)
-                };
+					Serializer = new BinarySerializerAdapter()
+					//RegisterServicesAction = container =>
+					//    container.RegisterService<IAsyncService, AsyncService>(
+					//        lifetime: ServiceLifetime.Singleton)
+				};
 
             await using var server = new NativeServer(9196, serverConfig);
 			server.RegisterService<IAsyncService, AsyncService>();
 			server.Start();
 
-			await using var client = new NativeClient(9196, new ClientConfig());
+			await using var client = new NativeClient(9196, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
 
             var proxy = client.CreateProxy<IAsyncService>();
 
@@ -76,16 +78,17 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                    //RegisterServicesAction = container =>
-                    //    container.RegisterService<IAsyncService, AsyncService>(
-                    //        lifetime: ServiceLifetime.Singleton)
-                };
+					Serializer = new BinarySerializerAdapter()
+					//RegisterServicesAction = container =>
+					//    container.RegisterService<IAsyncService, AsyncService>(
+					//        lifetime: ServiceLifetime.Singleton)
+				};
 
 			await using var server = new NativeServer(port, serverConfig);
 			server.RegisterService<IAsyncService, AsyncService>();
 			server.Start();
 
-            await using var client = new NativeClient(port, new ClientConfig());
+            await using var client = new NativeClient(port, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
 
             var proxy = client.CreateProxy<IAsyncService>();
 

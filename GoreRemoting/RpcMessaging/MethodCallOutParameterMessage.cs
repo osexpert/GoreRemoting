@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Runtime.Serialization;
 
 namespace GoreRemoting.RpcMessaging
@@ -6,9 +8,17 @@ namespace GoreRemoting.RpcMessaging
     /// <summary>
     /// Serializable message that describes an out parameter.
     /// </summary>
-    [Serializable]
-    public class MethodOutArgument
+    public class MethodOutArgument : IGorializer
     {
+        public MethodOutArgument()
+        {
+        }
+
+        public MethodOutArgument(BinaryReader r)
+		{
+            Deserialize(r);
+        }
+
         /// <summary>
         /// Gets or sets the name of the parameter.
         /// </summary>
@@ -18,5 +28,23 @@ namespace GoreRemoting.RpcMessaging
         /// Gets or sets the out value of the parameter.
         /// </summary>
         public object OutValue { get; set; }
-    }
+
+		public void Deserialize(BinaryReader r)
+		{
+            ParameterName = r.ReadString();
+            
+		}
+
+		public void Deserialize(Stack<object> st)
+		{
+            OutValue = st.Pop();
+			
+		}
+
+		public void Serialize(BinaryWriter w, Stack<object> st)
+		{
+            w.Write(ParameterName);
+            st.Push(OutValue);
+		}
+	}
 }

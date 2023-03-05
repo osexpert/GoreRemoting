@@ -14,6 +14,7 @@ using GoreRemoting.RemoteDelegates;
 using GoreRemoting.RpcMessaging;
 using GoreRemoting.Serialization;
 using stakx.DynamicProxy;
+using System.IO;
 
 namespace GoreRemoting
 {
@@ -54,12 +55,12 @@ namespace GoreRemoting
 			headers.Add(Constants.SerializerHeaderKey, serializer.Name);
 
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
-				serializer: serializer, 
-				remoteServiceName: _serviceName, 
-				targetMethod: targetMethod, 
-				args: arguments);
+				remoteServiceName: _serviceName,
+				targetMethod: targetMethod,
+				args: arguments
+				);
 
-			var bytes = serializer.Serialize(callMessage);
+			var bytes = Gorializer.GoreSerialize(callMessage, serializer);
 
 			var resultMessage = _client.Invoke(bytes, 
 				(callback, res) => HandleResponseAsync(serializer, callback, res, args), 
@@ -81,6 +82,8 @@ namespace GoreRemoting
             //CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
         }
 
+		
+
 		async ValueTask InterceptAsync(IAsyncInvocation invocation)
 		{
 			var args = invocation.Arguments;
@@ -97,12 +100,12 @@ namespace GoreRemoting
 			headers.Add(Constants.SerializerHeaderKey, serializer.Name);
 
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
-				serializer: serializer, 
 				remoteServiceName: _serviceName, 
-				targetMethod: targetMethod, 
-				args: arguments);
+				targetMethod: targetMethod,
+				args: arguments
+				);
 
-			var bytes = serializer.Serialize(callMessage);
+			var bytes = Gorializer.GoreSerialize(callMessage, serializer);
 
 			var resultMessage =  await _client.InvokeAsync(bytes,
 				(callback, req) => HandleResponseAsync(serializer, callback, req, args.ToArray()),
@@ -118,9 +121,12 @@ namespace GoreRemoting
             //CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
         }
 
+
+
+
 		private async Task<MethodResultMessage> HandleResponseAsync(ISerializerAdapter serializer, byte[] callback, Func<byte[], Task> res, object[] args)
 		{
-			var callbackData = serializer.Deserialize<WireResponseMessage>(callback);
+			var callbackData = Gorializer.GoreDeserialize<WireResponseMessage>(callback, serializer);
 
 			switch (callbackData.ResponseType)
 			{
@@ -132,6 +138,8 @@ namespace GoreRemoting
 						var delegateMsg = callbackData.Delegate;
 
 						var delegt = (Delegate)args[delegateMsg.Position];
+
+//						again:
 
 						// not possible with async here?
 						object result = null;
@@ -149,6 +157,7 @@ namespace GoreRemoting
 							if (delegateMsg.OneWay)
 							{
 								// eat...
+								_client.OnOneWayException(ex);
 							}
 							else
 							{
@@ -156,7 +165,7 @@ namespace GoreRemoting
 								if (ex is TargetInvocationException tie)
 									ex2 = tie.InnerException;
 
-								exception = ex2.GetType().IsSerializable ? ex2 : new RemoteInvocationException(ex2.Message);
+								exception = serializer.GetException(ex2);
 							}
 						}
 
@@ -169,7 +178,8 @@ namespace GoreRemoting
 						else
 							msg = new DelegateResultMessage{ Position = delegateMsg.Position, Result = result };
 
-						var data = serializer.Serialize(msg);
+						var data = Gorializer.GoreSerialize(msg, serializer);
+
 						await res(data).ConfigureAwait(false);
 
 						return null;
@@ -195,7 +205,7 @@ namespace GoreRemoting
 			{
 				var type = argument?.GetType();
 
-				if (MapDelegateArgument(type, argument, out var mappedArgument))
+				if (MapDelegateArgument(type, out var mappedArgument))
 				{
 					if (mappedArgument.HasResult)
 					{
@@ -233,10 +243,9 @@ namespace GoreRemoting
 		/// Maps a delegate argument into a serializable RemoteDelegateInfo object.
 		/// </summary>
 		/// <param name="argumentType">Type of argument to be mapped</param>
-		/// <param name="argument">Argument to be wrapped</param>
 		/// <param name="mappedArgument">Out: Mapped argument</param>
 		/// <returns>True if mapping applied, otherwise false</returns>
-		private bool MapDelegateArgument(Type argumentType, object argument, out RemoteDelegateInfo mappedArgument)
+		private bool MapDelegateArgument(Type argumentType, out RemoteDelegateInfo mappedArgument)
 		{
 			if (argumentType == null || !typeof(Delegate).IsAssignableFrom(argumentType))
 			{
@@ -248,7 +257,7 @@ namespace GoreRemoting
 
 			var remoteDelegateInfo =
 				new RemoteDelegateInfo(
-					delegateTypeName: argumentType.FullName,
+					delegateTypeName: TypeFormatter.FormatType(argumentType),
 					// TODO: use a OneWay attribute instead?
 					hasResult: !(delegateReturnType == typeof(void) || delegateReturnType == typeof(Task) || delegateReturnType == typeof(ValueTask))
 					);

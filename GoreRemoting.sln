@@ -25,6 +25,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NativeServerNet60", "Exampl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerNet50", "Examples\ServerNet50\ServerNet50.csproj", "{8553CC7D-C8B9-4822-9BA8-4FD52E6EFFFD}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoreRemoting.Serialization.BinaryFormatter", "GoreRemoting.Serialization.BinaryFormatter\GoreRemoting.Serialization.BinaryFormatter.csproj", "{AF1C2330-DA6E-4C34-83D8-B43E63F3B5DD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoreRemoting.Serialization.MemoryPack", "GoreRemoting.Serialization.MemoryPack\GoreRemoting.Serialization.MemoryPack.csproj", "{C8F9F0FC-AEFE-4ABE-9F1A-098B13948107}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +75,14 @@ Global
 		{8553CC7D-C8B9-4822-9BA8-4FD52E6EFFFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8553CC7D-C8B9-4822-9BA8-4FD52E6EFFFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8553CC7D-C8B9-4822-9BA8-4FD52E6EFFFD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF1C2330-DA6E-4C34-83D8-B43E63F3B5DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF1C2330-DA6E-4C34-83D8-B43E63F3B5DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF1C2330-DA6E-4C34-83D8-B43E63F3B5DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF1C2330-DA6E-4C34-83D8-B43E63F3B5DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8F9F0FC-AEFE-4ABE-9F1A-098B13948107}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8F9F0FC-AEFE-4ABE-9F1A-098B13948107}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8F9F0FC-AEFE-4ABE-9F1A-098B13948107}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8F9F0FC-AEFE-4ABE-9F1A-098B13948107}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -49,13 +49,38 @@ namespace GoreRemoting.Serialization.Binary
         /// <param name="formatter">Binary formatter instance</param>
         /// <param name="objectToSerialize">Object to serialize</param>
         /// <returns>Serialized data</returns>
-        public static byte[] SerializeByteArray(this BinaryFormatter formatter, object objectToSerialize)
-        {
-            using var stream = new MemoryStream();
+//        public static byte[] SerializeByteArray(this BinaryFormatter formatter, object objectToSerialize)
+//        {
+//            using var stream = new MemoryStream();
+
+//#if NETSTANDARD2_0
+
+//            formatter.Serialize(stream, objectToSerialize);
+
+//#else
+//            // for net6 need to use "Safe" formatter to enable the surrogates for types no longer serializable
+
+//            var safeBinaryFormatter = formatter.Safe();
+//			safeBinaryFormatter.Serialize(stream, objectToSerialize);
+//#endif
+
+//            return stream.ToArray();
+//        }
+
+
+		/// <summary>
+		/// Serializes the specified object into a byte array.
+		/// </summary>
+		/// <param name="formatter">Binary formatter instance</param>
+		/// <param name="objectToSerialize">Object to serialize</param>
+		/// <returns>Serialized data</returns>
+		public static void SerializeByteArray(this BinaryFormatter formatter, Stream stream, object objectToSerialize)
+		{
+			//using var stream = new MemoryStream();
 
 #if NETSTANDARD2_0
 
-            formatter.Serialize(stream, objectToSerialize);
+			formatter.Serialize(stream, objectToSerialize);
 
 #else
             // for net6 need to use "Safe" formatter to enable the surrogates for types no longer serializable
@@ -64,20 +89,33 @@ namespace GoreRemoting.Serialization.Binary
 			safeBinaryFormatter.Serialize(stream, objectToSerialize);
 #endif
 
-            return stream.ToArray();
-        }
-        
-        /// <summary>
-        /// Deserializes raw data back into an object.
-        /// </summary>
-        /// <param name="formatter">Binary formatter instance</param>
-        /// <param name="rawData">Raw data that should be deserialized</param>
-        /// <returns>Deserialized object</returns>
-        public static object DeserializeSafe(this BinaryFormatter formatter, byte[] rawData)
-        {
-            var safeBinaryFormatter = formatter.Safe();
-            using var stream = new MemoryStream(rawData);
-            return safeBinaryFormatter.Deserialize(stream);
-        }
-    }
+			//return stream.ToArray();
+		}
+
+
+		/// <summary>
+		/// Deserializes raw data back into an object.
+		/// </summary>
+		/// <param name="formatter">Binary formatter instance</param>
+		/// <param name="rawData">Raw data that should be deserialized</param>
+		/// <returns>Deserialized object</returns>
+		//public static object DeserializeSafe(this BinaryFormatter formatter, byte[] rawData)
+  //      {
+  //          var safeBinaryFormatter = formatter.Safe();
+  //          using var stream = new MemoryStream(rawData);
+  //          return safeBinaryFormatter.Deserialize(stream);
+  //      }
+
+		/// <summary>
+		/// Deserializes raw data back into an object.
+		/// </summary>
+		/// <param name="formatter">Binary formatter instance</param>
+		/// <param name="rawData">Raw data that should be deserialized</param>
+		/// <returns>Deserialized object</returns>
+		public static object DeserializeSafe(this BinaryFormatter formatter, Stream stream)
+		{
+			var safeBinaryFormatter = formatter.Safe();
+			return safeBinaryFormatter.Deserialize(stream);
+		}
+	}
 }

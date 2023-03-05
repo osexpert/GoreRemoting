@@ -44,6 +44,7 @@ namespace ClientNet60
 
         public void BeforeBuildMethodCallMessage(Type t, MethodInfo mi, Metadata headers, ref ISerializerAdapter serializer)
         {
+			// check method...
             var a1 = mi.GetCustomAttribute<MemoryPackSerializerAttribute>();
             if (a1 != null)
             {
@@ -51,12 +52,12 @@ namespace ClientNet60
 			}
             else
             {
+				// ...then service itself
                 var t1 = t.GetCustomAttribute<MemoryPackSerializerAttribute>();
                 if (t1 != null)
                     serializer = new mempack();
             }
 
-			// men må fortelle hvilken formatter som brukes...
 			headers.Add(Constants.SessionIdHeaderKey, pSessID.ToString());
 			//CallContext.SetData("SessionId", pSessID);
         }
@@ -72,7 +73,17 @@ namespace ClientNet60
 			throw new NotImplementedException();
 		}
 
+		public T Deserialize<T>(Stream rawData)
+		{
+			throw new NotImplementedException();
+		}
+
 		public object Deserialize(Type type, byte[] rawData)
+		{
+			throw new NotImplementedException();
+		}
+
+		public Exception GetException(Exception ex2)
 		{
 			throw new NotImplementedException();
 		}
@@ -83,6 +94,11 @@ namespace ClientNet60
 		}
 
 		public byte[] Serialize(Type type, object graph)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void Serialize<T>(Stream s, T graph)
 		{
 			throw new NotImplementedException();
 		}

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace GoreRemoting.RpcMessaging
 {
@@ -15,9 +17,12 @@ namespace GoreRemoting.RpcMessaging
 		Delegate,
 	}
 
-	[Serializable]
-	public class WireResponseMessage
+
+	public class WireResponseMessage : IGorializer
 	{
+		public WireResponseMessage()
+		{ }
+
 		public WireResponseMessage(DelegateCallMessage callMsg)
 		{
 			Delegate = callMsg;
@@ -38,6 +43,40 @@ namespace GoreRemoting.RpcMessaging
 		public MethodResultMessage Result { get; set; }
 
 		public DelegateCallMessage Delegate { get; set; }
+
+		public void Deserialize(BinaryReader r)
+		{
+			ResponseType = (ResponseType)r.ReadInt32();
+
+			if (ResponseType == ResponseType.Delegate)
+				Delegate = new DelegateCallMessage(r);
+			else if (ResponseType == ResponseType.Result)
+				Result = new MethodResultMessage(r);
+			else
+				throw new NotImplementedException();
+		}
+
+		public void Deserialize(Stack<object> st)
+		{
+			if (ResponseType == ResponseType.Delegate)
+				Delegate.Deserialize(st);
+			else if (ResponseType == ResponseType.Result)
+				Result.Deserialize(st);
+			else
+				throw new NotImplementedException();
+		}
+
+		public void Serialize(BinaryWriter w, Stack<object> st)
+		{
+			w.Write((int)ResponseType);
+
+			if (ResponseType == ResponseType.Delegate)
+				Delegate.Serialize(w, st);
+			else if (ResponseType == ResponseType.Result)
+				Result.Serialize(w, st);
+			else
+				throw new NotImplementedException();
+		}
 	}
 
 }

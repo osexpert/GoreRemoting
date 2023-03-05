@@ -11,6 +11,7 @@ using GoreRemoting.Tests.Tools;
 using Xunit;
 using Xunit.Abstractions;
 using static GoreRemoting.Tests.RpcTests;
+using GoreRemoting.Serialization.Binary;
 
 namespace GoreRemoting.Tests
 {
@@ -41,10 +42,11 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                    CreateInstance = (t, c) => testService
+					Serializer = new BinarySerializerAdapter(),
+					CreateInstance = (t, c) => testService
                 };
 
-            await using var server = new NativeServer(9094, serverConfig);
+			await using var server = new NativeServer(9094, serverConfig);
 			server.Start();
 			server.RegisterService<ITestService, TestService>();
 			
@@ -55,7 +57,7 @@ namespace GoreRemoting.Tests
                     var stopWatch = new Stopwatch();
                     stopWatch.Start();
 
-                    await using var client = new NativeClient(9094, new ClientConfig());
+                    await using var client = new NativeClient(9094, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
 
                     stopWatch.Stop();
                     _testOutputHelper.WriteLine($"Creating client took {stopWatch.ElapsedMilliseconds} ms");
@@ -130,7 +132,8 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                    CreateInstance = (t,c) => testService
+					Serializer = new BinarySerializerAdapter(),
+					CreateInstance = (t,c) => testService
                 };
 
           
@@ -145,7 +148,7 @@ namespace GoreRemoting.Tests
                     var stopWatch = new Stopwatch();
                     stopWatch.Start();
 
-                    await using var client = new NativeClient(9094, new ClientConfig());
+                    await using var client = new NativeClient(9094, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
 
                     stopWatch.Stop();
                     _testOutputHelper.WriteLine($"Creating client took {stopWatch.ElapsedMilliseconds} ms");
@@ -208,7 +211,8 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                };
+					Serializer = new BinarySerializerAdapter()
+				};
 
             await using var server = new NativeServer(9095, serverConfig);
 			server.RegisterService<ITestService, TestService>();
@@ -218,7 +222,7 @@ namespace GoreRemoting.Tests
             {
                 try
                 {
-                    await using var client = new NativeClient(9095, new ClientConfig());
+                    await using var client = new NativeClient(9095, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
 
                     var proxy = client.CreateProxy<ITestService>();
                     proxy.TestMethodWithDelegateArg(arg => argumentFromServer = arg);
@@ -248,7 +252,8 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                    CreateInstance = (t, c) => testService
+					Serializer = new BinarySerializerAdapter(),
+					CreateInstance = (t, c) => testService
                 };
 
             bool serviceEventCalled = false;
@@ -257,7 +262,7 @@ namespace GoreRemoting.Tests
             server.RegisterService<ITestService, TestService>();
             server.Start();
 
-            await using var client = new NativeClient(9096, new ClientConfig());
+            await using var client = new NativeClient(9096, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
 
             var proxy = client.CreateProxy<ITestService>();
             
@@ -301,7 +306,8 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                    CreateInstance = (t,c) => testService
+					Serializer = new BinarySerializerAdapter(),
+					CreateInstance = (t,c) => testService
                 };
 
            
@@ -313,7 +319,7 @@ namespace GoreRemoting.Tests
             {
                 try
                 {
-                    await using var client = new NativeClient(9097, new ClientConfig());
+                    await using var client = new NativeClient(9097, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
 
                     var proxy = client.CreateProxy<ITestService>();
                     proxy.TestExternalTypeParameter(new DataClass() {Value = 42});
@@ -374,13 +380,14 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                };
+					Serializer = new BinarySerializerAdapter()
+				};
 
             await using var server = new NativeServer(9197, serverConfig);
             server.RegisterService<IGenericEchoService, GenericEchoService>();
             server.Start();
 
-            await using var client = new NativeClient(9197, new ClientConfig());
+            await using var client = new NativeClient(9197, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
 
             var proxy = client.CreateProxy<IGenericEchoService>();
 
@@ -428,13 +435,14 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-                };
+					Serializer = new BinarySerializerAdapter()
+				};
 
             await using var server = new NativeServer(9198, serverConfig);
 			server.RegisterService<IEnumTestService, EnumTestService>();
 			server.Start();
 
-            await using var client = new NativeClient(9198, new ClientConfig());
+            await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
 
             var proxy = client.CreateProxy<IEnumTestService>();
 
@@ -473,13 +481,14 @@ namespace GoreRemoting.Tests
 			var serverConfig =
 				new ServerConfig()
 				{
+					Serializer = new BinarySerializerAdapter()
 				};
 
 			await using var server = new NativeServer(9198, serverConfig);
 			server.RegisterService<IRefTestService, RefTestService>();
 			server.Start();
 
-			await using var client = new NativeClient(9198, new ClientConfig());
+			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
 
 			var proxy = client.CreateProxy<IRefTestService>();
 
@@ -587,13 +596,14 @@ namespace GoreRemoting.Tests
         {
 			var serverConfig = new ServerConfig()
 		    {
-		    };
+				Serializer = new BinarySerializerAdapter()
+			};
 
 			await using var server = new NativeServer(9198, serverConfig);
 			server.RegisterService<IDelegateTest, DelegateTest>();
 			server.Start();
 
-			await using var client = new NativeClient(9198, new ClientConfig());
+			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
 
 			var proxy = client.CreateProxy<IDelegateTest>();
 
@@ -757,13 +767,14 @@ namespace GoreRemoting.Tests
         {
 			var serverConfig = new ServerConfig()
 			{
+				Serializer = new BinarySerializerAdapter()
 			};
 
 			await using var server = new NativeServer(9198, serverConfig);
 			server.RegisterService<IDelegateTest2, DelegateTest2>();
 			server.Start();
 
-			await using var client = new NativeClient(9198, new ClientConfig());
+			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
 
 			var proxy = client.CreateProxy<IDelegateTest2>();
 
@@ -1072,11 +1083,11 @@ namespace GoreRemoting.Tests
 		[Fact]
         public async Task DoVarArgTest()
         {
-			await using var server = new NativeServer(9198, new ServerConfig());
+			await using var server = new NativeServer(9198, new ServerConfig() { Serializer = new BinarySerializerAdapter() });
 			server.RegisterService<IVarArgTest, VarArgTest>();
 			server.Start();
 
-			await using var client = new NativeClient(9198, new ClientConfig());
+			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
 
 			var proxy = client.CreateProxy<IVarArgTest>();
             {

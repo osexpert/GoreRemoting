@@ -1,4 +1,7 @@
-﻿using System;
+﻿using GoreRemoting.RpcMessaging;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Runtime.Serialization;
 
 namespace GoreRemoting.RemoteDelegates
@@ -6,8 +9,8 @@ namespace GoreRemoting.RemoteDelegates
     /// <summary>
     /// Describes a remote delegate.
     /// </summary>
-    [Serializable]
-    public class RemoteDelegateInfo
+
+    public class RemoteDelegateInfo : IGorializer
     {
         private string _delegateTypeName;
 
@@ -23,21 +26,63 @@ namespace GoreRemoting.RemoteDelegates
             _delegateTypeName = delegateTypeName;
 			_hasResult = hasResult;
         }
-        
-        /// <summary>
-        /// Gets the type name of the client delegate.
-        /// </summary>
-        public string DelegateTypeName => _delegateTypeName;
+
+		public RemoteDelegateInfo(BinaryReader r)
+		{
+			Deserialize(r);
+		}
+
+		/// <summary>
+		/// Gets the type name of the client delegate.
+		/// </summary>
+		public string DelegateTypeName => _delegateTypeName;
 
         /// <summary>
         /// HasResult
         /// </summary>
         public bool HasResult => _hasResult;
-    }
 
-    [Serializable]
-    public class CancellationTokenDummy
-    {
-    }
+		public void Deserialize(BinaryReader r)
+		{
+			_delegateTypeName = r.ReadString();
+			_hasResult = r.ReadBoolean();
+		}
+
+		public void Deserialize(Stack<object> st)
+		{
+
+		}
+
+		public void Serialize(BinaryWriter w, Stack<object> st)
+		{
+			w.Write(_delegateTypeName);
+			w.Write(_hasResult);
+		}
+	}
+
+
+	public class CancellationTokenDummy : IGorializer
+	{
+        public CancellationTokenDummy()
+        {
+            
+        }
+        public CancellationTokenDummy(BinaryReader r)
+		{
+			Deserialize(r);
+		}
+
+		public void Deserialize(BinaryReader r)
+		{
+		}
+
+		public void Deserialize(Stack<object> st)
+		{
+		}
+
+		public void Serialize(BinaryWriter w, Stack<object> st)
+		{
+		}
+	}
 
 }

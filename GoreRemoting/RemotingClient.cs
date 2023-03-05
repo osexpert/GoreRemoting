@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using Grpc.Core;
 using GoreRemoting.RpcMessaging;
 using GoreRemoting.Serialization;
-using GoreRemoting.Serialization.Binary;
 
 namespace GoreRemoting
 {
@@ -92,6 +91,12 @@ namespace GoreRemoting
 			}
 
 			throw new Exception("No result message");
+		}
+
+        public event EventHandler<Exception> OneWayException;
+		internal void OnOneWayException(Exception ex)
+		{
+            OneWayException?.Invoke(this, ex);
 		}
 	}
 

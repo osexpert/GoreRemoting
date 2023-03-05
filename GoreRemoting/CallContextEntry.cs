@@ -6,7 +6,7 @@ namespace GoreRemoting
     /// <summary>
     /// Describes a single call context entry.
     /// </summary>
-    [Serializable]
+    
     public class CallContextEntry
     {
         /// <summary>

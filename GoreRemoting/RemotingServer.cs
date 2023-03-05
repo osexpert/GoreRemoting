@@ -12,11 +12,12 @@ using Grpc.Core.Utils;
 using GoreRemoting.RemoteDelegates;
 using GoreRemoting.RpcMessaging;
 using GoreRemoting.Serialization;
-using GoreRemoting.Serialization.Binary;
 using System.Xml.Linq;
 using System.Net.Http;
 using System.Threading;
 using KPreisser;
+using System.IO;
+using System.Net.Mail;
 
 namespace GoreRemoting
 {
@@ -41,10 +42,7 @@ namespace GoreRemoting
 			if (!_services.TryGetValue(serviceName, out var serviceType))
 				throw new Exception("Service not registered: " + serviceName);
 
-			if (_config.CreateInstance != null)
-				return _config.CreateInstance(serviceType, context.RequestHeaders);
-			else
-				return Activator.CreateInstance(serviceType);
+			return _config.CreateInstance(serviceType, context.RequestHeaders);
         }
 
 		private Type GetServiceType(string serviceName)
@@ -96,13 +94,13 @@ namespace GoreRemoting
 		private bool MapDelegateArgument(object argument, int position, out object mappedArgument, Func<DelegateCallMessage, object> callDelegate,
 			Func<DelegateCallMessage, Task<object>> callDelegateAsync)
 		{
-			if (!(argument is RemoteDelegateInfo remoteDelegateInfo))
+			if (argument is not RemoteDelegateInfo remoteDelegateInfo)
 			{
 				mappedArgument = argument;
 				return false;
 			}
 
-			var delegateType = Type.GetType(remoteDelegateInfo.DelegateTypeName);
+			var delegateType = TypeFormatter.ParseType(remoteDelegateInfo.DelegateTypeName);
             if (delegateType == null)
                 throw new Exception("Delegate type not found: " + remoteDelegateInfo.DelegateTypeName);
 
@@ -146,7 +144,7 @@ namespace GoreRemoting
 
         private async Task DuplexCall(ISerializerAdapter serializer, byte[] request, Func<Task<byte[]>> req, Func<byte[], Task> reponse, ServerCallContext context)
 		{
-            var callMessage = serializer.Deserialize<MethodCallMessage>(request);
+			var callMessage = Gorializer.GoreDeserialize<MethodCallMessage>(request, serializer);
 
 			//CallContext.RestoreFromSnapshot(callMessage.CallContextSnapshot);
 
@@ -170,7 +168,9 @@ namespace GoreRemoting
 					if (resultSent)
 						throw new Exception("Too late, result sent");
 
-					reponse(serializer.Serialize(delegateResultMessage)).GetAwaiter().GetResult();
+					var bytes = Gorializer.GoreSerialize(delegateResultMessage, serializer);
+
+					reponse(bytes).GetAwaiter().GetResult();
 
 					if (delegateCallMsg.OneWay)
 					{
@@ -181,7 +181,9 @@ namespace GoreRemoting
 					{
 						// we want result or exception
 						byte[] data = req().GetAwaiter().GetResult();
-						var msg = serializer.Deserialize<DelegateResultMessage>(data);
+
+						var msg = Gorializer.GoreDeserialize<DelegateResultMessage>(data, serializer);
+
 						if (msg.Position != delegateCallMsg.Position)
 							throw new Exception("Incorrect result position");
 
@@ -210,7 +212,9 @@ namespace GoreRemoting
 					if (resultSent)
 						throw new Exception("Too late, result sent");
 
-					await reponse(serializer.Serialize(delegateResultMessage)).ConfigureAwait(false);
+					var bytes = Gorializer.GoreSerialize(delegateResultMessage, serializer);
+
+					await reponse(bytes).ConfigureAwait(false);
 
 					// FIXME: Task, ValueTask etc? as well as void?
 					if (delegateCallMsg.OneWay)
@@ -222,7 +226,9 @@ namespace GoreRemoting
 					{
 						// we want result or exception
 						byte[] data = await req().ConfigureAwait(false);
-						var msg = serializer.Deserialize<DelegateResultMessage>(data);
+
+						var msg = Gorializer.GoreDeserialize<DelegateResultMessage>(data, serializer);
+
 						if (msg.Position != delegateCallMsg.Position)
 							throw new Exception("Incorrect result position");
 
@@ -293,7 +299,7 @@ namespace GoreRemoting
 					if (ex2 is TargetInvocationException tie)
 						ex2 = tie.InnerException;
 
-					exception = ex2.GetType().IsSerializable ? ex2 : new RemoteInvocationException(ex2.Message);
+					exception = serializer.GetException(ex2);
 				}
 			}
 
@@ -306,7 +312,6 @@ namespace GoreRemoting
 			{
 				resultMessage =
 					MethodCallMessageBuilder.BuildMethodCallResultMessage(
-							serializer: serializer,
 							method: method,
 							args: parameterValues,
 							returnValue: result);
@@ -318,13 +323,18 @@ namespace GoreRemoting
 
 			var methodResultMessage = new WireResponseMessage(resultMessage);
 
+			var bytes = Gorializer.GoreSerialize(methodResultMessage, serializer);
+
 			// This will block new delegates and wait until existing ones have left. We then get exlusive lock and set the flag.
 			await responseLock.EnterWriteLockAsync().ConfigureAwait(false);
 			resultSent = true;
 			responseLock.ExitWriteLock();
 
-			await reponse(serializer.Serialize(methodResultMessage)).ConfigureAwait(false);
+			await reponse(bytes).ConfigureAwait(false);
 		}
+
+		
+
 
 		/// <summary>
 		/// 

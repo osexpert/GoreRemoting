@@ -14,7 +14,7 @@ namespace GoreRemoting.Serialization.Binary
         /// <summary>
         /// Core library assembly name.
         /// </summary>
-        public const string CORE_LIBRARY_ASSEMBLY_NAME = "mscorlib";
+        public const string CORE_LIBRARY_ASSEMBLY_NAME = "mscorlib"; // what about net6??
 
         /// <summary>
         /// System.DelegateSerializationHolder type name.

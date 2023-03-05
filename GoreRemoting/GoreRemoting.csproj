@@ -51,11 +51,11 @@
 		<!-- <PackageReference Include="Open.ChannelExtensions" Version="6.2.2"  /> -->
 		<!--      <PackageReference Include="stakx.DynamicProxy.AsyncInterceptor" Version="0.1.0" /> -->
 	    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
-	    <PackageReference Include="System.Runtime.Serialization.Formatters" Version="4.3.0" />
+<!--	    <PackageReference Include="System.Runtime.Serialization.Formatters" Version="4.3.0" /> -->
       <PackageReference Include="System.Threading.Channels" Version="6.0.0" />
-		<PackageReference Include="System.Security.Principal.Windows" Version="4.7.0">
-		  <Aliases></Aliases>
-		</PackageReference>
+		
+<!--		<PackageReference Include="System.Security.Principal.Windows" Version="4.7.0">  -->
+		
     </ItemGroup>
 
 </Project>

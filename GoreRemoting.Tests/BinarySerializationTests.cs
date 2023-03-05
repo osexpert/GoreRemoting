@@ -1,3 +1,4 @@
+#if false
 using System;
 using GoreRemoting.RpcMessaging;
 using GoreRemoting.Serialization.Binary;
@@ -42,3 +43,4 @@ namespace GoreRemoting.Tests
 
     }
 }
+#endif

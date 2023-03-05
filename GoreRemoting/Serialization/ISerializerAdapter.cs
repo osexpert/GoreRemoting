@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 
 namespace GoreRemoting.Serialization
 {
@@ -13,15 +14,25 @@ namespace GoreRemoting.Serialization
         /// <param name="graph">Object graph to be serialized</param>
         /// <typeparam name="T">Object type</typeparam>
         /// <returns>Serialized data</returns>
-        byte[] Serialize<T>(T graph);
-        
-        /// <summary>
-        /// Serializes an object graph.
-        /// </summary>
-        /// <param name="type">Object type</param>
-        /// <param name="graph">Object graph to be serialized</param>
-        /// <returns>Serialized data</returns>
-        byte[] Serialize(Type type, object graph);
+      //  byte[] Serialize<T>(T graph);
+
+
+		/// <summary>
+		/// Serializes an object graph.
+		/// </summary>
+		/// <param name="graph">Object graph to be serialized</param>
+		/// <typeparam name="T">Object type</typeparam>
+		/// <returns>Serialized data</returns>
+		void Serialize<T>(Stream s, T graph);
+
+
+		/// <summary>
+		/// Serializes an object graph.
+		/// </summary>
+		/// <param name="type">Object type</param>
+		/// <param name="graph">Object graph to be serialized</param>
+		/// <returns>Serialized data</returns>
+		//byte[] Serialize(Type type, object graph);
 
         /// <summary>
         /// Deserializes raw data back into an object graph.
@@ -29,16 +40,20 @@ namespace GoreRemoting.Serialization
         /// <param name="rawData">Raw data that should be deserialized</param>
         /// <typeparam name="T">Object type</typeparam>
         /// <returns>Deserialized object graph</returns>
-        T Deserialize<T>(byte[] rawData);
-        
-        /// <summary>
-        /// Deserializes raw data back into an object graph.
-        /// </summary>
-        /// <param name="type">Object type</param>
-        /// <param name="rawData">Raw data that should be deserialized</param>
-        /// <returns>Deserialized object graph</returns>
-        object Deserialize(Type type, byte[] rawData);
+      //  T Deserialize<T>(byte[] rawData);
 
-        string Name { get; }
+
+		T Deserialize<T>(Stream rawData);
+		Exception GetException(Exception ex2);
+
+		/// <summary>
+		/// Deserializes raw data back into an object graph.
+		/// </summary>
+		/// <param name="type">Object type</param>
+		/// <param name="rawData">Raw data that should be deserialized</param>
+		/// <returns>Deserialized object graph</returns>
+		//	object Deserialize(Type type, byte[] rawData);
+
+		string Name { get; }
     }
 }

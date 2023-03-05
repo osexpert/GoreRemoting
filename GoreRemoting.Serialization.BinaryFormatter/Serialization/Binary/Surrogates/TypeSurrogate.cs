@@ -56,6 +56,7 @@ namespace GoreRemoting.Serialization.Binary
 
 			public TypeReference(Type type)
 			{
+				// But will this ctor ever be called?
 				if (type == null) throw new ArgumentNullException(nameof(type));
 				AssemblyName = type.Assembly.FullName;
 				FullName = type.FullName;
@@ -63,6 +64,8 @@ namespace GoreRemoting.Serialization.Binary
 
 			public object GetRealObject(StreamingContext context)
 			{
+				// Assembly.Load seems a bit too much?
+				// Use TypeFormatter here too?
 				var assembly = Assembly.Load(AssemblyName);
 				return assembly.GetType(FullName, true);
 			}

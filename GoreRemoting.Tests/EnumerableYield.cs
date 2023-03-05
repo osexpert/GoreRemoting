@@ -1,4 +1,5 @@
-﻿using GoreRemoting.Tests.Tools;
+﻿using GoreRemoting.Serialization.Binary;
+using GoreRemoting.Tests.Tools;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -180,11 +181,11 @@ namespace GoreRemoting.Tests
 		[Fact]
 		public async Task YieldTest()
 		{
-			await using var server = new NativeServer(9198, new ServerConfig());
+			await using var server = new NativeServer(9198, new ServerConfig() { Serializer = new BinarySerializerAdapter() });
 			server.RegisterService<IIenumera, EnumeTest>();
 			server.Start();
 
-			await using var client = new NativeClient(9198, new ClientConfig());
+			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
 
 			var proxy = client.CreateProxy<IIenumera>();
 
