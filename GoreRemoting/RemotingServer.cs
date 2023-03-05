@@ -299,7 +299,7 @@ namespace GoreRemoting
 					if (ex2 is TargetInvocationException tie)
 						ex2 = tie.InnerException;
 
-					exception = serializer.GetException(ex2);
+					exception = serializer.GetSerializableException(ex2);
 				}
 			}
 

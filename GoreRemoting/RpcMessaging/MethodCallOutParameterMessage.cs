@@ -14,7 +14,7 @@ namespace GoreRemoting.RpcMessaging
         {
         }
 
-        public MethodOutArgument(BinaryReader r)
+        public MethodOutArgument(GoreBinaryReader r)
 		{
             Deserialize(r);
         }
@@ -29,19 +29,17 @@ namespace GoreRemoting.RpcMessaging
         /// </summary>
         public object OutValue { get; set; }
 
-		public void Deserialize(BinaryReader r)
+		public void Deserialize(GoreBinaryReader r)
 		{
             ParameterName = r.ReadString();
-            
 		}
 
 		public void Deserialize(Stack<object> st)
 		{
             OutValue = st.Pop();
-			
 		}
 
-		public void Serialize(BinaryWriter w, Stack<object> st)
+		public void Serialize(GoreBinaryWriter w, Stack<object> st)
 		{
             w.Write(ParameterName);
             st.Push(OutValue);

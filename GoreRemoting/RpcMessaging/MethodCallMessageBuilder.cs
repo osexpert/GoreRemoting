@@ -29,7 +29,6 @@ namespace GoreRemoting.RpcMessaging
 			if (targetMethod == null)
 				throw new ArgumentNullException(nameof(targetMethod));
 
-
 			args ??= new object[0];
 
 			var message = new MethodCallMessage()

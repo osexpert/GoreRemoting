@@ -23,7 +23,7 @@ namespace GoreRemoting.Serialization
 		/// <param name="graph">Object graph to be serialized</param>
 		/// <typeparam name="T">Object type</typeparam>
 		/// <returns>Serialized data</returns>
-		void Serialize<T>(Stream s, T graph);
+		void Serialize(Stream s, object[] graph);
 
 
 		/// <summary>
@@ -43,8 +43,9 @@ namespace GoreRemoting.Serialization
       //  T Deserialize<T>(byte[] rawData);
 
 
-		T Deserialize<T>(Stream rawData);
-		Exception GetException(Exception ex2);
+		object[] Deserialize(Stream rawData);
+
+		Exception GetSerializableException(Exception ex2);
 
 		/// <summary>
 		/// Deserializes raw data back into an object graph.

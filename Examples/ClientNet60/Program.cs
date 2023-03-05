@@ -68,37 +68,17 @@ namespace ClientNet60
 	{
 		public string Name => throw new NotImplementedException();
 
-		public T Deserialize<T>(byte[] rawData)
+		public object[] Deserialize(Stream rawData)
 		{
 			throw new NotImplementedException();
 		}
 
-		public T Deserialize<T>(Stream rawData)
+		public Exception GetSerializableException(Exception ex2)
 		{
 			throw new NotImplementedException();
 		}
 
-		public object Deserialize(Type type, byte[] rawData)
-		{
-			throw new NotImplementedException();
-		}
-
-		public Exception GetException(Exception ex2)
-		{
-			throw new NotImplementedException();
-		}
-
-		public byte[] Serialize<T>(T graph)
-		{
-			throw new NotImplementedException();
-		}
-
-		public byte[] Serialize(Type type, object graph)
-		{
-			throw new NotImplementedException();
-		}
-
-		public void Serialize<T>(Stream s, T graph)
+		public void Serialize(Stream s, object[] graph)
 		{
 			throw new NotImplementedException();
 		}

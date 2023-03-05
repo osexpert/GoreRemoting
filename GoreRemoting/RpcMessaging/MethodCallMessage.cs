@@ -6,14 +6,6 @@ using System.Runtime.Serialization;
 
 namespace GoreRemoting.RpcMessaging
 {
-    
-
-	internal interface IGorializer
-	{
-        void Serialize(BinaryWriter w, Stack<object> st);
-        void Deserialize(BinaryReader r);
-		void Deserialize(Stack<object> st);
-	}
 
     /// <summary>
     /// Describes a method call as serializable message.
@@ -49,24 +41,24 @@ namespace GoreRemoting.RpcMessaging
 
         public bool IsGenericMethod { get; set; }
 
-        public void Serialize(BinaryWriter w, Stack<object> st)
+        public void Serialize(GoreBinaryWriter w, Stack<object> st)
         {
             w.Write(ServiceName);
             w.Write(MethodName);
 			w.Write(IsGenericMethod);
 
-			w.Write(Arguments.Length);
+			w.Write7BitEncodedInt(Arguments.Length);
             foreach (var a in Arguments)
                 a.Serialize(w, st);
         }
 
-        public void Deserialize(BinaryReader r)
+        public void Deserialize(GoreBinaryReader r)
         {
             ServiceName = r.ReadString();
             MethodName = r.ReadString();
 			IsGenericMethod = r.ReadBoolean();
 
-			var n = r.ReadInt32();
+			var n = r.Read7BitEncodedInt();
             Arguments = new MethodCallArgument[n];
             for (int i = 0; i < n; i++)
                 Arguments[i] = new MethodCallArgument(r);

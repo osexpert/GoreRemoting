@@ -14,7 +14,7 @@ namespace GoreRemoting.RpcMessaging
 		public MethodCallArgument()
         { }
 
-		public MethodCallArgument(BinaryReader r)
+		public MethodCallArgument(GoreBinaryReader r)
 		{
             Deserialize(r);
 		}
@@ -36,12 +36,12 @@ namespace GoreRemoting.RpcMessaging
 
 		bool _popValue;
 
-		public void Deserialize(BinaryReader r)
+		public void Deserialize(GoreBinaryReader r)
 		{
             ParameterName = r.ReadString();
             TypeName = r.ReadString();
 
-			var v = r.ReadInt32();
+			var v = r.Read7BitEncodedInt();
 			_popValue = (v == 0);
 			if (!_popValue)
 			{ 
@@ -56,7 +56,6 @@ namespace GoreRemoting.RpcMessaging
 				else
 					throw new NotImplementedException("unk type");
 			}
-
 		}
 
 		public void Deserialize(Stack<object> st)
@@ -65,7 +64,7 @@ namespace GoreRemoting.RpcMessaging
 				Value = st.Pop();
         }
 
-		public void Serialize(BinaryWriter w, Stack<object> st)
+		public void Serialize(GoreBinaryWriter w, Stack<object> st)
 		{
             w.Write(ParameterName);
             w.Write(TypeName);
@@ -74,11 +73,11 @@ namespace GoreRemoting.RpcMessaging
             {
                 if (Value is RemoteDelegates.RemoteDelegateInfo)
                 {
-                    w.Write(1);
+                    w.Write7BitEncodedInt(1);
                 }
                 else if (Value is CancellationTokenDummy)
                 {
-					w.Write(2);
+					w.Write7BitEncodedInt(2);
 				}
                 else
                     throw new NotImplementedException("unk type");
@@ -87,8 +86,7 @@ namespace GoreRemoting.RpcMessaging
 			}
             else
             {
-				w.Write(0);
-				// Value written by serializer
+				w.Write7BitEncodedInt(0);
 				st.Push(Value);
             }
 		}

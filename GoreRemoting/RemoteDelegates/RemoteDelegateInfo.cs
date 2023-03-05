@@ -27,7 +27,7 @@ namespace GoreRemoting.RemoteDelegates
 			_hasResult = hasResult;
         }
 
-		public RemoteDelegateInfo(BinaryReader r)
+		public RemoteDelegateInfo(GoreBinaryReader r)
 		{
 			Deserialize(r);
 		}
@@ -42,7 +42,7 @@ namespace GoreRemoting.RemoteDelegates
         /// </summary>
         public bool HasResult => _hasResult;
 
-		public void Deserialize(BinaryReader r)
+		public void Deserialize(GoreBinaryReader r)
 		{
 			_delegateTypeName = r.ReadString();
 			_hasResult = r.ReadBoolean();
@@ -53,7 +53,7 @@ namespace GoreRemoting.RemoteDelegates
 
 		}
 
-		public void Serialize(BinaryWriter w, Stack<object> st)
+		public void Serialize(GoreBinaryWriter w, Stack<object> st)
 		{
 			w.Write(_delegateTypeName);
 			w.Write(_hasResult);
@@ -67,12 +67,12 @@ namespace GoreRemoting.RemoteDelegates
         {
             
         }
-        public CancellationTokenDummy(BinaryReader r)
+        public CancellationTokenDummy(GoreBinaryReader r)
 		{
 			Deserialize(r);
 		}
 
-		public void Deserialize(BinaryReader r)
+		public void Deserialize(GoreBinaryReader r)
 		{
 		}
 
@@ -80,7 +80,7 @@ namespace GoreRemoting.RemoteDelegates
 		{
 		}
 
-		public void Serialize(BinaryWriter w, Stack<object> st)
+		public void Serialize(GoreBinaryWriter w, Stack<object> st)
 		{
 		}
 	}

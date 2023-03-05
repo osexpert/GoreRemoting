@@ -14,7 +14,7 @@ namespace GoreRemoting.RpcMessaging
         {
         }
 
-        public MethodResultMessage(BinaryReader r)
+        public MethodResultMessage(GoreBinaryReader r)
         {
             Deserialize(r);
         }
@@ -36,9 +36,9 @@ namespace GoreRemoting.RpcMessaging
         /// </summary>
         public MethodOutArgument[] OutArguments { get; set; }
 
-		public void Deserialize(BinaryReader r)
+		public void Deserialize(GoreBinaryReader r)
 		{
-            var n = r.ReadInt32();
+            var n = r.Read7BitEncodedInt();
 			OutArguments = new MethodOutArgument[n];
             for (int i = 0; i < n; i++)
 				OutArguments[i] = new MethodOutArgument(r);
@@ -53,16 +53,16 @@ namespace GoreRemoting.RpcMessaging
                 oa.Deserialize(st);
         }
 
-		public void Serialize(BinaryWriter w, Stack<object> st)
+		public void Serialize(GoreBinaryWriter w, Stack<object> st)
 		{
 			st.Push(ReturnValue);
 			st.Push(Exception);
 
             if (OutArguments == null)
-                w.Write(0);
+                w.Write7BitEncodedInt(0);
             else
             {
-                w.Write(OutArguments.Length);
+                w.Write7BitEncodedInt(OutArguments.Length);
                 foreach (var oa in OutArguments)
                     oa.Serialize(w, st);
             }

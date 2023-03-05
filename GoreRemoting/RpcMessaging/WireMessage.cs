@@ -44,9 +44,9 @@ namespace GoreRemoting.RpcMessaging
 
 		public DelegateCallMessage Delegate { get; set; }
 
-		public void Deserialize(BinaryReader r)
+		public void Deserialize(GoreBinaryReader r)
 		{
-			ResponseType = (ResponseType)r.ReadInt32();
+			ResponseType = (ResponseType)r.Read7BitEncodedInt();
 
 			if (ResponseType == ResponseType.Delegate)
 				Delegate = new DelegateCallMessage(r);
@@ -66,9 +66,9 @@ namespace GoreRemoting.RpcMessaging
 				throw new NotImplementedException();
 		}
 
-		public void Serialize(BinaryWriter w, Stack<object> st)
+		public void Serialize(GoreBinaryWriter w, Stack<object> st)
 		{
-			w.Write((int)ResponseType);
+			w.Write7BitEncodedInt((int)ResponseType);
 
 			if (ResponseType == ResponseType.Delegate)
 				Delegate.Serialize(w, st);

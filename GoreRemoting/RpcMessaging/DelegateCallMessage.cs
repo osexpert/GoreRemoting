@@ -15,7 +15,7 @@ namespace GoreRemoting.RpcMessaging
             
         }
 
-        public DelegateCallMessage(BinaryReader r)
+        public DelegateCallMessage(GoreBinaryReader r)
 		{
 			Deserialize(r);
 		}
@@ -26,12 +26,12 @@ namespace GoreRemoting.RpcMessaging
 
 		public bool OneWay { get; set; }
 
-		public void Deserialize(BinaryReader r)
+		public void Deserialize(GoreBinaryReader r)
 		{
-			Position = r.ReadInt32();
+			Position = r.Read7BitEncodedInt();
 			OneWay = r.ReadBoolean();
 
-			var n = r.ReadInt32();
+			var n = r.Read7BitEncodedInt();
 			Arguments = new object[n];
 		}
 
@@ -41,12 +41,12 @@ namespace GoreRemoting.RpcMessaging
 				Arguments[i] = st.Pop();
 		}
 
-		public void Serialize(BinaryWriter w, Stack<object> st)
+		public void Serialize(GoreBinaryWriter w, Stack<object> st)
 		{
-			w.Write(Position);
+			w.Write7BitEncodedInt(Position);
 			w.Write(OneWay);
 
-			w.Write(Arguments.Length);
+			w.Write7BitEncodedInt(Arguments.Length);
 
 			foreach (var arg in Arguments)
 				st.Push(arg);
@@ -64,18 +64,18 @@ namespace GoreRemoting.RpcMessaging
 
 		public Exception Exception { get; set; }
 
-		public void Deserialize(BinaryReader r)
+		public void Deserialize(GoreBinaryReader r)
 		{
-			Position = r.ReadInt32();
+			Position = r.Read7BitEncodedInt();
 		}
 		public void Deserialize(Stack<object> st)
 		{
 			Result = st.Pop();
 			Exception = (Exception)st.Pop();
 		}
-		public void Serialize(BinaryWriter w, Stack<object> st)
+		public void Serialize(GoreBinaryWriter w, Stack<object> st)
 		{
-			w.Write(Position);
+			w.Write7BitEncodedInt(Position);
 
 			st.Push(Result);
 			st.Push(Exception);
