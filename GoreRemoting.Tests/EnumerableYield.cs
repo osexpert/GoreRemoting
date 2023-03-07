@@ -1,4 +1,7 @@
-﻿using GoreRemoting.Serialization.Binary;
+﻿using GoreRemoting.Serialization;
+using GoreRemoting.Serialization.Binary;
+using GoreRemoting.Serialization.Json;
+using GoreRemoting.Serialization.MemoryPack;
 using GoreRemoting.Tests.Tools;
 using System;
 using System.Collections.Concurrent;
@@ -44,7 +47,10 @@ namespace GoreRemoting.Tests
 			Task TestCancel2(CancellationToken c1, CancellationToken cancel);
 
 			Task TestProg(Action<int> p);
-			
+
+
+			void TextNonserEx();
+			void TextNonserEx2();
 		}
 
 
@@ -176,16 +182,55 @@ namespace GoreRemoting.Tests
 				pReport.Report(42);
 			}
 
+			public void TextNonserEx()
+			{
+				var e = new NonoEx();
+				throw e;
+			}
+
+			public void TextNonserEx2()
+			{
+				var e = new NonoEx2(null, "mess");
+				throw e;
+			}
 		}
 
-		[Fact]
-		public async Task YieldTest()
+		class NonoEx : Exception
 		{
-			await using var server = new NativeServer(9198, new ServerConfig() { Serializer = new BinarySerializerAdapter() });
+
+		}
+
+		class NonoEx2 : Exception
+		{
+            public NonoEx2(object t, string mess) : base(mess)
+            {
+               
+            }
+        }
+
+		private static ISerializerAdapter GetSerializer(enSerializer ser)
+		{
+			return ser switch
+			{
+				enSerializer.BinaryFormatter => new BinarySerializerAdapter(),
+				enSerializer.MemoryPack => new MemoryPackAdapter(),
+				enSerializer.Json => new JsonAdapter(),
+				_ => throw new NotImplementedException(),
+			};
+		}
+
+
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		public async Task YieldTest(enSerializer ser)
+		{
+			await using var server = new NativeServer(9198, new ServerConfig() { Serializer = GetSerializer(ser) });
 			server.RegisterService<IIenumera, EnumeTest>();
 			server.Start();
 
-			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
+			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = GetSerializer(ser) });
 
 			var proxy = client.CreateProxy<IIenumera>();
 
@@ -292,6 +337,29 @@ namespace GoreRemoting.Tests
 
 			Assert.True(l.Count == 2);
 			Assert.True(l.Sum() == 43);
+
+			Exception _ex1 = null;
+			try
+			{
+				proxy.TextNonserEx();
+			}
+			catch (Exception e)
+			{
+				_ex1 = e;
+			}
+
+			Exception _ex2 = null;
+			try
+			{
+				proxy.TextNonserEx2();
+			}
+			catch (Exception e)
+			{
+				_ex2 = e;
+			}
+
+			Assert.Equal("Exception of type 'GoreRemoting.Tests.EnumerableYield+NonoEx' was thrown.", _ex1.Message);
+			Assert.Equal("mess", _ex2.Message);
 
 		}
 

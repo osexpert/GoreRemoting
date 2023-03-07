@@ -73,7 +73,12 @@ namespace ClientNet60
 			throw new NotImplementedException();
 		}
 
-		public Exception GetSerializableException(Exception ex2)
+		public object GetSerializableException(Exception ex2)
+		{
+			throw new NotImplementedException();
+		}
+
+		public Exception RestoreSerializedException(object ex2)
 		{
 			throw new NotImplementedException();
 		}

@@ -67,7 +67,7 @@ namespace GoreRemoting
 				new CallOptions(headers: headers, cancellationToken: cancel));
 
 			if (resultMessage.Exception != null)
-				throw resultMessage.Exception.Capture();
+				throw serializer.RestoreSerializedException(resultMessage.Exception);
 
 			var parameterInfos = targetMethod.GetParameters();
 
@@ -112,7 +112,7 @@ namespace GoreRemoting
 				new CallOptions(headers: headers, cancellationToken: cancel)).ConfigureAwait(false);
 
 			if (resultMessage.Exception != null)
-				throw resultMessage.Exception.Capture();
+				throw serializer.RestoreSerializedException(resultMessage.Exception);
 
 			// out|ref not possible with async
 
@@ -143,7 +143,7 @@ namespace GoreRemoting
 
 						// not possible with async here?
 						object result = null;
-						Exception exception = null;
+						object exception = null;
 
 						try
 						{
@@ -270,17 +270,7 @@ namespace GoreRemoting
   
     }
 
-    internal static class ExceptionExtensions
-    {
-		internal static Exception Capture(this Exception e)
-		{
-			FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
-			remoteStackTraceString.SetValue(e, e.StackTrace + System.Environment.NewLine);
 
-			return e;
-		}
-
-    }
 
 	internal static class TaskResultHelper
 	{

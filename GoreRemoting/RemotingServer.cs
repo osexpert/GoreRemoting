@@ -188,7 +188,7 @@ namespace GoreRemoting
 							throw new Exception("Incorrect result position");
 
 						if (msg.Exception != null)
-							throw msg.Exception.Capture();
+							throw serializer.RestoreSerializedException(msg.Exception);
 						else
 							return msg.Result;
 					}
@@ -233,7 +233,7 @@ namespace GoreRemoting
 							throw new Exception("Incorrect result position");
 
 						if (msg.Exception != null)
-							throw msg.Exception.Capture();
+							throw serializer.RestoreSerializedException(msg.Exception);
 						else
 							return msg.Result; // Task?
 					}
@@ -278,7 +278,7 @@ namespace GoreRemoting
 
 			object result = null;
 
-			Exception exception = null;
+			object exception = null;
 
 			try
 			{

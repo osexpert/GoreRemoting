@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 
 namespace GoreRemoting.Serialization.Binary
@@ -73,12 +74,28 @@ namespace GoreRemoting.Serialization.Binary
 			return (object[])binaryFormatter.DeserializeSafe(stream);
 		}
 
-		public Exception GetSerializableException(Exception ex2)
+		public object GetSerializableException(Exception ex2)
 		{
-            return ex2.GetType().IsSerializable ? ex2 : new RemoteInvocationException(ex2.Message);
+            return ex2.GetType().IsSerializable ? ex2 : new RemoteInvocationException(ex2.Message); // TODO: set stack trace of RemoteInvocationException?
 		}
 
+		public Exception RestoreSerializedException(object ex2)
+		{
+            return ((Exception)ex2).Capture();
+		}
 
 		public string Name => "BinaryFormatter";
     }
+
+	internal static class ExceptionExtensions
+	{
+		internal static Exception Capture(this Exception e)
+		{
+			FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
+			remoteStackTraceString.SetValue(e, e.StackTrace + System.Environment.NewLine);
+
+			return e;
+		}
+
+	}
 }

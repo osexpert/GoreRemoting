@@ -12,6 +12,10 @@ using Xunit;
 using Xunit.Abstractions;
 using static GoreRemoting.Tests.RpcTests;
 using GoreRemoting.Serialization.Binary;
+using GoreRemoting.Serialization;
+using GoreRemoting.Serialization.MemoryPack;
+using MemoryPack;
+using GoreRemoting.Serialization.Json;
 
 namespace GoreRemoting.Tests
 {
@@ -19,13 +23,27 @@ namespace GoreRemoting.Tests
     {
         private readonly ITestOutputHelper _testOutputHelper;
 
-        public RpcTests(ITestOutputHelper testOutputHelper)
+		private static ISerializerAdapter GetSerializer(enSerializer ser)
+		{
+			return ser switch
+			{
+				enSerializer.BinaryFormatter => new BinarySerializerAdapter(),
+				enSerializer.MemoryPack => new MemoryPackAdapter(),
+                enSerializer.Json => new JsonAdapter(),
+				_ => throw new NotImplementedException(),
+			};
+		}
+
+		public RpcTests(ITestOutputHelper testOutputHelper)
         {
             _testOutputHelper = testOutputHelper;
         }
 
-        [Fact]
-        public async Task Call_on_Proxy_should_be_invoked_on_remote_service()
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		public async Task Call_on_Proxy_should_be_invoked_on_remote_service(enSerializer ser)
         {
             bool remoteServiceCalled = false;
 
@@ -42,7 +60,7 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-					Serializer = new BinarySerializerAdapter(),
+					Serializer = GetSerializer(ser),
 					CreateInstance = (t, c) => testService
                 };
 
@@ -57,7 +75,7 @@ namespace GoreRemoting.Tests
                     var stopWatch = new Stopwatch();
                     stopWatch.Start();
 
-                    await using var client = new NativeClient(9094, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
+                    await using var client = new NativeClient(9094, new ClientConfig() { DefaultSerializer = GetSerializer(ser) });
 
                     stopWatch.Stop();
                     _testOutputHelper.WriteLine($"Creating client took {stopWatch.ElapsedMilliseconds} ms");
@@ -113,9 +131,12 @@ namespace GoreRemoting.Tests
             
             Assert.True(remoteServiceCalled);
         }
-        
-        [Fact]
-        public async Task Call_on_Proxy_should_be_invoked_on_remote_service_without_MessageEncryption()
+
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		public async Task Call_on_Proxy_should_be_invoked_on_remote_service_without_MessageEncryption(enSerializer ser)
         {
             bool remoteServiceCalled = false;
 
@@ -132,7 +153,7 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-					Serializer = new BinarySerializerAdapter(),
+					Serializer = GetSerializer(ser),
 					CreateInstance = (t,c) => testService
                 };
 
@@ -148,7 +169,7 @@ namespace GoreRemoting.Tests
                     var stopWatch = new Stopwatch();
                     stopWatch.Start();
 
-                    await using var client = new NativeClient(9094, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
+                    await using var client = new NativeClient(9094, new ClientConfig() { DefaultSerializer = GetSerializer(ser) });
 
                     stopWatch.Stop();
                     _testOutputHelper.WriteLine($"Creating client took {stopWatch.ElapsedMilliseconds} ms");
@@ -201,8 +222,11 @@ namespace GoreRemoting.Tests
             Assert.True(remoteServiceCalled);
         }
 
-        [Fact]
-        public async Task Delegate_invoked_on_server_should_callback_client()
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		public async Task Delegate_invoked_on_server_should_callback_client(enSerializer ser)
         {
             string argumentFromServer = null;
 
@@ -211,7 +235,7 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-					Serializer = new BinarySerializerAdapter()
+					Serializer = GetSerializer(ser)
 				};
 
             await using var server = new NativeServer(9095, serverConfig);
@@ -222,7 +246,7 @@ namespace GoreRemoting.Tests
             {
                 try
                 {
-                    await using var client = new NativeClient(9095, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
+                    await using var client = new NativeClient(9095, new ClientConfig() { DefaultSerializer = GetSerializer(ser) });
 
                     var proxy = client.CreateProxy<ITestService>();
                     proxy.TestMethodWithDelegateArg(arg => argumentFromServer = arg);
@@ -243,16 +267,19 @@ namespace GoreRemoting.Tests
                 
             Assert.Equal("test", argumentFromServer);
         }
-        
-        [Fact]
-        public async Task Events_should_NOT_work_remotly()
+
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		public async Task Events_should_NOT_work_remotly(enSerializer ser)
         {
             var testService = new TestService();
 
             var serverConfig =
                 new ServerConfig()
                 {
-					Serializer = new BinarySerializerAdapter(),
+					Serializer = GetSerializer(ser),
 					CreateInstance = (t, c) => testService
                 };
 
@@ -262,7 +289,7 @@ namespace GoreRemoting.Tests
             server.RegisterService<ITestService, TestService>();
             server.Start();
 
-            await using var client = new NativeClient(9096, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
+            await using var client = new NativeClient(9096, new ClientConfig() { DefaultSerializer = GetSerializer(ser) });
 
             var proxy = client.CreateProxy<ITestService>();
             
@@ -283,12 +310,16 @@ namespace GoreRemoting.Tests
                 ex = e;
             }
             Assert.Equal("Too late, result sent", ex.Message);
+			Assert.Equal(14, ex.ToString().Split(Environment.NewLine).Length);
 
-            Assert.False(serviceEventCalled);
+			Assert.False(serviceEventCalled);
         }
-        
-        [Fact]
-        public async Task External_types_should_work_as_remote_service_parameters()
+
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		public async Task External_types_should_work_as_remote_service_parameters(enSerializer ser)
         {
             bool remoteServiceCalled = false;
             DataClass parameterValue = null;
@@ -306,7 +337,7 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-					Serializer = new BinarySerializerAdapter(),
+					Serializer = GetSerializer(ser),
 					CreateInstance = (t,c) => testService
                 };
 
@@ -319,7 +350,7 @@ namespace GoreRemoting.Tests
             {
                 try
                 {
-                    await using var client = new NativeClient(9097, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
+                    await using var client = new NativeClient(9097, new ClientConfig() { DefaultSerializer = GetSerializer(ser) });
 
                     var proxy = client.CreateProxy<ITestService>();
                     proxy.TestExternalTypeParameter(new DataClass() {Value = 42});
@@ -372,22 +403,25 @@ namespace GoreRemoting.Tests
 			}
 		}
 
-        #endregion
-        
-        [Fact]
-        public async Task Generic_methods_should_be_called_correctly()
+		#endregion
+
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		public async Task Generic_methods_should_be_called_correctly(enSerializer ser)
         {
             var serverConfig =
                 new ServerConfig()
                 {
-					Serializer = new BinarySerializerAdapter()
+					Serializer = GetSerializer(ser)
 				};
 
             await using var server = new NativeServer(9197, serverConfig);
             server.RegisterService<IGenericEchoService, GenericEchoService>();
             server.Start();
 
-            await using var client = new NativeClient(9197, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
+            await using var client = new NativeClient(9197, new ClientConfig() { DefaultSerializer = GetSerializer(ser) });
 
             var proxy = client.CreateProxy<IGenericEchoService>();
 
@@ -427,22 +461,25 @@ namespace GoreRemoting.Tests
             }
         }
 
-        #endregion
-        
-        [Fact]
-        public async Task Enum_arguments_should_be_passed_correctly()
+		#endregion
+
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		public async Task Enum_arguments_should_be_passed_correctly(enSerializer ser)
         {
             var serverConfig =
                 new ServerConfig()
                 {
-					Serializer = new BinarySerializerAdapter()
+					Serializer = GetSerializer(ser)
 				};
 
             await using var server = new NativeServer(9198, serverConfig);
 			server.RegisterService<IEnumTestService, EnumTestService>();
 			server.Start();
 
-            await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
+            await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = GetSerializer(ser) });
 
             var proxy = client.CreateProxy<IEnumTestService>();
 
@@ -475,20 +512,23 @@ namespace GoreRemoting.Tests
 		}
 
 
-		[Fact]
-		public async Task Ref_param_should_fail()
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		public async Task Ref_param_should_fail(enSerializer ser)
 		{
 			var serverConfig =
 				new ServerConfig()
 				{
-					Serializer = new BinarySerializerAdapter()
+					Serializer = GetSerializer(ser)
 				};
 
 			await using var server = new NativeServer(9198, serverConfig);
 			server.RegisterService<IRefTestService, RefTestService>();
 			server.Start();
 
-			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
+			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = GetSerializer(ser) });
 
 			var proxy = client.CreateProxy<IRefTestService>();
 
@@ -591,19 +631,22 @@ namespace GoreRemoting.Tests
         volatile static bool Test_Thread_Done = false;
 
 
-		[Fact]
-        public async Task Delegate_callback_after_return()
+		[Theory]
+        [InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		public async Task Delegate_callback_after_return(enSerializer ser)
         {
 			var serverConfig = new ServerConfig()
 		    {
-				Serializer = new BinarySerializerAdapter()
+				Serializer = GetSerializer(ser)
 			};
 
 			await using var server = new NativeServer(9198, serverConfig);
 			server.RegisterService<IDelegateTest, DelegateTest>();
 			server.Start();
 
-			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
+			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = GetSerializer(ser) });
 
 			var proxy = client.CreateProxy<IDelegateTest>();
 
@@ -631,63 +674,7 @@ namespace GoreRemoting.Tests
 		}
 
 
-        [Serializable]
-		public class S1
-        {
-            public string s1;
-            public S1(string s)
-            {
-                s1 = s;
-            }
-        }
-
-		[Serializable]
-		public class S2
-        {
-			public string s2;
-			public S2(string s)
-			{
-				s2 = s;
-			}
-		}
-
-		[Serializable]
-		public class S3
-        {
-			public string s3;
-			public S3(string s)
-			{
-				s3 = s;
-			}
-		}
-
-		[Serializable]
-		public class R1
-        {
-			public string r1;
-			public R1(string r)
-			{
-				r1 = r;
-			}
-		}
-
-		[Serializable]
-		public class R2 {
-			public string r2;
-			public R2(string r)
-			{
-				r2 = r;
-			}
-		}
-
-		[Serializable]
-		public class R3 {
-			public string r3;
-			public R3(string r)
-			{
-				r3 = r;
-			}
-		}
+    
 
 		public interface IDelegateTest2
 		{
@@ -762,19 +749,22 @@ namespace GoreRemoting.Tests
 			}
 		}
 
-        [Fact]
-		public async Task MultipleDelegateCallback()
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		public async Task MultipleDelegateCallback(enSerializer ser)
         {
 			var serverConfig = new ServerConfig()
 			{
-				Serializer = new BinarySerializerAdapter()
+				Serializer = GetSerializer(ser)
 			};
 
 			await using var server = new NativeServer(9198, serverConfig);
 			server.RegisterService<IDelegateTest2, DelegateTest2>();
 			server.Start();
 
-			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
+			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = GetSerializer(ser) });
 
 			var proxy = client.CreateProxy<IDelegateTest2>();
 
@@ -1080,14 +1070,17 @@ namespace GoreRemoting.Tests
 		static Exception throw8Ex;
 		static Exception throw9Ex;
 
-		[Fact]
-        public async Task DoVarArgTest()
+		[Theory]
+        [InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		public async Task DoVarArgTest(enSerializer ser)
         {
-			await using var server = new NativeServer(9198, new ServerConfig() { Serializer = new BinarySerializerAdapter() });
+			await using var server = new NativeServer(9198, new ServerConfig() { Serializer = GetSerializer(ser) });
 			server.RegisterService<IVarArgTest, VarArgTest>();
 			server.Start();
 
-			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = new BinarySerializerAdapter() });
+			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = GetSerializer(ser) });
 
 			var proxy = client.CreateProxy<IVarArgTest>();
             {
@@ -1315,6 +1308,109 @@ namespace GoreRemoting.Tests
 			Assert.Equal("test", throw7Ex.Message);
 			Assert.Null(throw8Ex);
 			Assert.Equal("test", throw9Ex.Message);
+		}
+	}
+
+	[Serializable]
+	[MemoryPackable]
+	public partial class S1
+	{
+		public string s1;
+		public S1(string s)
+		{
+			s1 = s;
+		}
+
+		[MemoryPackConstructor]
+		public S1()
+        {
+            
+        }
+    }
+
+	[Serializable]
+	[MemoryPackable]
+	public partial class S2
+	{
+		public string s2;
+		public S2(string s)
+		{
+			s2 = s;
+		}
+
+		[MemoryPackConstructor]
+		public S2()
+        {
+            
+        }
+    }
+
+	[Serializable]
+	[MemoryPackable]
+	public partial class S3
+	{
+		public string s3;
+		public S3(string s)
+		{
+			s3 = s;
+		}
+
+		[MemoryPackConstructor]
+		public S3()
+        {
+            
+        }
+    }
+
+	[Serializable]
+	[MemoryPackable]
+	public partial class R1
+	{
+		public string r1;
+		public R1(string r)
+		{
+			r1 = r;
+		}
+
+		[MemoryPackConstructor]
+		public R1()
+        {
+            
+        }
+    }
+
+	[Serializable]
+	[MemoryPackable]
+	public partial class R2
+	{
+		public string r2;
+		public R2(string r)
+		{
+			r2 = r;
+		}
+
+		[MemoryPackConstructor]
+		public R2()
+        {
+            
+        }
+    }
+
+	[Serializable]
+	[MemoryPackable]
+	public partial class R3
+	{
+		public string r3;
+
+        [MemoryPackConstructor]
+        public R3()
+        {
+            
+        }
+
+        public R3(string r)
+		{
+			r3 = r;
 		}
 	}
 }

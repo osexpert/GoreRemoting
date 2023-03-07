@@ -1,5 +1,6 @@
 ﻿using GoreRemoting.RpcMessaging;
 using GoreRemoting.Serialization;
+using Microsoft.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,9 +18,11 @@ namespace GoreRemoting
 
 	internal class Gorializer
 	{
+		private static readonly RecyclableMemoryStreamManager manager = new RecyclableMemoryStreamManager();
+
 		public static byte[] GoreSerialize(IGorializer data, ISerializerAdapter serializer)
 		{
-			using var ms = new MemoryStream();
+			using var ms = manager.GetStream();
 
 			var stack = new Stack<object>();
 
@@ -33,7 +36,7 @@ namespace GoreRemoting
 
 		public static T GoreDeserialize<T>(byte[] data, ISerializerAdapter serializer) where T : IGorializer, new()
 		{
-			using var ms = new MemoryStream(data);
+			using var ms = manager.GetStream(data);
 			using var br = new GoreBinaryReader(ms, leaveOpen: true);
 
 			var res = new T();

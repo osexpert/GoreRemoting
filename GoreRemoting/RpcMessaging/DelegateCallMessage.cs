@@ -62,7 +62,7 @@ namespace GoreRemoting.RpcMessaging
 		// TODO: could have enum with Result or Exception?
 		public object Result { get; set; }
 
-		public Exception Exception { get; set; }
+		public object Exception { get; set; }
 
 		public void Deserialize(GoreBinaryReader r)
 		{
@@ -71,7 +71,7 @@ namespace GoreRemoting.RpcMessaging
 		public void Deserialize(Stack<object> st)
 		{
 			Result = st.Pop();
-			Exception = (Exception)st.Pop();
+			Exception = st.Pop();
 		}
 		public void Serialize(GoreBinaryWriter w, Stack<object> st)
 		{

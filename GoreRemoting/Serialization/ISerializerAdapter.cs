@@ -45,7 +45,9 @@ namespace GoreRemoting.Serialization
 
 		object[] Deserialize(Stream rawData);
 
-		Exception GetSerializableException(Exception ex2);
+		object GetSerializableException(Exception ex2);
+
+		Exception RestoreSerializedException(object ex2);
 
 		/// <summary>
 		/// Deserializes raw data back into an object graph.

@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <Nullable>enable</Nullable>
-	  <LangVersion>11</LangVersion>
+	   <TargetFrameworks>net6.0</TargetFrameworks>
+	  <LangVersion>9</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MemoryPack" Version="1.9.13" />
+    <PackageReference Include="System.Text.Json" Version="7.0.2" />
+    <PackageReference Include="TupleAsJsonArray" Version="1.0.2" />
   </ItemGroup>
 
   <ItemGroup>

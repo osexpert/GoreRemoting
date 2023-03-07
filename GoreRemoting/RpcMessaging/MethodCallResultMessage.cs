@@ -29,7 +29,7 @@ namespace GoreRemoting.RpcMessaging
         /// <summary>
         /// Exception
         /// </summary>
-        public Exception Exception { get; set; }
+        public object Exception { get; set; }
 
         /// <summary>
         /// Gets or sets an array of out parameters.
@@ -47,7 +47,7 @@ namespace GoreRemoting.RpcMessaging
         public void Deserialize(Stack<object> st)
         {
             ReturnValue = st.Pop();
-            Exception = (Exception)st.Pop();
+            Exception = st.Pop();
 
             foreach (var oa in OutArguments)
                 oa.Deserialize(st);
