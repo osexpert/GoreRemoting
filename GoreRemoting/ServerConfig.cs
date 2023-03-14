@@ -17,8 +17,6 @@ namespace GoreRemoting
         /// </summary>
         public Func<Type, Metadata, object> CreateInstance { get; set; } = (t, m) => Activator.CreateInstance(t);
 
-        //		static ISerializerAdapter _binaryFormatter = new BinarySerializerAdapter();
-
         public Dictionary<string, ISerializerAdapter> Serializers { get; } = new();// = Init();
 
         public ISerializerAdapter Serializer
@@ -44,5 +42,8 @@ namespace GoreRemoting
 		//          return res;
 		//}
 
+		// Use capacity of 1. We don't want to buffer anything, we just wanted to solve the problem of max 1 can write at a time,
+		// the buffering was a side effect that I think may cause problems, at least unbounded, it may use all memory.
+		public int? ResponseQueueLength { get; set; } = 1;
 	}
 }

@@ -45,20 +45,9 @@ namespace GoreRemoting
 		}
 	}
 
-	//public class StreamingDone
-	//{
-	//	bool _done;
- //       public StreamingDone(bool done)
- //       {
-	//		_done = done;
- //       }
-
-	//	public bool Done => _done;
- //   }
-
-	public class StreamingFuncDone : Exception
+	public class StreamingDoneException : Exception
 	{
 	}
 
-	//public delegate (T, bool) StreamingFunc<T>();
+
 }

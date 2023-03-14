@@ -88,7 +88,7 @@ namespace ClientShared
 
 					var r = f.Read(bytes, 0, buffLen_constant);
                     if (r == 0)
-                        throw new StreamingFuncDone();
+                        throw new StreamingDoneException();
 
             //        Array.Resize(ref bytes, r);
 

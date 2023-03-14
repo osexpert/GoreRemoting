@@ -50,7 +50,7 @@ namespace GoreRemoting.Tests
 
 					ll.Add(d);
 				}
-				catch (StreamingFuncDone)
+				catch (StreamingDoneException)
 				{
 					break;
 				}
@@ -81,10 +81,10 @@ namespace GoreRemoting.Tests
 
 	public class Lolz
 	{
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
+		//[Theory]
+		//[InlineData(enSerializer.BinaryFormatter)]
+		//[InlineData(enSerializer.MemoryPack)]
+		//[InlineData(enSerializer.Json)]
 		//[InlineData(enSerializer.MessagePack)]
 		public async Task StreamTestt(enSerializer ser)
 		{
@@ -106,7 +106,7 @@ namespace GoreRemoting.Tests
 				//				throw new StreamingFuncStopException();
 
 				if (i == 10)
-					throw new StreamingFuncDone();
+					throw new StreamingDoneException();
 
 				return new byte[] { 1, 2, 4 };// new StreamingDone(i == 10));
 

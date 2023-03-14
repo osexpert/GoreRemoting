@@ -30,25 +30,35 @@ namespace GoreRemoting
 		private readonly IServerStreamWriter<T> _stream;
 		private readonly Task _consumer;
 
-		//private readonly Channel<T> _channel = Channel.CreateUnbounded<T>(
-		//	new UnboundedChannelOptions
-		//	{
-		//		SingleWriter = false,
-		//		SingleReader = true,
-		//	});
-
-		// Use capacity of 1. We don't want to buffer anything, we just wanted to solve the problem of max 1 can write at a time,
-		// the buffering was a side effect that I think may cause problems, at least unbounded, it may use all memory.
-		private readonly Channel<T> _channel = Channel.CreateBounded<T>(1);
+		private readonly Channel<T> _channel; 
 
 
 		public StreamResponseQueue(
 			IServerStreamWriter<T> stream,
+			int? queueLength,
 			CancellationToken cancellationToken = default
 		)
 		{
+			_channel = CreateChannel<T>(queueLength);
+
 			_stream = stream;
 			_consumer = Consume(cancellationToken);
+		}
+
+		private static Channel<TT> CreateChannel<TT>(int? queueLength)
+		{
+			if (queueLength == null)
+			{
+				return Channel.CreateUnbounded<TT>(new UnboundedChannelOptions
+				{
+					SingleWriter = false,
+					SingleReader = true,
+				});
+			}
+			else
+			{
+				return Channel.CreateBounded<TT>(queueLength.Value);
+			}
 		}
 
 		/// <summary>

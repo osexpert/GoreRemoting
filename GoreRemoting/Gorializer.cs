@@ -53,9 +53,9 @@ namespace GoreRemoting
 
 	public class GoreBinaryWriter : BinaryWriter
 	{
-		static Encoding encu8nobom = new UTF8Encoding(false);
+		static Encoding _utf8NoBom = new UTF8Encoding(false);
 
-        public GoreBinaryWriter(Stream outp, bool leaveOpen = false) : base(outp, encu8nobom, leaveOpen)
+        public GoreBinaryWriter(Stream outp, bool leaveOpen = false) : base(outp, _utf8NoBom, leaveOpen)
         {
 			
         }
@@ -65,9 +65,9 @@ namespace GoreRemoting
 
 	public class GoreBinaryReader : BinaryReader
 	{
-		static Encoding encu8nobom = new UTF8Encoding(false);
+		static Encoding _utf8NoBom = new UTF8Encoding(false);
 
-        public GoreBinaryReader(Stream inp, bool leaveOpen = false) : base(inp, encu8nobom, leaveOpen)
+        public GoreBinaryReader(Stream inp, bool leaveOpen = false) : base(inp, _utf8NoBom, leaveOpen)
         {
         }
 

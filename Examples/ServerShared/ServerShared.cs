@@ -207,7 +207,7 @@ namespace ServerShared
             {
                 res = pChunk(81920); // MUST BE a constant value when using StreamingFunc
             }
-            catch (StreamingFuncDone)
+            catch (StreamingDoneException)
             {
                 return 0;
             }

@@ -204,7 +204,7 @@ namespace GoreRemoting
 						if (msg.StreamingStatus == StreamingStatus.Active)
 							activeStreamingDelegatePosition = msg.Position;
 						else if (msg.StreamingStatus == StreamingStatus.Done)
-							throw new StreamingFuncDone();
+							throw new StreamingDoneException();
 
 						return msg.Result;
 					}
@@ -261,7 +261,7 @@ namespace GoreRemoting
 						if (msg.StreamingStatus == StreamingStatus.Active)
 							activeStreamingDelegatePosition = msg.Position;
 						else if (msg.StreamingStatus == StreamingStatus.Done)
-							throw new StreamingFuncDone();
+							throw new StreamingDoneException();
 
 						return msg.Result; // Task?
 					}
@@ -398,7 +398,7 @@ namespace GoreRemoting
 		{
 			try
 			{
-				var responseStreamWrapped = new GoreRemoting.StreamResponseQueue<byte[]>(responseStream);
+				var responseStreamWrapped = new GoreRemoting.StreamResponseQueue<byte[]>(responseStream, _config.ResponseQueueLength);
 
 				bool gotNext = await requestStream.MoveNext().ConfigureAwait(false);
 				if (!gotNext)

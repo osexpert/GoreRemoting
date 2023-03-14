@@ -163,7 +163,7 @@ namespace GoreRemoting
 							if (ex is TargetInvocationException tie)
 								ex2 = tie.InnerException;
 
-							if (ex2 is StreamingFuncDone)
+							if (ex2 is StreamingDoneException)
 							{
 								if (streamingStatus != StreamingStatus.Active)
 									throw new Exception("Streaming not active");

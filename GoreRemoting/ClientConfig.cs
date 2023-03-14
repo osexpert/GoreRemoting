@@ -18,9 +18,7 @@ namespace GoreRemoting
 
 		public delegate void ActionRef<T1, T2, T3, T4>(T1 a, T2 b, T3 c, ref T4 d);
 
-		//static ISerializerAdapter _binary_formatter = new BinarySerializerAdapter();
-
-        public ISerializerAdapter DefaultSerializer { get; set; } //= _binary_formatter;
+        public ISerializerAdapter DefaultSerializer { get; set; }
 
 	}
 }
