@@ -5,7 +5,7 @@ using System.IO;
  * Many thanks to yallie for this great extensions to make BinaryFormatter a lot safer.
  */
 
-namespace GoreRemoting.Serialization.Binary
+namespace GoreRemoting.Serialization.BinaryFormatter
 {
     using System;
     using System.Runtime.Serialization.Formatters.Binary;
@@ -76,20 +76,19 @@ namespace GoreRemoting.Serialization.Binary
 		/// <returns>Serialized data</returns>
 		public static void SerializeByteArray(this BinaryFormatter formatter, Stream stream, object objectToSerialize)
 		{
-			//using var stream = new MemoryStream();
+            if (BinaryFormatterAdapter.NetCore)
+            {
+				// for net6 need to use "Safe" formatter to enable the surrogates for types no longer serializable
+				// Yes...because DataSet and WindowsIdentity only need the safety during deserialize. But I guess it does not hurt to use it in all cases,
+				// so make it always active.
 
-#if NETSTANDARD2_0
-
-			formatter.Serialize(stream, objectToSerialize);
-
-#else
-            // for net6 need to use "Safe" formatter to enable the surrogates for types no longer serializable
-
-            var safeBinaryFormatter = formatter.Safe();
-			safeBinaryFormatter.Serialize(stream, objectToSerialize);
-#endif
-
-			//return stream.ToArray();
+				var safeBinaryFormatter = formatter.Safe();
+				safeBinaryFormatter.Serialize(stream, objectToSerialize);
+			}
+            else
+            {
+                formatter.Serialize(stream, objectToSerialize);
+            }
 		}
 
 

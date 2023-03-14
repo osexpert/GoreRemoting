@@ -5,7 +5,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace GoreRemoting.Serialization.Binary
+namespace GoreRemoting.Serialization.BinaryFormatter
 {
     using System;
     using System.Linq;
@@ -41,6 +41,7 @@ namespace GoreRemoting.Serialization.Binary
                 throw new ArgumentException(nameof(typeName));
             }
 
+            // I dont think this logic works with generics...
             var parts = typeName.Split(',').Select(p => p.Trim()).ToArray();
             if (parts.Length == 0)
             {

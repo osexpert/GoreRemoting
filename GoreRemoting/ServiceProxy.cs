@@ -44,9 +44,11 @@ namespace GoreRemoting
 			var args = invocation.Arguments;
 			var targetMethod = invocation.Method;
 
-			var arguments = MapArguments(args, out var cancel);
+			(var arguments, var cancel, var streamingDelePos) = MapArguments(targetMethod, args);
 
 			var serializer = _client.DefaultSerializer;
+			if (serializer == null)
+				throw new Exception("DefaultSerializer is not set");
 
 			var headers = new Metadata();
 
@@ -63,7 +65,7 @@ namespace GoreRemoting
 			var bytes = Gorializer.GoreSerialize(callMessage, serializer);
 
 			var resultMessage = _client.Invoke(bytes, 
-				(callback, res) => HandleResponseAsync(serializer, callback, res, args), 
+				(callback, res) => HandleResponseAsync(serializer, callback, res, args, streamingDelePos), 
 				new CallOptions(headers: headers, cancellationToken: cancel));
 
 			if (resultMessage.Exception != null)
@@ -86,10 +88,10 @@ namespace GoreRemoting
 
 		async ValueTask InterceptAsync(IAsyncInvocation invocation)
 		{
-			var args = invocation.Arguments;
+			var args = invocation.Arguments.ToArray();
 			var targetMethod = invocation.Method;
 
-			var arguments = MapArguments(args, out var cancel);
+			(var arguments, var cancel, var streamingDelePos) = MapArguments(targetMethod, args);
 
 			var serializer = _client.DefaultSerializer;
 
@@ -108,7 +110,7 @@ namespace GoreRemoting
 			var bytes = Gorializer.GoreSerialize(callMessage, serializer);
 
 			var resultMessage =  await _client.InvokeAsync(bytes,
-				(callback, req) => HandleResponseAsync(serializer, callback, req, args.ToArray()),
+				(callback, req) => HandleResponseAsync(serializer, callback, req, args.ToArray(), streamingDelePos),
 				new CallOptions(headers: headers, cancellationToken: cancel)).ConfigureAwait(false);
 
 			if (resultMessage.Exception != null)
@@ -124,7 +126,8 @@ namespace GoreRemoting
 
 
 
-		private async Task<MethodResultMessage> HandleResponseAsync(ISerializerAdapter serializer, byte[] callback, Func<byte[], Task> res, object[] args)
+		private async Task<MethodResultMessage> HandleResponseAsync(ISerializerAdapter serializer, byte[] callback, Func<byte[], Task> res, object[] args,
+			int? streamingDelegatePosition)
 		{
 			var callbackData = Gorializer.GoreDeserialize<WireResponseMessage>(callback, serializer);
 
@@ -139,7 +142,9 @@ namespace GoreRemoting
 
 						var delegt = (Delegate)args[delegateMsg.Position];
 
-//						again:
+						StreamingStatus streamingStatus = (streamingDelegatePosition == delegateMsg.Position) ? StreamingStatus.Active : StreamingStatus.None;
+
+					again:
 
 						// not possible with async here?
 						object result = null;
@@ -154,18 +159,28 @@ namespace GoreRemoting
 						}
 						catch (Exception ex)
 						{
-							if (delegateMsg.OneWay)
+							Exception ex2 = ex;
+							if (ex is TargetInvocationException tie)
+								ex2 = tie.InnerException;
+
+							if (ex2 is StreamingFuncDone)
 							{
-								// eat...
-								_client.OnOneWayException(ex);
+								if (streamingStatus != StreamingStatus.Active)
+									throw new Exception("Streaming not active");
+								streamingStatus = StreamingStatus.Done;
+								result = null; // important!
 							}
 							else
 							{
-								Exception ex2 = ex;
-								if (ex is TargetInvocationException tie)
-									ex2 = tie.InnerException;
-
-								exception = serializer.GetSerializableException(ex2);
+								if (delegateMsg.OneWay)
+								{
+									// eat...
+									_client.OnOneWayException(ex);
+								}
+								else
+								{
+									exception = serializer.GetSerializableException(ex2);
+								}
 							}
 						}
 
@@ -176,11 +191,14 @@ namespace GoreRemoting
 						if (exception != null)
 							msg = new DelegateResultMessage{ Position = delegateMsg.Position, Exception = exception };
 						else
-							msg = new DelegateResultMessage{ Position = delegateMsg.Position, Result = result };
+							msg = new DelegateResultMessage{ Position = delegateMsg.Position, Result = result, StreamingStatus = streamingStatus };
 
 						var data = Gorializer.GoreSerialize(msg, serializer);
 
 						await res(data).ConfigureAwait(false);
+
+						if (streamingStatus == StreamingStatus.Active && exception == null)
+							goto again;
 
 						return null;
 					}
@@ -189,26 +207,42 @@ namespace GoreRemoting
 			}
 		}
 
-
 		/// <summary>
 		/// Maps non serializable arguments into a serializable form.
 		/// </summary>
 		/// <param name="arguments">Arguments</param>
 		/// <returns>Array of arguments (includes mapped ones)</returns>
-		private object[] MapArguments(IEnumerable<object> arguments, out CancellationToken cancel)
+		private (object[] arguments, CancellationToken cancel, int? streamingDelePos) MapArguments(MethodInfo mi, object[] arguments)
 		{
 			bool delegateHasResult = false;
 
 			CancellationToken? lastCancel = null;
 
-			var res =  arguments.Select(argument =>
+			int? streamingDelePos = null;
+
+			object[] res = new object[arguments.Length];
+
+			var methodParams = mi.GetParameters();
+
+			for (int i = 0; i < arguments.Length; i++)
 			{
+				var argument = arguments[i];
+
 				var type = argument?.GetType();
 
 				if (MapDelegateArgument(type, out var mappedArgument))
 				{
 					if (mappedArgument.HasResult)
 					{
+						var streamingDele = methodParams[i].GetCustomAttribute<StreamingFuncAttribute>();
+						if (streamingDele != null)
+						{
+							if (streamingDelePos == null)
+								streamingDelePos = i;
+							else
+								throw new Exception("Only one streaming func delegate supported");
+						}
+
 						if (!delegateHasResult)
 							delegateHasResult = true;
 						else
@@ -218,7 +252,7 @@ namespace GoreRemoting
 						}
 					}
 
-					return mappedArgument;
+					res[i] = mappedArgument;
 				}
 				else if (typeof(CancellationToken).IsAssignableFrom(type))
 				{
@@ -227,16 +261,13 @@ namespace GoreRemoting
 					else
 						lastCancel = (CancellationToken)argument;
 
-					return new CancellationTokenDummy();
+					res[i] = new CancellationTokenDummy();
 				}
 				else
-					return argument;
+					res[i] = argument;
+			}
 
-			}).ToArray();
-
-			cancel = lastCancel ?? default;
-
-			return res;
+			return (res, lastCancel ?? default, streamingDelePos);
 		}
 
 		/// <summary>
@@ -265,11 +296,7 @@ namespace GoreRemoting
 			mappedArgument = remoteDelegateInfo;
 			return true;
 		}
-
-
-  
     }
-
 
 
 	internal static class TaskResultHelper

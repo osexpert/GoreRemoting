@@ -53,7 +53,12 @@ namespace GoreRemoting.RpcMessaging
 		}
 	}
 
-
+	public enum StreamingStatus
+	{
+		None,
+		Active,
+		Done
+	}
 
 	public class DelegateResultMessage : IGorializer
 	{
@@ -62,11 +67,14 @@ namespace GoreRemoting.RpcMessaging
 		// TODO: could have enum with Result or Exception?
 		public object Result { get; set; }
 
+		public StreamingStatus StreamingStatus { get; set; }
+
 		public object Exception { get; set; }
 
 		public void Deserialize(GoreBinaryReader r)
 		{
 			Position = r.Read7BitEncodedInt();
+			StreamingStatus = (StreamingStatus)r.Read7BitEncodedInt();
 		}
 		public void Deserialize(Stack<object> st)
 		{
@@ -76,6 +84,7 @@ namespace GoreRemoting.RpcMessaging
 		public void Serialize(GoreBinaryWriter w, Stack<object> st)
 		{
 			w.Write7BitEncodedInt(Position);
+			w.Write7BitEncodedInt((int)StreamingStatus);
 
 			st.Push(Result);
 			st.Push(Exception);

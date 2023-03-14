@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GoreRemoting.Serialization.BinaryFormatter;
 
 namespace ServerNet60
 {
@@ -41,7 +42,7 @@ namespace ServerNet60
 
 			services.AddSingleton<GoreRemotingService>();
 
-			var server = new RemotingServer(new ServerConfig { CreateInstance = CreateInstance });
+			var server = new RemotingServer(new ServerConfig { CreateInstance = CreateInstance, Serializer = new BinaryFormatterAdapter() });
 
 			server.RegisterService<ITestService, TestService>();
 

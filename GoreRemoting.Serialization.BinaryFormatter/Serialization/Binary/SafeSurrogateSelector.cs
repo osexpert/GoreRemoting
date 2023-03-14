@@ -4,7 +4,7 @@
  * Many thanks to yallie for this great extensions to make BinaryFormatter a lot safer.
  */
 
-namespace GoreRemoting.Serialization.Binary
+namespace GoreRemoting.Serialization.BinaryFormatter
 {
     using System;
     using System.Data;

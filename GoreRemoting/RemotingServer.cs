@@ -82,6 +82,8 @@ namespace GoreRemoting
 		}
 
 
+
+
 		/// <summary>
 		/// Maps a delegate argument into a delegate proxy.
 		/// </summary>
@@ -153,6 +155,8 @@ namespace GoreRemoting
 			bool resultSent = false;
 			var responseLock = new AsyncReaderWriterLockSlim();
 
+			int? activeStreamingDelegatePosition = null;
+
 			parameterValues = MapArguments(parameterValues,
 			delegateCallMsg =>
 			{
@@ -168,9 +172,16 @@ namespace GoreRemoting
 					if (resultSent)
 						throw new Exception("Too late, result sent");
 
-					var bytes = Gorializer.GoreSerialize(delegateResultMessage, serializer);
+					if (delegateCallMsg.Position == activeStreamingDelegatePosition)
+					{
+						// only recieve now that streaming is active
+					}
+					else
+					{
+						var bytes = Gorializer.GoreSerialize(delegateResultMessage, serializer);
 
-					reponse(bytes).GetAwaiter().GetResult();
+						reponse(bytes).GetAwaiter().GetResult();
+					}
 
 					if (delegateCallMsg.OneWay)
 					{
@@ -189,8 +200,13 @@ namespace GoreRemoting
 
 						if (msg.Exception != null)
 							throw serializer.RestoreSerializedException(msg.Exception);
-						else
-							return msg.Result;
+
+						if (msg.StreamingStatus == StreamingStatus.Active)
+							activeStreamingDelegatePosition = msg.Position;
+						else if (msg.StreamingStatus == StreamingStatus.Done)
+							throw new StreamingFuncDone();
+
+						return msg.Result;
 					}
 				}
 				finally
@@ -212,9 +228,16 @@ namespace GoreRemoting
 					if (resultSent)
 						throw new Exception("Too late, result sent");
 
-					var bytes = Gorializer.GoreSerialize(delegateResultMessage, serializer);
+					if (delegateCallMsg.Position == activeStreamingDelegatePosition)
+					{
+						// only recieve now that streaming is active
+					}
+					else
+					{
+						var bytes = Gorializer.GoreSerialize(delegateResultMessage, serializer);
 
-					await reponse(bytes).ConfigureAwait(false);
+						await reponse(bytes).ConfigureAwait(false);
+					}
 
 					// FIXME: Task, ValueTask etc? as well as void?
 					if (delegateCallMsg.OneWay)
@@ -234,8 +257,13 @@ namespace GoreRemoting
 
 						if (msg.Exception != null)
 							throw serializer.RestoreSerializedException(msg.Exception);
-						else
-							return msg.Result; // Task?
+
+						if (msg.StreamingStatus == StreamingStatus.Active)
+							activeStreamingDelegatePosition = msg.Position;
+						else if (msg.StreamingStatus == StreamingStatus.Done)
+							throw new StreamingFuncDone();
+
+						return msg.Result; // Task?
 					}
 				}
 				finally
@@ -292,6 +320,7 @@ namespace GoreRemoting
 				if (oneWay)
 				{
 					// eat...
+					OnOneWayException(ex);
 				}
 				else
 				{
@@ -333,8 +362,12 @@ namespace GoreRemoting
 			await reponse(bytes).ConfigureAwait(false);
 		}
 
-		
 
+		public event EventHandler<Exception> OneWayException;
+		internal void OnOneWayException(Exception ex)
+		{
+			OneWayException?.Invoke(this, ex);
+		}
 
 		/// <summary>
 		/// 

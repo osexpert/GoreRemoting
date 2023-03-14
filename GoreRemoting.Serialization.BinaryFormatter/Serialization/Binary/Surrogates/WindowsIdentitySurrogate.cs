@@ -5,7 +5,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace GoreRemoting.Serialization.Binary
+namespace GoreRemoting.Serialization.BinaryFormatter
 {
     using System;
 	using System.IO;

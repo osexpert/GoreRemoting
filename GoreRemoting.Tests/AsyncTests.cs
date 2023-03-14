@@ -1,7 +1,8 @@
 using GoreRemoting.Serialization;
-using GoreRemoting.Serialization.Binary;
+using GoreRemoting.Serialization.BinaryFormatter;
 using GoreRemoting.Serialization.Json;
 using GoreRemoting.Serialization.MemoryPack;
+using GoreRemoting.Serialization.MessagePack;
 using GoreRemoting.Tests.Tools;
 using System;
 using System.IO;
@@ -53,12 +54,13 @@ namespace GoreRemoting.Tests
         [InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
+		//[InlineData(enSerializer.MessagePack)]
 		public async void AsyncMethods_should_work(enSerializer ser)
         {
             var serverConfig =
                 new ServerConfig()
                 {
-					Serializer = GetSerializer(ser)
+					Serializer = Serializers.GetSerializer(ser)
 					//RegisterServicesAction = container =>
 					//    container.RegisterService<IAsyncService, AsyncService>(
 					//        lifetime: ServiceLifetime.Singleton)
@@ -68,7 +70,7 @@ namespace GoreRemoting.Tests
 			server.RegisterService<IAsyncService, AsyncService>();
 			server.Start();
 
-			await using var client = new NativeClient(9196, new ClientConfig() { DefaultSerializer = GetSerializer(ser) });
+			await using var client = new NativeClient(9196, new ClientConfig() { DefaultSerializer = Serializers.GetSerializer(ser) });
 
             var proxy = client.CreateProxy<IAsyncService>();
 
@@ -77,16 +79,7 @@ namespace GoreRemoting.Tests
             Assert.Equal("WWF5", base64String);
         }
 
-		private ISerializerAdapter GetSerializer(enSerializer ser)
-		{
-            return ser switch
-            {
-                enSerializer.BinaryFormatter => new BinarySerializerAdapter(),
-                enSerializer.MemoryPack => new MemoryPackAdapter(),
-                enSerializer.Json => new JsonAdapter(),
-                _ => throw new NotImplementedException(),
-			};
-		}
+
 
 		/// <summary>
 		/// Awaiting for ordinary non-generic task method should not hangs. 
@@ -96,6 +89,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
+		//[InlineData(enSerializer.MessagePack)]
 		public async Task AwaitingNonGenericTask_should_not_hang_forever(enSerializer ser)
         {
             var port = 9197;
@@ -103,7 +97,7 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig()
                 {
-					Serializer = GetSerializer(ser)
+					Serializer = Serializers.GetSerializer(ser)
 					//RegisterServicesAction = container =>
 					//    container.RegisterService<IAsyncService, AsyncService>(
 					//        lifetime: ServiceLifetime.Singleton)
@@ -113,7 +107,7 @@ namespace GoreRemoting.Tests
 			server.RegisterService<IAsyncService, AsyncService>();
 			server.Start();
 
-            await using var client = new NativeClient(port, new ClientConfig() { DefaultSerializer = GetSerializer(ser) });
+            await using var client = new NativeClient(port, new ClientConfig() { DefaultSerializer = Serializers.GetSerializer(ser) });
 
             var proxy = client.CreateProxy<IAsyncService>();
 
@@ -125,6 +119,23 @@ namespace GoreRemoting.Tests
 	{
 		BinaryFormatter,
 		MemoryPack,
-        Json
+        Json,
+        MessagePack
+
+	}
+
+    public static class Serializers
+    {
+		public static ISerializerAdapter GetSerializer(enSerializer ser)
+		{
+			return ser switch
+			{
+				enSerializer.BinaryFormatter => new BinaryFormatterAdapter(),
+				enSerializer.MemoryPack => new MemoryPackAdapter(),
+				enSerializer.Json => new JsonAdapter(),
+				enSerializer.MessagePack => new MessagePackAdapter(),
+				_ => throw new NotImplementedException(),
+			};
+		}
 	}
 }

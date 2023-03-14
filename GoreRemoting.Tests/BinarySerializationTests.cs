@@ -1,7 +1,7 @@
 #if false
 using System;
 using GoreRemoting.RpcMessaging;
-using GoreRemoting.Serialization.Binary;
+using GoreRemoting.Serialization.BinaryFormatter;
 using GoreRemoting.Tests.Tools;
 using Xunit;
 

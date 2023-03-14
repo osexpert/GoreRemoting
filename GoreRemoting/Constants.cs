@@ -28,7 +28,8 @@ namespace GoreRemoting
 		{
 			// Why not use full asm name? type.Assembly.FullName (then it would be same as assemblyqualifyedname?)
 			// Or maybe the simple name make most sense...
-			return type.FullName + "," + type.Assembly.GetName().Name;
+			//return type.FullName + "," + type.Assembly.GetName().Name;
+			return TypeShortener.GetShortType(type);
 		}
 
 		private static Type _ParseType(string s)
@@ -36,4 +37,28 @@ namespace GoreRemoting
 			return Type.GetType(s);
 		}
 	}
+
+	public class StreamingFuncAttribute : Attribute
+	{
+		public StreamingFuncAttribute()
+		{
+		}
+	}
+
+	//public class StreamingDone
+	//{
+	//	bool _done;
+ //       public StreamingDone(bool done)
+ //       {
+	//		_done = done;
+ //       }
+
+	//	public bool Done => _done;
+ //   }
+
+	public class StreamingFuncDone : Exception
+	{
+	}
+
+	//public delegate (T, bool) StreamingFunc<T>();
 }

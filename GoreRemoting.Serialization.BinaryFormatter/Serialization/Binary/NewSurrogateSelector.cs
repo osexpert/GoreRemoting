@@ -15,7 +15,7 @@ using System.Security.Permissions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GoreRemoting.Serialization.Binary
+namespace GoreRemoting.Serialization.BinaryFormatter
 {
 	/// <summary>
 	/// Based on code from Microsoft.Bot.Builder on github
@@ -36,17 +36,18 @@ namespace GoreRemoting.Serialization.Binary
 		{
 			var providers = new List<ISerializationSurrogateEx>();
 
-			// These 2 are about safety
+			// These 2 are about safety during deserialize (does not alter serialization)
 			providers.Add(new DataSetSurrogate());
 			providers.Add(new WindowsIdentitySurrogate());
 
-#if !NETSTANDARD2_0
-            // These are about things that are no longer Serializable in net6
-            // There is a lot more that is not Serializable in net6 (CollectionBase etc.)
-            // but for some things its easier\better to change to somethign else than adding support for it here.
-            providers.Add(new TypeSurrogate());
-			providers.Add(new CultureInfoSurrogate());
-#endif
+			if (BinaryFormatterAdapter.NetCore)
+			{
+				// These are about things that are no longer Serializable in net6
+				// There is a lot more that is not Serializable in net6 (CollectionBase etc.)
+				// but for some things its easier\better to change to somethign else than adding support for it here.
+				providers.Add(new TypeSurrogate());
+				providers.Add(new CultureInfoSurrogate());
+			}
 
 			return providers;
 		}

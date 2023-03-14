@@ -54,7 +54,7 @@ namespace GoreRemoting.Serialization.MemoryPack
 				{
 					var ct1 = t.GetConstructor(new Type[] { typeof(string) });
 					if (ct1 != null)
-						newE = (Exception)ct1.Invoke(new object[] { e.Mess! });
+						newE = (Exception)ct1.Invoke(new object[] { e.Message! });
 //					Activator.CreateInstance(t, e.Mess, );
 				}
 				catch (MissingMethodException)
@@ -67,7 +67,7 @@ namespace GoreRemoting.Serialization.MemoryPack
 					{
 						var ct1 = t.GetConstructor(new Type[] { typeof(string), typeof(Exception) });
 						if (ct1 != null)
-							newE = (Exception)ct1.Invoke(new object[] { e.Mess!, null! });
+							newE = (Exception)ct1.Invoke(new object[] { e.Message!, null! });
 						//newE = (Exception)Activator.CreateInstance(t, e.Mess, null);
 					}
 					catch (MissingMethodException)
@@ -93,12 +93,12 @@ namespace GoreRemoting.Serialization.MemoryPack
 
 			if (newE == null)			
 			{
-				newE = new TypelessException(e.Mess!);
+				newE = new TypelessException(e.Message!);
 			}
 
 			// set stack
 			FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
-			remoteStackTraceString.SetValue(newE, e.Stack + System.Environment.NewLine);
+			remoteStackTraceString.SetValue(newE, e.StackTrace + System.Environment.NewLine);
 
 			return newE;
 		}
@@ -143,8 +143,8 @@ namespace GoreRemoting.Serialization.MemoryPack
 	partial class ExceptionWrapper //: Exception //seems impossible that MemPack can inherit exception?
 	{
 		public string? TypeName { get; set; }
-		public string? Mess { get; set; }
-		public string? Stack { get; set; }
+		public string? Message { get; set; }
+		public string? StackTrace { get; set; }
 
 		[MemoryPackConstructor]
         public ExceptionWrapper()
@@ -156,10 +156,10 @@ namespace GoreRemoting.Serialization.MemoryPack
 
 		public ExceptionWrapper(Exception ex2)
 		{
-			TypeName = UnsafeObjectFormatter.GetShortType(ex2.GetType());
-			Mess = ex2.Message;
+			TypeName = TypeShortener.GetShortType(ex2.GetType());
+			Message = ex2.Message;
 
-			Stack = ex2.StackTrace;
+			StackTrace = ex2.StackTrace;
 		//	FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
 	//		remoteStackTraceString.SetValue(ex2, ex2.StackTrace + System.Environment.NewLine);
 //			 St

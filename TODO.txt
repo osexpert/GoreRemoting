@@ -1,4 +1,10 @@
-Use headers to tell what formatter to use? Serializer\formatter: BinaryFormatter, MemoryPack, etc.
+TODO: a special type of delegate where the server only call the client once and the client loop and just send data to server continously.
+Today, the server aks for data in a loop, so get one extra call from server per byte[].
+I guess can use an attribute on the parameter, eg SendDataToServer([StreamingResult]Func<(byte[] dataToServer, bool done)> serverAskForData)
+The other way where serber deliver data works fine today, it will be streaming data from server:
+GetDataFromServer(Action<(byte[] dataToServer, bool done)> serverDeliverData)
+
+Use headers to tell what formatter to use? Serializer\formatter: BinaryFormatter, MemoryPack, etc. (done)
 Use headers to tell what\if compression to use? Compress\compressor: Deflate, gzip, etc.
 
 Use separate methods for bidir and unary? So if no callback delegate arguments can use unary.
@@ -29,7 +35,7 @@ But grpc has native compression too? Is it enabled by default? Find out...
 FlagsAttribute subclass: nativeremotingclient, dotnetremotingclient ???
 
 TODO: add possibility to change formatter based on interface method attributes.
-Then can gradually migrate from BinaryFormatter to eg. MemoryPack etc.
+Then can gradually migrate from BinaryFormatter to eg. MemoryPack etc. (done)
 
 Support multiple delegates with result:
 only 1 thread allowed to read result from client, others wait on something else.

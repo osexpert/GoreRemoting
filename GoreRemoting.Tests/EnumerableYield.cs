@@ -1,7 +1,8 @@
 ﻿using GoreRemoting.Serialization;
-using GoreRemoting.Serialization.Binary;
+using GoreRemoting.Serialization.BinaryFormatter;
 using GoreRemoting.Serialization.Json;
 using GoreRemoting.Serialization.MemoryPack;
+using GoreRemoting.Serialization.MessagePack;
 using GoreRemoting.Tests.Tools;
 using System;
 using System.Collections.Concurrent;
@@ -208,29 +209,20 @@ namespace GoreRemoting.Tests
             }
         }
 
-		private static ISerializerAdapter GetSerializer(enSerializer ser)
-		{
-			return ser switch
-			{
-				enSerializer.BinaryFormatter => new BinarySerializerAdapter(),
-				enSerializer.MemoryPack => new MemoryPackAdapter(),
-				enSerializer.Json => new JsonAdapter(),
-				_ => throw new NotImplementedException(),
-			};
-		}
 
 
 		[Theory]
 		[InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
+		//[InlineData(enSerializer.MessagePack)]
 		public async Task YieldTest(enSerializer ser)
 		{
-			await using var server = new NativeServer(9198, new ServerConfig() { Serializer = GetSerializer(ser) });
+			await using var server = new NativeServer(9198, new ServerConfig() { Serializer = Serializers.GetSerializer(ser) });
 			server.RegisterService<IIenumera, EnumeTest>();
 			server.Start();
 
-			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = GetSerializer(ser) });
+			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = Serializers.GetSerializer(ser) });
 
 			var proxy = client.CreateProxy<IIenumera>();
 

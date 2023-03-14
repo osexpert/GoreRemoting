@@ -27,9 +27,6 @@ namespace GoreRemoting.Serialization.MemoryPack
 	{
 		public static readonly UnsafeObjectFormatter Default = new UnsafeObjectFormatter();
 
-		// see:http://msdn.microsoft.com/en-us/library/w3f99sx1.aspx
-		static readonly Regex AssemblyNameVersionSelectorRegex = new Regex(@", Version=\d+.\d+.\d+.\d+, Culture=[\w-]+, PublicKeyToken=(?:null|[a-f0-9]{16})", RegexOptions.Compiled);
-		static readonly ConcurrentDictionary<Type, string> typeNameCache = new ConcurrentDictionary<Type, string>();
 
 		public override void Serialize<TBufferWriter>(ref MemoryPackWriter<TBufferWriter> writer, scoped ref object? value)
 		{
@@ -40,32 +37,14 @@ namespace GoreRemoting.Serialization.MemoryPack
 			}
 
 			var type = value.GetType();
-			string typeName = GetShortType(type);
+			string typeName = TypeShortener.GetShortType(type);
 
 			writer.WriteObjectHeader(2);
 			writer.WriteString(typeName);
 			writer.WriteValue(type, value);
 		}
 
-		public static string GetShortType(Type type)
-		{
-			if (!typeNameCache.TryGetValue(type, out var typeName))
-			{
-				var full = type.AssemblyQualifiedName!;
 
-				var shortened = AssemblyNameVersionSelectorRegex.Replace(full, string.Empty);
-				if (Type.GetType(shortened, false) == null)
-				{
-					// if type cannot be found with shortened name - use full name
-					shortened = full;
-				}
-
-				typeNameCache[type] = shortened;
-				typeName = shortened;
-			}
-
-			return typeName;
-		}
 
 		public override void Deserialize(ref MemoryPackReader reader, scoped ref object? value)
 		{

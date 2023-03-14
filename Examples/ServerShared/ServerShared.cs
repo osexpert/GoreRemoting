@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Threading;
 using System;
+using GoreRemoting;
 
 namespace ServerShared
 {
@@ -18,7 +19,7 @@ namespace ServerShared
         void CompleteGetMessages();
         void SendMessage(string mess);
         void GetFile(string file, Action<byte[], int, int> write, Action<string> progress);
-        void SendFile(string file, Func<int, (byte[], int, int)> read, Action<string> progress);
+        void SendFile(string file, [StreamingFunc]Func<int, (byte[], int)> read, Action<string> progress);
     }
 
     class TestService : ITestService
@@ -104,16 +105,16 @@ namespace ServerShared
 
             var sw = new WriteStreamWrapper(write);
             using (var f = File.OpenRead(file))
-                f.CopyTo(sw, 1024 * 1024);
+                f.CopyTo(sw, 81920);
         }
 
-        public void SendFile(string file, Func<int, (byte[], int, int)> read, Action<string> progress)
+        public void SendFile(string file, Func<int, (byte[], int)> read, Action<string> progress)
         {
             progress("hello");
 
             var sr = new ReadStreamWrapper(read);
             using (var f = File.OpenWrite(file))
-                sr.CopyTo(f, 1024 * 1024);
+                sr.CopyTo(f, 81920);
 
             // Alternative to using the stream wrapper, it will avoid the buffer copy but does not help much for performance:
             //using (var f = File.OpenWrite(file))
@@ -180,10 +181,10 @@ namespace ServerShared
 
     class ReadStreamWrapper : Stream
     {
-        Func<int, (byte[], int, int)> pChunk;
+        Func<int, (byte[], int)> pChunk;
 
 
-        public ReadStreamWrapper(Func<int, (byte[], int, int)> chunk)
+        public ReadStreamWrapper(Func<int, (byte[], int)> chunk)
         {
             pChunk = chunk;
         }
@@ -201,12 +202,30 @@ namespace ServerShared
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            var res = pChunk(count);
+            (byte[] data, int len) res;
+            try
+            {
+                res = pChunk(81920); // MUST BE a constant value when using StreamingFunc
+            }
+            catch (StreamingFuncDone)
+            {
+                return 0;
+            }
+            //catch (RemoteInvocationException e)
+            //{
+            //    return 0;
+            //}
 
-            if (res.Item3 > 0)
-                Buffer.BlockCopy(res.Item1, res.Item2, buffer, offset, res.Item3);
+            if (res.len == 0)
+                throw new Exception("should have used StreamingDoneException");
 
-            return res.Item3;
+            if (res.len > count)
+                throw new Exception("too much data");
+
+            if (res.len > 0)
+                Buffer.BlockCopy(res.data, 0, buffer, offset, res.len);
+
+            return res.len;
         }
 
         public override long Seek(long offset, SeekOrigin origin)

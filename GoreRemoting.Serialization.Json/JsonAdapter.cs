@@ -52,7 +52,7 @@ namespace GoreRemoting.Serialization.Json
 				if (o != null)
 				{
 					var t = o.GetType();
-					var tao = new TypeAndObject() { TypeName = t.AssemblyQualifiedName, Data = o };
+					var tao = new TypeAndObject() { TypeName = TypeShortener.GetShortType(t), Data = o };
 					g2[i] = tao;
 				}
 				else
@@ -119,8 +119,8 @@ namespace GoreRemoting.Serialization.Json
 		class ExceptionWrapper //: Exception //seems impossible that MemPack can inherit exception?
 		{
 			public string? TypeName { get; set; }
-			public string? Mess { get; set; }
-			public string? Stack { get; set; }
+			public string? Message { get; set; }
+			public string? StackTrace { get; set; }
 
 			public ExceptionWrapper()
 			{
@@ -129,10 +129,10 @@ namespace GoreRemoting.Serialization.Json
 
 			public ExceptionWrapper(Exception ex2)
 			{
-				TypeName = ex2.GetType().AssemblyQualifiedName;// UnsafeObjectFormatter.GetShortType(ex2.GetType());
-				Mess = ex2.Message;
+				TypeName = TypeShortener.GetShortType(ex2.GetType());//.AssemblyQualifiedName;// UnsafeObjectFormatter.GetShortType(ex2.GetType());
+				Message = ex2.Message;
 
-				Stack = ex2.StackTrace;
+				StackTrace = ex2.StackTrace;
 				//	FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
 				//		remoteStackTraceString.SetValue(ex2, ex2.StackTrace + System.Environment.NewLine);
 				//			 St
@@ -143,19 +143,19 @@ namespace GoreRemoting.Serialization.Json
 		{
 			//var newE = (Exception)ex2;
 			var e = (ExceptionWrapper)ex2;
-			var t = Type.GetType(e.TypeName);
+			var type = Type.GetType(e.TypeName);
 
 			Exception newE = null;
-			if (t != null)
+			if (type != null)
 			{
 				// can this fail? missing ctor? yes, can fail...MissingMethodException
 				// TODO: be smarter and try to find a ctor with a string, else an empty ctor?
 
 				try
 				{
-					var ct1 = t.GetConstructor(new Type[] { typeof(string) });
+					var ct1 = type.GetConstructor(new Type[] { typeof(string) });
 					if (ct1 != null)
-						newE = (Exception)ct1.Invoke(new object[] { e.Mess! });
+						newE = (Exception)ct1.Invoke(new object[] { e.Message! });
 					//					Activator.CreateInstance(t, e.Mess, );
 				}
 				catch (MissingMethodException)
@@ -166,9 +166,9 @@ namespace GoreRemoting.Serialization.Json
 				{
 					try
 					{
-						var ct1 = t.GetConstructor(new Type[] { typeof(string), typeof(Exception) });
+						var ct1 = type.GetConstructor(new Type[] { typeof(string), typeof(Exception) });
 						if (ct1 != null)
-							newE = (Exception)ct1.Invoke(new object[] { e.Mess!, null! });
+							newE = (Exception)ct1.Invoke(new object[] { e.Message!, null! });
 						//newE = (Exception)Activator.CreateInstance(t, e.Mess, null);
 					}
 					catch (MissingMethodException)
@@ -180,7 +180,7 @@ namespace GoreRemoting.Serialization.Json
 				{
 					try
 					{
-						var ct1 = t.GetConstructor(new Type[] { });
+						var ct1 = type.GetConstructor(new Type[] { });
 						if (ct1 != null)
 							newE = (Exception)ct1.Invoke(new object[] { });
 						// empty ctor
@@ -194,12 +194,12 @@ namespace GoreRemoting.Serialization.Json
 
 			if (newE == null)
 			{
-				newE = new TypelessException(e.Mess!);
+				newE = new TypelessException(e.Message!);
 			}
 
 			//// set stack
 			FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
-			remoteStackTraceString.SetValue(newE, e.Stack);
+			remoteStackTraceString.SetValue(newE, e.StackTrace);
 			remoteStackTraceString.SetValue(newE, newE.StackTrace + System.Environment.NewLine);
 
 			return newE;

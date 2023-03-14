@@ -1,6 +1,6 @@
 using System.Runtime.Serialization.Formatters;
 
-namespace GoreRemoting.Serialization.Binary
+namespace GoreRemoting.Serialization.BinaryFormatter
 {
     /// <summary>
     /// Describes binary serialization settings.

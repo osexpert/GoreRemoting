@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using ServerShared;
+using GoreRemoting.Serialization.BinaryFormatter;
 
 namespace ServerNet60
 {
@@ -34,7 +35,8 @@ namespace ServerNet60
 
             var server = new RemotingServer(new ServerConfig
             {
-                CreateInstance = p.CreateInstance
+                CreateInstance = p.CreateInstance,
+                Serializer = new BinaryFormatterAdapter()
 			});
 
             server.RegisterService<ITestService, TestService>();

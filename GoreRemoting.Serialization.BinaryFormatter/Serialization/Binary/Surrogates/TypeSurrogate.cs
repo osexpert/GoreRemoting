@@ -15,7 +15,7 @@ using System.Security.Permissions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GoreRemoting.Serialization.Binary
+namespace GoreRemoting.Serialization.BinaryFormatter
 {
 
 	public sealed class TypeSurrogate : ISerializationSurrogateEx
@@ -33,14 +33,18 @@ namespace GoreRemoting.Serialization.Binary
 			// BinaryFormatter in .NET Core 2.0 cannot persist types in System.Private.CoreLib.dll
 			// that are not forwareded to mscorlib, including System.RuntimeType
 			info.SetType(typeof(TypeReference));
-			info.AddValue("AssemblyName", type.Assembly.FullName);
-			info.AddValue("FullName", type.FullName);
+			info.AddValue("TypeName", TypeShortener.GetShortType(type));
+//			info.AddValue("AssemblyName", type.Assembly.FullName);
+	//		info.AddValue("FullName", type.FullName);
 		}
 
         [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
 		public object SetObjectData(object obj, SerializationInfo info, StreamingContext context,
 			ISurrogateSelector selector)
 		{
+			// Why go via IObjectReference? Why don't just use this?
+			// I guess...this can be wasteful? BF has already made some object here and want us to set things in it.
+			// But we just discard it. I guess IObjectReference may be how this was intended to be?
 			throw new NotSupportedException();
 			//var AssemblyQualifiedName = info.GetString("AssemblyQualifiedName");
 			//return Type.GetType(AssemblyQualifiedName, true);
@@ -50,24 +54,26 @@ namespace GoreRemoting.Serialization.Binary
 		internal sealed class TypeReference : IObjectReference
 		{
 
-			private readonly string AssemblyName;
+			//private readonly string AssemblyName;
 
-			private readonly string FullName;
+			//private readonly string FullName;
+			private readonly string TypeName;
 
-			public TypeReference(Type type)
-			{
-				// But will this ctor ever be called?
-				if (type == null) throw new ArgumentNullException(nameof(type));
-				AssemblyName = type.Assembly.FullName;
-				FullName = type.FullName;
-			}
+			//public TypeReference(Type type)
+			//{
+			//	// But will this ctor ever be called?
+			//	if (type == null) throw new ArgumentNullException(nameof(type));
+			//	AssemblyName = type.Assembly.FullName;
+			//	FullName = type.FullName;
+			//}
 
 			public object GetRealObject(StreamingContext context)
 			{
 				// Assembly.Load seems a bit too much?
 				// Use TypeFormatter here too?
-				var assembly = Assembly.Load(AssemblyName);
-				return assembly.GetType(FullName, true);
+				//	var assembly = Assembly.Load(AssemblyName);
+				//return assembly.GetType(FullName, true);
+				return Type.GetType(TypeName, true);
 			}
 		}
 

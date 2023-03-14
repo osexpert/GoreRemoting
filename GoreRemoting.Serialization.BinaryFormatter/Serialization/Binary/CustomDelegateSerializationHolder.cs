@@ -3,7 +3,7 @@
  * Many thanks to yallie for this great extensions to make BinaryFormatter a lot safer.
  */
 
-namespace GoreRemoting.Serialization.Binary
+namespace GoreRemoting.Serialization.BinaryFormatter
 {
     using System;
     using System.Reflection;
@@ -25,7 +25,6 @@ namespace GoreRemoting.Serialization.Binary
         {
             Holder = (IObjectReference)Constructor.Invoke(new object[] { info, context });
         }
-
         private static Type DelegateSerializationHolderType { get; } = Type.GetType(SafeSerializationBinder.DELEGATE_SERIALIZATION_HOLDER_TYPE_NAME);
 
         private static ConstructorInfo Constructor { get; } = DelegateSerializationHolderType.GetConstructor(

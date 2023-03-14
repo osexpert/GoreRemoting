@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
+using GoreRemoting.Serialization.BinaryFormatter;
 
 namespace ClientNet48
 {
@@ -27,7 +28,8 @@ namespace ClientNet48
 			var channel = new Channel("localhost", 5000, ChannelCredentials.Insecure);
             var c = new RemotingClient(channel.CreateCallInvoker(), new ClientConfig 
             { 
-                BeforeMethodCall = BeforeBuildMethodCallMessage
+                BeforeMethodCall = BeforeBuildMethodCallMessage,
+                DefaultSerializer = new BinaryFormatterAdapter()
             });
             var testServ = c.CreateProxy<ITestService>();
 

@@ -7,6 +7,7 @@ using System.Threading;
 using System.Collections.Concurrent;
 using System.IO;
 using ServerShared;
+using GoreRemoting.Serialization.BinaryFormatter;
 
 namespace ServerNet48
 {
@@ -27,7 +28,8 @@ namespace ServerNet48
         {
             var remServer = new RemotingServer(new ServerConfig 
             { 
-                CreateInstance = CreateInstance
+                CreateInstance = CreateInstance,
+                Serializer = new BinaryFormatterAdapter()
             });
             remServer.RegisterService<ITestService, TestService>();
 

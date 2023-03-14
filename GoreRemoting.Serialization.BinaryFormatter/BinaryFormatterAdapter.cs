@@ -2,17 +2,24 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
-using System.Runtime.Serialization.Formatters.Binary;
+using BF = System.Runtime.Serialization.Formatters.Binary;
 
-namespace GoreRemoting.Serialization.Binary
+namespace GoreRemoting.Serialization.BinaryFormatter
 {
     /// <summary>
     /// Serializer adapter to allow binary serialization.
     /// </summary>
-    public class BinarySerializerAdapter : ISerializerAdapter
+    public class BinaryFormatterAdapter : ISerializerAdapter
     {
+
+#if NETSTANDARD2_1_OR_GREATER
+        public static bool NetCore { get; set; } = true;
+#else
+        public static bool NetCore { get; set; } = false;
+#endif
+
         [ThreadStatic] 
-        private static BinaryFormatter _formatter;
+        private static BF.BinaryFormatter _formatter;
         private readonly BinarySerializerConfig _config;
        
         /// <summary>
@@ -20,7 +27,7 @@ namespace GoreRemoting.Serialization.Binary
         /// </summary>
         /// <param name="config">Configuration settings</param>
         [SuppressMessage("ReSharper", "UnusedMember.Global")]
-        public BinarySerializerAdapter(BinarySerializerConfig config = null)
+        public BinaryFormatterAdapter(BinarySerializerConfig config = null)
         {
             _config = config;
         }
@@ -30,11 +37,11 @@ namespace GoreRemoting.Serialization.Binary
         /// The instance is reused for further calls.
         /// </summary>
         /// <returns>Binary formatter instance</returns>
-        private BinaryFormatter GetFormatter()
+        private BF.BinaryFormatter GetFormatter()
         {
             if (_formatter == null)
             {
-                _formatter = new BinaryFormatter();
+                _formatter = new BF.BinaryFormatter();
 
                 if (_config != null)
                 {
@@ -81,21 +88,15 @@ namespace GoreRemoting.Serialization.Binary
 
 		public Exception RestoreSerializedException(object ex2)
 		{
-            return ((Exception)ex2).Capture();
+            var e = (Exception)ex2;
+
+			FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
+			remoteStackTraceString.SetValue(e, e.StackTrace + System.Environment.NewLine);
+
+            return e;
 		}
 
 		public string Name => "BinaryFormatter";
     }
 
-	internal static class ExceptionExtensions
-	{
-		internal static Exception Capture(this Exception e)
-		{
-			FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
-			remoteStackTraceString.SetValue(e, e.StackTrace + System.Environment.NewLine);
-
-			return e;
-		}
-
-	}
 }

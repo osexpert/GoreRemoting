@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using GoreRemoting.Serialization.BinaryFormatter;
 
 namespace ClientNet60
 {
@@ -31,7 +32,8 @@ namespace ClientNet60
             
             var c = new RemotingClient(channel.CreateCallInvoker(), new ClientConfig 
             { 
-                BeforeMethodCall = BeforeBuildMethodCallMessage
+                BeforeMethodCall = BeforeBuildMethodCallMessage,
+				DefaultSerializer = new BinaryFormatterAdapter()
             });
 
             var testServ = c.CreateProxy<ITestService>();
