@@ -17,6 +17,7 @@
     <PackageReference Include="Open.ChannelExtensions">
       <Version>6.2.2</Version>
     </PackageReference>
+    <PackageReference Include="System.Security.Principal.Windows" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>

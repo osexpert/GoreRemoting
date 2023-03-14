@@ -15,26 +15,26 @@ Can have as many callback delegate arguments as you wish, but only one can retur
 Support CancellationToken (uses native Grpc support)
 AsyncEnumerableAdapter to adapt to IAsyncEnumerable providers\consumers via delegate.
 ProgressAdapter to adapt to IProgress providers\consumers via delegate.
-You can create own adapters based on same idea to emulate MarshalByRef behaviour via delegates.
+You can create own adapters based on same idea to emulate MarshalByRef behaviour via delegates (but only works for simple scenarios).
 Can use both native Grpc and Grpc dotnet.
-Currently only uses BinaryFormatter.
+Currently har working serializers for BinaryFormatter, System.Text.Json, MemoryPack
 Support Task\ValueTask in service methods result and in result from delegate arguments (but max one with actual result).
+It is possible to specify serializer on a per service or method basis, so slowly can migrate away from BinaryFormatter, method by method, service by service.
+GoreRemoting does not use .proto files but simply interfaces. Look at the examples for info, there is no documentation.  
 
 Limitations:
 Method that return IEnumerable and yield (crashes)  
 Method that return IAsyncEnumerable and yield (crashes)  
 
+Removed from CoreRemoting:
 CoreRemoting use websockets while GoreRemoting is a rewrite (sort of) to use Grpc instead.  
-GoreRemoting only support BinaryFormatter, while CoreRemoting also supported BSON.
-Encryption, authentication, session management, DependencyInjection, Linq expression arguments are also remved (maybe some can be added back if demand).
-Idea in the future is to support MessagePack or MemoryPack in addition.
-Idea is to make it possible to specify formatter on a per method basis, so slowly can migrate away from BinaryFormatter, method by method.
-GoreRemoting does not use .proto files but simply interfaces. Look at the examples for info, there is no documentation.  
+Encryption, authentication, session management, DependencyInjection, Linq expression arguments removed (maybe some can be added back if demand).
 
 Delegate arguments:
 Delegates that return void, Task, ValueTask are all threated as OneWay. Then it will not wait for any result and any exceptions thrown are eaten.
 You can have max one delegate with result (eg. int, Task\<int\>, ValueTask\<int\>) else will get runtime exception.
 If you need to force a delegate to be non-OneWay, then just make it return something (eg. a bool or Task\<bool\>). But again, max one delegate with result.
+Advanced: StreamingFuncAttribute\StreamingDoneException can be used to make streaming from server to client faster (normally there will be one call from server to client for every call that pull data from client).
 
 Methods:
 OneWay methods not supported. Methods always wait for result\exception.
@@ -42,6 +42,7 @@ OneWay methods not supported. Methods always wait for result\exception.
 TODO:
 Maybe OneWay delegate could be an opt-in instead of the default (still only max one could be non-OneWay)
 Instead of eating exceptions from delegates, maybe could have an optino to throw them or some way to get notified about them (via subscribe to delegate)
+Update: there is an event OneWayException in RemotingClient\RemotingServer if you want to observe any eaten exceptions.
 Add session management? (not in the core, but as example)
 
 Other Rpc framework maybe of interest:
@@ -77,7 +78,7 @@ https://stackoverflow.com/questions/50190568/net-standard-4-7-1-could-not-load-s
 
 You will need to add some hacks yourself if using BinaryFormatter across .NET Framework and .NET
 
-Performance:  
+Performance (1MB package size):
 The file copy test:
 .NET 4.8 server\client:  
 File sent to server and written by server: 18 seconds (why so slow?)  
@@ -87,7 +88,23 @@ File read from server and written by client: 11 seconds
 File sent to server and written by server: 31 seconds (oh noes...)  
 File read from server and written by client: 13 seconds  
 
-There is something fishy here:-)
+Update, when using StreamingFuncAttribute\StreamingDoneException (but also using smaller package size, 8KB instead of 1MB):
+.NET 6.0 native server\client: 
+File sent to server and written by server: 16 seconds (better)
+File read from server and written by client: 15 seconds
+
+.NET 6.0 dotnet server\client:
+File sent to server and written by server: 22 seconds (dotnet still slower than native)  
+File read from server and written by client: 23 seconds (faster before...)
+
+.NET 4.8 server\client:  
+File sent to server and written by server: 15 seconds
+File read from server and written by client: 15 seconds  
+
+Conclusion: StreamingFuncAttribute\StreamingDoneException does even out the numbers from and to. grpc dotnet is still slow.
+
+
+Grpc dotnet problems:
 
 When calling the server too fast(?) with grpc-dotnet, I get ENHANCE_YOUR_CALM:
 Bug filed: https://github.com/grpc/grpc-dotnet/issues/2010
