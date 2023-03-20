@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace GoreRemoting.Serialization.BinaryFormatter
 {
-	internal class CultureInfoSurrogate : ISerializationSurrogateEx
+	internal class CultureInfoSurrogate : ISurrogate
 	{
 		public bool Handles(Type type, StreamingContext context)
 		{

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if false
+using System;
 using System.Runtime.Serialization;
 
 namespace GoreRemoting
@@ -30,3 +31,4 @@ namespace GoreRemoting
         }
     }
 }
+#endif

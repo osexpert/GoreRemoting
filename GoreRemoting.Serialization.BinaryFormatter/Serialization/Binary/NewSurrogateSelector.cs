@@ -22,35 +22,37 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 	/// </summary>
 	public sealed class SafeSurrogateSelector : ISurrogateSelector
 	{
-		private static readonly IList<ISerializationSurrogateEx> _providers = GetProviders();
+		//private static readonly IList<ISerializationSurrogateEx> _providers = GetProviders();
+		private BinarySerializerOptions _options;
 
 		[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
-		public SafeSurrogateSelector(ISurrogateSelector next)
+		public SafeSurrogateSelector(ISurrogateSelector next, BinarySerializerOptions options)
 		{
+			_options = options;
 			if (next != null)
 				throw new NotImplementedException("Next surrogate selector not allowed");
 		}
 
-		[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
-		static IList<ISerializationSurrogateEx> GetProviders()
-		{
-			var providers = new List<ISerializationSurrogateEx>();
+		//[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
+		//static IList<ISerializationSurrogateEx> GetProviders()
+		//{
+		//	var providers = new List<ISerializationSurrogateEx>();
 
-			// These 2 are about safety during deserialize (does not alter serialization)
-			providers.Add(new DataSetSurrogate());
-			providers.Add(new WindowsIdentitySurrogate());
+		//	// These 2 are about safety during deserialize (does not alter serialization)
+		//	providers.Add(new DataSetSurrogate());
+		//	providers.Add(new WindowsIdentitySurrogate());
 
-			if (BinaryFormatterAdapter.NetCore)
-			{
-				// These are about things that are no longer Serializable in net6
-				// There is a lot more that is not Serializable in net6 (CollectionBase etc.)
-				// but for some things its easier\better to change to somethign else than adding support for it here.
-				providers.Add(new TypeSurrogate());
-				providers.Add(new CultureInfoSurrogate());
-			}
+		//	if (BinaryFormatterAdapter.NetCore)
+		//	{
+		//		// These are about things that are no longer Serializable in net6
+		//		// There is a lot more that is not Serializable in net6 (CollectionBase etc.)
+		//		// but for some things its easier\better to change to somethign else than adding support for it here.
+		//		providers.Add(new TypeSurrogate());
+		//		providers.Add(new CultureInfoSurrogate());
+		//	}
 
-			return providers;
-		}
+		//	return providers;
+		//}
 
 		[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
 		void ISurrogateSelector.ChainSelector(ISurrogateSelector selector)
@@ -68,8 +70,8 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		ISerializationSurrogate ISurrogateSelector.GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
 		{
 			// Use a simpler logic at first, until we get conflicts (if ever)
-			ISerializationSurrogateEx found = null;
-			foreach (var surr in _providers)
+			ISurrogate found = null;
+			foreach (var surr in _options.Surrogates)
 			{
 				if (surr.Handles(type, context))
 				{
@@ -94,9 +96,9 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 	}
 
     /// <summary>
-    /// Extend <see cref="ISerializationSurrogate"/> with a "tester" method used by <see cref="SurrogateSelector"/>.
+    /// Extend <see cref="ISerializationSurrogate"/> with a "tester" method used by <see cref="SafeSurrogateSelector"/>.
     /// </summary>
-    public interface ISerializationSurrogateEx : ISerializationSurrogate
+    public interface ISurrogate : ISerializationSurrogate
     {
         /// <summary>
         /// Determine whether this surrogate provider handles this type.

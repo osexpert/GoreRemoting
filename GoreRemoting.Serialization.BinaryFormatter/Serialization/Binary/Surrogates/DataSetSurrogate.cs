@@ -19,8 +19,15 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 	/// <summary>
 	/// Deserialization surrogate for the DataSet class.
 	/// </summary>
-    internal class DataSetSurrogate : ISerializationSurrogateEx
+    internal class DataSetSurrogate : ISurrogate
     {
+        BinarySerializerOptions _options;
+
+		public DataSetSurrogate(BinarySerializerOptions options)
+        {
+            _options = options;    
+        }
+
         private static ConstructorInfo Constructor { get; } = typeof(DataSet).GetConstructor(
             BindingFlags.Instance | BindingFlags.NonPublic,
             null,
@@ -83,7 +90,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
                     new BinaryFormatter(
                         selector: null,
                         context: new StreamingContext(context.State, false))
-                    .Safe();
+                    .Safe(_options);
                 
                 using var ms = new MemoryStream(buffer);
                 

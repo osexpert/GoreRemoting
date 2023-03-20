@@ -8,24 +8,26 @@ namespace GoreRemoting.Serialization.MessagePack
 	{
 		public string Name => "MessagePack";
 
-		public void Serialize(Stream s, object[] graph)
+		public MessagePackSerializerOptions Options { get; set; } = null;
+
+		public void Serialize(Stream stream, object[] graph)
 		{
-			MessagePackSerializer.Serialize(s, graph);
+			MessagePackSerializer.Serialize(stream, graph, Options);
 		}
 
-		public object[] Deserialize(Stream rawData)
+		public object[] Deserialize(Stream stream)
 		{
-			return MessagePackSerializer.Deserialize<object[]>(rawData);
+			return MessagePackSerializer.Deserialize<object[]>(stream, Options);
 		}
 
-		public object GetSerializableException(Exception ex2)
+		public object GetSerializableException(Exception ex)
 		{
-			return ex2;
+			return ex;
 		}
 
-		public Exception RestoreSerializedException(object ex2)
+		public Exception RestoreSerializedException(object ex)
 		{
-			return (Exception)ex2;
+			return (Exception)ex;
 		}
 
 

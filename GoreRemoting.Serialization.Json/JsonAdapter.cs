@@ -9,16 +9,27 @@ namespace GoreRemoting.Serialization.Json
 {
 	public class JsonAdapter : ISerializerAdapter
 	{
-		static JsonSerializerOptions opt = new JsonSerializerOptions()
+		public JsonSerializerOptions Options { get; }
+
+		public JsonAdapter()
+        {
+			Options = CreateOptions();
+
+		}
+
+		private static JsonSerializerOptions CreateOptions()
 		{
-			IncludeFields = true,
-			ReferenceHandler = ReferenceHandler.Preserve,
-			Converters =
+			return new JsonSerializerOptions()
 			{
-				new TupleConverterFactory(),
-			}
-			
-		};
+				IncludeFields = true,
+				ReferenceHandler = ReferenceHandler.Preserve,
+				Converters =
+				{
+					new TupleConverterFactory(),
+				}
+
+			};
+		}
 
 		/// <summary>
 		/// Serializes an object graph.
@@ -26,40 +37,25 @@ namespace GoreRemoting.Serialization.Json
 		/// <param name="graph">Object graph to be serialized</param>
 		/// <typeparam name="T">Object type</typeparam>
 		/// <returns>Serialized data</returns>
-		public void Serialize(Stream s, object[] graph)
+		public void Serialize(Stream stream, object[] graph)
 		{
-			//var bw = new GoreBinaryWriter(s);
-			//bw.Write7BitEncodedInt(graph.Length);
-
-			//foreach (var v in graph)
-			//{
-			//	if (v == null)
-			//		bw.Write(false);
-			//	else
-			//	{
-			//		bw.Write(true);
-			//		bw.Write(v.GetType().AssemblyQualifiedName);
-			//		System.Text.Json.JsonSerializer.Serialize(s, v, opt);
-			//	}
-			//}
-
-			TypeAndObject[] g2 = new TypeAndObject[graph.Length];
+			TypeAndObject[] typeAndObjects = new TypeAndObject[graph.Length];
 
 			for (int i = 0; i < graph.Length; i++)
 			{
-				var o = graph[i];
+				var obj = graph[i];
 
-				if (o != null)
+				if (obj != null)
 				{
-					var t = o.GetType();
-					var tao = new TypeAndObject() { TypeName = TypeShortener.GetShortType(t), Data = o };
-					g2[i] = tao;
+					var t = obj.GetType();
+					var tao = new TypeAndObject() { TypeName = TypeShortener.GetShortType(t), Data = obj };
+					typeAndObjects[i] = tao;
 				}
 				else
-					g2[i] = null;
+					typeAndObjects[i] = null;
 			}
 
-			System.Text.Json.JsonSerializer.Serialize<TypeAndObject[]>(s, g2, opt);
+			System.Text.Json.JsonSerializer.Serialize<TypeAndObject[]>(stream, typeAndObjects, Options);
 		}
 
 		/// <summary>
@@ -70,35 +66,17 @@ namespace GoreRemoting.Serialization.Json
 		/// <returns>Deserialized object graph</returns>
 		public object[] Deserialize(Stream stream)
 		{
-			//var br = new GoreBinaryReader(stream);
+			var typeAndObjects = JsonSerializer.Deserialize<TypeAndObject[]>(stream, Options)!;
 
-			//var n = br.Read7BitEncodedInt();
+			object[] res = new object[typeAndObjects.Length];
 
-			//object[] res = new object[n];
-
-			//for (int i=0; i < n;i++)
-			//{
-			//	if (br.ReadBoolean())
-			//	{
-			//		var t = Type.GetType(br.ReadString());
-			//		res[i] = JsonSerializer.Deserialize(stream, t, opt);
-			//	}
-			//	else
-			//		res[i] = null;
-			//}
-
-			//return res;
-			var tao = JsonSerializer.Deserialize<TypeAndObject[]>(stream, opt)!;
-
-			object[] res = new object[tao.Length];
-
-			for (int i = 0; i < tao.Length; i++)
+			for (int i = 0; i < typeAndObjects.Length; i++)
 			{
-				var to = tao[i];
+				var to = typeAndObjects[i];
 				if (to != null)
 				{
 					var t = Type.GetType(to.TypeName);
-					res[i] = ((System.Text.Json.JsonElement)to.Data).Deserialize(t, opt);
+					res[i] = ((System.Text.Json.JsonElement)to.Data).Deserialize(t, Options);
 				}
 				else
 					res[i] = null;
@@ -108,12 +86,6 @@ namespace GoreRemoting.Serialization.Json
 			//// maybe we can convert to same type as parameters?
 			////https://stackoverflow.com/questions/58138793/system-text-json-jsonelement-toobject-workaround
 			//	throw new NotImplementedException();
-		}
-
-		public object GetSerializableException(Exception ex2)
-		{
-			//return ex2;
-			return new ExceptionWrapper(ex2);// return ex2.GetType().IsSerializable ? ex2 : new RemoteInvocationException(ex2.Message);
 		}
 
 		class ExceptionWrapper //: Exception //seems impossible that MemPack can inherit exception?
@@ -127,91 +99,44 @@ namespace GoreRemoting.Serialization.Json
 
 			}
 
-			public ExceptionWrapper(Exception ex2)
+			public ExceptionWrapper(Exception ex)
 			{
-				TypeName = TypeShortener.GetShortType(ex2.GetType());//.AssemblyQualifiedName;// UnsafeObjectFormatter.GetShortType(ex2.GetType());
-				Message = ex2.Message;
-
-				StackTrace = ex2.StackTrace;
-				//	FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
-				//		remoteStackTraceString.SetValue(ex2, ex2.StackTrace + System.Environment.NewLine);
-				//			 St
+				TypeName = TypeShortener.GetShortType(ex.GetType());
+				Message = ex.Message;
+				StackTrace = ex.StackTrace;
 			}
 		}
 
-		public Exception RestoreSerializedException(object ex2)
+		public object GetSerializableException(Exception ex)
 		{
-			//var newE = (Exception)ex2;
-			var e = (ExceptionWrapper)ex2;
+			return new ExceptionWrapper(ex);
+		}
+
+		public Exception RestoreSerializedException(object ex)
+		{
+			var e = (ExceptionWrapper)ex;
 			var type = Type.GetType(e.TypeName);
 
-			Exception newE = null;
+			Exception res = null;
 			if (type != null)
 			{
-				// can this fail? missing ctor? yes, can fail...MissingMethodException
-				// TODO: be smarter and try to find a ctor with a string, else an empty ctor?
-
-				try
-				{
-					var ct1 = type.GetConstructor(new Type[] { typeof(string) });
-					if (ct1 != null)
-						newE = (Exception)ct1.Invoke(new object[] { e.Message! });
-					//					Activator.CreateInstance(t, e.Mess, );
-				}
-				catch (MissingMethodException)
-				{
-				}
-
-				if (newE == null)
-				{
-					try
-					{
-						var ct1 = type.GetConstructor(new Type[] { typeof(string), typeof(Exception) });
-						if (ct1 != null)
-							newE = (Exception)ct1.Invoke(new object[] { e.Message!, null! });
-						//newE = (Exception)Activator.CreateInstance(t, e.Mess, null);
-					}
-					catch (MissingMethodException)
-					{
-					}
-				}
-
-				if (newE == null)
-				{
-					try
-					{
-						var ct1 = type.GetConstructor(new Type[] { });
-						if (ct1 != null)
-							newE = (Exception)ct1.Invoke(new object[] { });
-						// empty ctor
-						//newE = (Exception)Activator.CreateInstance(t);
-					}
-					catch (MissingMethodException)
-					{
-					}
-				}
+				res = ExceptionHelper.ConstructException(e.Message, type);
 			}
 
-			if (newE == null)
+			if (res == null)
 			{
-				newE = new TypelessException(e.Message!);
+				res = new RemoteInvocationException(e.Message!, e.TypeName);
 			}
 
-			//// set stack
-			FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
-			remoteStackTraceString.SetValue(newE, e.StackTrace);
-			remoteStackTraceString.SetValue(newE, newE.StackTrace + System.Environment.NewLine);
+			// set stack
+			FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
+			remoteStackTraceString.SetValue(res, e.StackTrace);
+			remoteStackTraceString.SetValue(res, res.StackTrace + System.Environment.NewLine);
 
-			return newE;
+			return res;
 		}
 
-		public class TypelessException : Exception
-		{
-			public TypelessException(string mess) : base(mess)
-			{
 
-			}
-		}
 
 		public string Name => "Json";
 	}

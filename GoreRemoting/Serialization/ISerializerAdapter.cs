@@ -8,54 +8,13 @@ namespace GoreRemoting.Serialization
     /// </summary>
     public interface ISerializerAdapter
     {
-        /// <summary>
-        /// Serializes an object graph.
-        /// </summary>
-        /// <param name="graph">Object graph to be serialized</param>
-        /// <typeparam name="T">Object type</typeparam>
-        /// <returns>Serialized data</returns>
-      //  byte[] Serialize<T>(T graph);
+		void Serialize(Stream stream, object[] graph);
 
+		object[] Deserialize(Stream stream);
 
-		/// <summary>
-		/// Serializes an object graph.
-		/// </summary>
-		/// <param name="graph">Object graph to be serialized</param>
-		/// <typeparam name="T">Object type</typeparam>
-		/// <returns>Serialized data</returns>
-		void Serialize(Stream s, object[] graph);
+		object GetSerializableException(Exception ex);
 
-
-		/// <summary>
-		/// Serializes an object graph.
-		/// </summary>
-		/// <param name="type">Object type</param>
-		/// <param name="graph">Object graph to be serialized</param>
-		/// <returns>Serialized data</returns>
-		//byte[] Serialize(Type type, object graph);
-
-        /// <summary>
-        /// Deserializes raw data back into an object graph.
-        /// </summary>
-        /// <param name="rawData">Raw data that should be deserialized</param>
-        /// <typeparam name="T">Object type</typeparam>
-        /// <returns>Deserialized object graph</returns>
-      //  T Deserialize<T>(byte[] rawData);
-
-
-		object[] Deserialize(Stream rawData);
-
-		object GetSerializableException(Exception ex2);
-
-		Exception RestoreSerializedException(object ex2);
-
-		/// <summary>
-		/// Deserializes raw data back into an object graph.
-		/// </summary>
-		/// <param name="type">Object type</param>
-		/// <param name="rawData">Raw data that should be deserialized</param>
-		/// <returns>Deserialized object graph</returns>
-		//	object Deserialize(Type type, byte[] rawData);
+		Exception RestoreSerializedException(object ex);
 
 		string Name { get; }
     }

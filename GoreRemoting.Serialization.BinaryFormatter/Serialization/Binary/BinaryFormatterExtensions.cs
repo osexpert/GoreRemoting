@@ -20,7 +20,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
         /// </summary>
         /// <param name="formatter">The <see cref="BinaryFormatter"/> to guard.</param>
         /// <returns>The safe version of the <see cref="BinaryFormatter"/>.</returns>
-        public static BinaryFormatter Safe(this BinaryFormatter formatter)
+        public static BinaryFormatter Safe(this BinaryFormatter formatter, BinarySerializerOptions options)
         {
             if (formatter == null)
             {
@@ -37,7 +37,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
             if (!(formatter.SurrogateSelector is SafeSurrogateSelector))
             {
                 // create a new surrogate selector and chain to the existing one, if any
-                formatter.SurrogateSelector = new SafeSurrogateSelector(formatter.SurrogateSelector);
+                formatter.SurrogateSelector = new SafeSurrogateSelector(formatter.SurrogateSelector, options);
             }
 
             return formatter;
@@ -68,28 +68,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 //        }
 
 
-		/// <summary>
-		/// Serializes the specified object into a byte array.
-		/// </summary>
-		/// <param name="formatter">Binary formatter instance</param>
-		/// <param name="objectToSerialize">Object to serialize</param>
-		/// <returns>Serialized data</returns>
-		public static void SerializeByteArray(this BinaryFormatter formatter, Stream stream, object objectToSerialize)
-		{
-            if (BinaryFormatterAdapter.NetCore)
-            {
-				// for net6 need to use "Safe" formatter to enable the surrogates for types no longer serializable
-				// Yes...because DataSet and WindowsIdentity only need the safety during deserialize. But I guess it does not hurt to use it in all cases,
-				// so make it always active.
 
-				var safeBinaryFormatter = formatter.Safe();
-				safeBinaryFormatter.Serialize(stream, objectToSerialize);
-			}
-            else
-            {
-                formatter.Serialize(stream, objectToSerialize);
-            }
-		}
 
 
 		/// <summary>
@@ -105,16 +84,6 @@ namespace GoreRemoting.Serialization.BinaryFormatter
   //          return safeBinaryFormatter.Deserialize(stream);
   //      }
 
-		/// <summary>
-		/// Deserializes raw data back into an object.
-		/// </summary>
-		/// <param name="formatter">Binary formatter instance</param>
-		/// <param name="rawData">Raw data that should be deserialized</param>
-		/// <returns>Deserialized object</returns>
-		public static object DeserializeSafe(this BinaryFormatter formatter, Stream stream)
-		{
-			var safeBinaryFormatter = formatter.Safe();
-			return safeBinaryFormatter.Deserialize(stream);
-		}
+
 	}
 }

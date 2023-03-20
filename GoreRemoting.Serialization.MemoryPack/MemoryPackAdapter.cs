@@ -12,15 +12,17 @@ namespace GoreRemoting.Serialization.MemoryPack
 	public class MemoryPackAdapter : ISerializerAdapter
 	{
 
+		public MemoryPackSerializerOptions Options { get; set; } = null;
+
 		/// <summary>
 		/// Serializes an object graph.
 		/// </summary>
 		/// <param name="graph">Object graph to be serialized</param>
 		/// <typeparam name="T">Object type</typeparam>
 		/// <returns>Serialized data</returns>
-		public void Serialize(Stream s, object[] graph)
+		public void Serialize(Stream stream, object[] graph)
 		{
-			MemoryPackSerializer.SerializeAsync<MemPackObjectArray>(s, new MemPackObjectArray() { Datas = graph }).GetAwaiter().GetResult();
+			MemoryPackSerializer.SerializeAsync<MemPackObjectArray>(stream, new MemPackObjectArray() { Datas = graph }, Options).GetAwaiter().GetResult();
 		}
 
 		/// <summary>
@@ -31,88 +33,41 @@ namespace GoreRemoting.Serialization.MemoryPack
 		/// <returns>Deserialized object graph</returns>
 		public object[] Deserialize(Stream stream)
 		{
-			return MemoryPackSerializer.DeserializeAsync<MemPackObjectArray>(stream).GetAwaiter().GetResult()!.Datas;
+			return MemoryPackSerializer.DeserializeAsync<MemPackObjectArray>(stream, Options).GetAwaiter().GetResult()!.Datas;
 		}
 
-		public object GetSerializableException(Exception ex2)
+		public object GetSerializableException(Exception ex)
 		{
-			return new ExceptionWrapper(ex2);// return ex2.GetType().IsSerializable ? ex2 : new RemoteInvocationException(ex2.Message);
+			return new ExceptionWrapper(ex);
 		}
 
-		public Exception RestoreSerializedException(object ex2)
+		public Exception RestoreSerializedException(object ex)
 		{
-			var e = (ExceptionWrapper)ex2;
-			var t = Type.GetType(e.TypeName);
+			var e = (ExceptionWrapper)ex;
+			var exeptionType = Type.GetType(e.TypeName);
 
-			Exception newE = null;
-			if (t != null)
+			Exception res = null;
+			if (exeptionType != null)
 			{
-				// can this fail? missing ctor? yes, can fail...MissingMethodException
-				// TODO: be smarter and try to find a ctor with a string, else an empty ctor?
-
-				try
-				{
-					var ct1 = t.GetConstructor(new Type[] { typeof(string) });
-					if (ct1 != null)
-						newE = (Exception)ct1.Invoke(new object[] { e.Message! });
-//					Activator.CreateInstance(t, e.Mess, );
-				}
-				catch (MissingMethodException)
-				{
-				}
-
-				if (newE == null)
-				{
-					try
-					{
-						var ct1 = t.GetConstructor(new Type[] { typeof(string), typeof(Exception) });
-						if (ct1 != null)
-							newE = (Exception)ct1.Invoke(new object[] { e.Message!, null! });
-						//newE = (Exception)Activator.CreateInstance(t, e.Mess, null);
-					}
-					catch (MissingMethodException)
-					{
-					}
-				}
-
-				if (newE == null)
-				{
-					try
-					{
-						var ct1 = t.GetConstructor(new Type[] { });
-						if (ct1 != null)
-							newE = (Exception)ct1.Invoke(new object[] { });
-						// empty ctor
-						//newE = (Exception)Activator.CreateInstance(t);
-					}
-					catch (MissingMethodException)
-					{
-					}
-				}
+				res = ExceptionHelper.ConstructException(e.Message, exeptionType);
 			}
 
-			if (newE == null)			
+			if (res == null)			
 			{
-				newE = new TypelessException(e.Message!);
+				res = new RemoteInvocationException(e.Message!, e.TypeName);
 			}
 
 			// set stack
-			FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
-			remoteStackTraceString.SetValue(newE, e.StackTrace + System.Environment.NewLine);
+			FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
+			remoteStackTraceString.SetValue(res, e.StackTrace + System.Environment.NewLine);
 
-			return newE;
+			return res;
 		}
 
 		public string Name => "MemoryPack";
 	}
 
-	public class TypelessException : Exception
-	{
-        public TypelessException(string mess) : base(mess)
-        {
-            
-        }
-    }
+
 
 	/// <summary>
 	/// TODO: can this be used for anything?
@@ -152,17 +107,11 @@ namespace GoreRemoting.Serialization.MemoryPack
             
         }
 
-				
-
-		public ExceptionWrapper(Exception ex2)
+		public ExceptionWrapper(Exception ex)
 		{
-			TypeName = TypeShortener.GetShortType(ex2.GetType());
-			Message = ex2.Message;
-
-			StackTrace = ex2.StackTrace;
-		//	FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
-	//		remoteStackTraceString.SetValue(ex2, ex2.StackTrace + System.Environment.NewLine);
-//			 St
+			TypeName = TypeShortener.GetShortType(ex.GetType());
+			Message = ex.Message;
+			StackTrace = ex.StackTrace;
 		}
 	}
 

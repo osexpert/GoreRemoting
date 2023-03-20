@@ -27,7 +27,6 @@ namespace GoreRemoting.Serialization.MemoryPack
 	{
 		public static readonly UnsafeObjectFormatter Default = new UnsafeObjectFormatter();
 
-
 		public override void Serialize<TBufferWriter>(ref MemoryPackWriter<TBufferWriter> writer, scoped ref object? value)
 		{
 			if (value == null)
@@ -43,8 +42,6 @@ namespace GoreRemoting.Serialization.MemoryPack
 			writer.WriteString(typeName);
 			writer.WriteValue(type, value);
 		}
-
-
 
 		public override void Deserialize(ref MemoryPackReader reader, scoped ref object? value)
 		{

@@ -18,8 +18,15 @@ namespace GoreRemoting.Serialization.BinaryFormatter
     /// <summary>
     /// Deserialization surrogate for the WindowsIdentity class.
     /// </summary>
-    internal class WindowsIdentitySurrogate : ISerializationSurrogateEx
+    internal class WindowsIdentitySurrogate : ISurrogate
 	{
+        BinarySerializerOptions _options;
+
+		public WindowsIdentitySurrogate(BinarySerializerOptions options)
+        {
+            _options = options;    
+        }
+
         private static ConstructorInfo Constructor { get; } = typeof(WindowsIdentity).GetConstructor(
             BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public,
             null,
@@ -56,7 +63,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
         private void Validate(SerializationInfo info, StreamingContext context)
         {
             // check the serialized data using a guarded BinaryFormatter
-            var fmt = new BinaryFormatter().Safe();
+            var fmt = new BinaryFormatter().Safe(_options);
 
             var e = info.GetEnumerator();
             while (e.MoveNext())

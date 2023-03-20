@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 namespace GoreRemoting.Serialization.BinaryFormatter
 {
 
-	public sealed class TypeSurrogate : ISerializationSurrogateEx
+	public sealed class TypeSurrogate : ISurrogate
 	{
 		public bool Handles(Type type, StreamingContext context)
 		{
