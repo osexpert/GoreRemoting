@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="System.Text.Json" Version="7.0.2" />
-    <PackageReference Include="TupleAsJsonArray" Version="1.0.2" />
+    <PackageReference Include="TupleAsJsonArray.Redux" Version="1.1.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -4,10 +4,13 @@ using GoreRemoting.Serialization.Json;
 using GoreRemoting.Serialization.MemoryPack;
 using GoreRemoting.Serialization.MessagePack;
 using GoreRemoting.Tests.Tools;
+using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Runtime.ConstrainedExecution;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Sdk;
@@ -23,6 +26,8 @@ namespace GoreRemoting.Tests
             Task<string> ConvertToBase64Async(string text);
 
             Task NonGenericTask();
+
+            (Version, Version, Version[], Version[]) TestMisc(Version v, Version v2, Version[] versions, Version[] versions2);
         }
 
         public class AsyncService : IAsyncService
@@ -44,40 +49,55 @@ namespace GoreRemoting.Tests
             {
                 return Task.CompletedTask;
             }
-        }
+
+			public (Version, Version, Version[], Version[]) TestMisc(Version v, Version vs, Version[] versions, Version[] versions2)
+			{
+				return (v, vs, versions, versions2);
+			}
+		}
 
 		#endregion
 
 
 
-        [Theory]
-        [InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.Json)]
-		//[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.MessagePack)]
 		public async void AsyncMethods_should_work(enSerializer ser)
-        {
-            var serverConfig =
-                new ServerConfig()
-                {
+		{
+
+
+			var serverConfig =
+				new ServerConfig()
+				{
 					Serializer = Serializers.GetSerializer(ser)
 					//RegisterServicesAction = container =>
 					//    container.RegisterService<IAsyncService, AsyncService>(
 					//        lifetime: ServiceLifetime.Singleton)
 				};
 
-            await using var server = new NativeServer(9196, serverConfig);
+			await using var server = new NativeServer(9196, serverConfig);
 			server.RegisterService<IAsyncService, AsyncService>();
 			server.Start();
 
 			await using var client = new NativeClient(9196, new ClientConfig() { DefaultSerializer = Serializers.GetSerializer(ser) });
 
-            var proxy = client.CreateProxy<IAsyncService>();
+			var proxy = client.CreateProxy<IAsyncService>();
 
-            var base64String = await proxy.ConvertToBase64Async("Yay");
+			var base64String = await proxy.ConvertToBase64Async("Yay");
 
-            Assert.Equal("WWF5", base64String);
-        }
+			Assert.Equal("WWF5", base64String);
+
+			var res = proxy.TestMisc(null, new Version(1, 42), new[] { new Version(1, 2), new Version(2, 3, 5) }, null);
+			Assert.Null(res.Item1);
+			Assert.Null(res.Item4);
+			Assert.Equal(new Version(1, 42), res.Item2);
+			Assert.Equal(2, res.Item3.Length);
+			Assert.Equal(new Version(1, 2), res.Item3[0]);
+			Assert.Equal(new Version(2, 3, 5), res.Item3[1]);
+		}
 
 
 
@@ -89,7 +109,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
-		//[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.MessagePack)]
 		public async Task AwaitingNonGenericTask_should_not_hang_forever(enSerializer ser)
         {
             var port = 9197;

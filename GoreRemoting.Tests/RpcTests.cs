@@ -36,7 +36,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
-		//[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.MessagePack)]
 		public async Task Call_on_Proxy_should_be_invoked_on_remote_service(enSerializer ser)
         {
             bool remoteServiceCalled = false;
@@ -130,7 +130,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
-		//[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.MessagePack)]
 		public async Task Call_on_Proxy_should_be_invoked_on_remote_service_without_MessageEncryption(enSerializer ser)
         {
             bool remoteServiceCalled = false;
@@ -221,7 +221,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
-		//[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.MessagePack)]
 		public async Task Delegate_invoked_on_server_should_callback_client(enSerializer ser)
         {
             string argumentFromServer = null;
@@ -268,7 +268,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
-		//[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.MessagePack)]
 		public async Task Events_should_NOT_work_remotly(enSerializer ser)
         {
             var testService = new TestService();
@@ -316,7 +316,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
-		//[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.MessagePack)]
 		public async Task External_types_should_work_as_remote_service_parameters(enSerializer ser)
         {
             bool remoteServiceCalled = false;
@@ -433,7 +433,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
-		//[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.MessagePack)]
 		public async Task Generic_methods_should_be_called_correctly(enSerializer ser)
         {
             var serverConfig =
@@ -504,7 +504,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
-		//[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.MessagePack)]
 		public async Task Enum_arguments_should_be_passed_correctly(enSerializer ser)
         {
             var serverConfig =
@@ -554,7 +554,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
-		//[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.MessagePack)]
 		public async Task Ref_param_should_fail(enSerializer ser)
 		{
 			var serverConfig =
@@ -674,7 +674,7 @@ namespace GoreRemoting.Tests
         [InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
-		//[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.MessagePack)]
 		public async Task Delegate_callback_after_return(enSerializer ser)
         {
 			var serverConfig = new ServerConfig()
@@ -793,7 +793,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
-		//[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.MessagePack)]
 		public async Task MultipleDelegateCallback(enSerializer ser)
         {
 			var serverConfig = new ServerConfig()
@@ -1115,7 +1115,7 @@ namespace GoreRemoting.Tests
         [InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
-		//[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.MessagePack)]
 		public async Task DoVarArgTest(enSerializer ser)
         {
 			await using var server = new NativeServer(9198, new ServerConfig() { Serializer = Serializers.GetSerializer(ser) });
@@ -1355,7 +1355,7 @@ namespace GoreRemoting.Tests
 
 	[Serializable]
 	[MemoryPackable]
-	[MessagePackObject]
+	[MessagePackObject(keyAsPropertyName: true)]
 	public partial class S1
 	{
 		public string s1;
@@ -1373,7 +1373,7 @@ namespace GoreRemoting.Tests
 
 	[Serializable]
 	[MemoryPackable]
-    [MessagePackObject]
+	[MessagePackObject(keyAsPropertyName: true)]
 	public partial class S2
 	{
 		public string s2;
@@ -1391,7 +1391,7 @@ namespace GoreRemoting.Tests
 
 	[Serializable]
 	[MemoryPackable]
-	[MessagePackObject]
+	[MessagePackObject(keyAsPropertyName: true)]
 	public partial class S3
 	{
 		public string s3;
@@ -1409,7 +1409,7 @@ namespace GoreRemoting.Tests
 
 	[Serializable]
 	[MemoryPackable]
-	[MessagePackObject]
+	[MessagePackObject(keyAsPropertyName: true)]
 	public partial class R1
 	{
 		public string r1;
@@ -1427,7 +1427,7 @@ namespace GoreRemoting.Tests
 
 	[Serializable]
 	[MemoryPackable]
-	[MessagePackObject]
+	[MessagePackObject(keyAsPropertyName: true)]
 	public partial class R2
 	{
 		public string r2;
@@ -1445,7 +1445,7 @@ namespace GoreRemoting.Tests
 
 	[Serializable]
 	[MemoryPackable]
-	[MessagePackObject]
+	[MessagePackObject(keyAsPropertyName: true)]
 	public partial class R3
 	{
 		public string r3;
