@@ -297,10 +297,9 @@ namespace GoreRemoting.Serialization.Json
 
 			Exception res = null;
 
-			SerializationInfo info = null;
 			if (e.HasSerializationInfo)
 			{
-				info = new SerializationInfo(type, new JsonConverterFormatter(Options));
+				var info = new SerializationInfo(type, new JsonConverterFormatter(Options));
 
 				foreach (var kv in e.SerializationInfo)
 					info.AddValue(kv.Key, kv.Value);

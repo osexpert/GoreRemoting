@@ -42,6 +42,11 @@ namespace GoreRemoting.RpcMessaging
 			OutArguments = new MethodOutArgument[n];
             for (int i = 0; i < n; i++)
 				OutArguments[i] = new MethodOutArgument(r);
+
+			var c = r.Read7BitEncodedInt();
+			CallContextSnapshot = new CallContextEntry[c];
+			for (int j = 0; j < c; j++)
+				CallContextSnapshot[j] = new CallContextEntry(r);
 		}
 
         public void Deserialize(Stack<object> st)
@@ -51,7 +56,10 @@ namespace GoreRemoting.RpcMessaging
 
             foreach (var oa in OutArguments)
                 oa.Deserialize(st);
-        }
+
+			foreach (var cc in CallContextSnapshot)
+				cc.Deserialize(st);
+		}
 
 		public void Serialize(GoreBinaryWriter w, Stack<object> st)
 		{
@@ -66,11 +74,20 @@ namespace GoreRemoting.RpcMessaging
                 foreach (var oa in OutArguments)
                     oa.Serialize(w, st);
             }
+
+            if (CallContextSnapshot == null)
+                w.Write7BitEncodedInt(0);
+            else
+            {
+				w.Write7BitEncodedInt(CallContextSnapshot.Length);
+				foreach (var cc in CallContextSnapshot)
+					cc.Serialize(w, st);
+			}
 		}
 
 		/// <summary>
 		/// Gets or sets a snapshot of the call context that flows from server back to the client. 
 		/// </summary>
-		//public CallContextEntry[] CallContextSnapshot { get; set; }
+		public CallContextEntry[] CallContextSnapshot { get; set; }
 	}
 }

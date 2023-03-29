@@ -218,11 +218,11 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MessagePack)]
 		public async Task YieldTest(enSerializer ser)
 		{
-			await using var server = new NativeServer(9198, new ServerConfig() { Serializer = Serializers.GetSerializer(ser) });
+			await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
 			server.RegisterService<IIenumera, EnumeTest>();
 			server.Start();
 
-			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = Serializers.GetSerializer(ser) });
+			await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
 
 			var proxy = client.CreateProxy<IIenumera>();
 

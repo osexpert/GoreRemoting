@@ -46,11 +46,8 @@ namespace GoreRemoting
 
 			(var arguments, var cancel, var streamingDelePos) = MapArguments(targetMethod, args);
 
-			var serializer = _client.DefaultSerializer;
-			if (serializer == null)
-				throw new Exception("DefaultSerializer is not set");
-
 			var headers = new Metadata();
+			var serializer = ChooseSerializer(typeof(T), targetMethod);
 
 			_client.BeforeMethodCall(typeof(T), targetMethod, headers, ref serializer);
 
@@ -59,7 +56,8 @@ namespace GoreRemoting
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
 				remoteServiceName: _serviceName,
 				targetMethod: targetMethod,
-				args: arguments
+				args: arguments,
+				setCallContext: _client._config.SetCallContext
 				);
 
 			var bytes = Gorializer.GoreSerialize(callMessage, serializer);
@@ -81,10 +79,10 @@ namespace GoreRemoting
 
 			invocation.ReturnValue = resultMessage.ReturnValue;
 
-            //CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
+			// restore context flow from server
+			if (_client._config.RestoreCallContext)
+				CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
         }
-
-		
 
 		async ValueTask InterceptAsync(IAsyncInvocation invocation)
 		{
@@ -93,9 +91,8 @@ namespace GoreRemoting
 
 			(var arguments, var cancel, var streamingDelePos) = MapArguments(targetMethod, args);
 
-			var serializer = _client.DefaultSerializer;
-
 			var headers = new Metadata();
+			var serializer = ChooseSerializer(typeof(T), targetMethod);
 
 			_client.BeforeMethodCall(typeof(T), targetMethod, headers, ref serializer);
 
@@ -104,7 +101,8 @@ namespace GoreRemoting
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
 				remoteServiceName: _serviceName, 
 				targetMethod: targetMethod,
-				args: arguments
+				args: arguments,
+				setCallContext: _client._config.SetCallContext
 				);
 
 			var bytes = Gorializer.GoreSerialize(callMessage, serializer);
@@ -120,10 +118,34 @@ namespace GoreRemoting
 
 			invocation.Result = resultMessage.ReturnValue;
 
-            //CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
+			// restore context flow from server
+			if (_client._config.RestoreCallContext)
+				CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
         }
 
+		private ISerializerAdapter ChooseSerializer(Type t, MethodInfo mi)
+		{
+			// check method...
+			var a1 = mi.GetCustomAttribute<SerializerAttribute>();
+			if (a1 != null)
+			{
+				return _client._config.GetSerializerByType(a1.Serializer);
+			}
+			else
+			{
+				// ...then service itself
+				var t1 = t.GetCustomAttribute<SerializerAttribute>();
+				if (t1 != null)
+					return _client._config.GetSerializerByType(a1.Serializer);
+			}
 
+			// else default
+			var defSerializer = _client._config.DefaultSerializer;
+			if (defSerializer == null)
+				throw new Exception("DefaultSerializer not set");
+
+			return _client._config.GetSerializerByType(defSerializer);
+		}
 
 
 		private async Task<MethodResultMessage> HandleResponseAsync(ISerializerAdapter serializer, byte[] callback, Func<byte[], Task> res, object[] args,

@@ -1,11 +1,9 @@
-
-
 using System.Reflection;
 using System.Threading.Tasks;
 using System;
 using GoreRemoting;
 using System.IO;
-
+using GoreRemoting.Serialization.MessagePack;
 
 namespace ClientShared
 {
@@ -135,15 +133,8 @@ namespace ClientShared
         void GetFile(string file, Action<byte[], int, int> write, Action<string> progress);
         void SendFile(string file, [StreamingFunc] Func<int, (byte[], int)> read, Action<string> progress);
 
-        [MemoryPackSerializer]
+        [Serializer(typeof(MessagePackAdapter))]
         void OtherFormatter();
     }
 
-	public class MemoryPackSerializerAttribute : Attribute//SerializerAttribute
-	{
-		public MemoryPackSerializerAttribute() //: base("MemoryPack")
-		{
-
-		}
-	}
 }

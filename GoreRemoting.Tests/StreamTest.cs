@@ -88,11 +88,11 @@ namespace GoreRemoting.Tests
 		//[InlineData(enSerializer.MessagePack)]
 		public async Task StreamTestt(enSerializer ser)
 		{
-			await using var server = new NativeServer(9198, new ServerConfig() { Serializer = new BinaryFormatterAdapter()});
+			await using var server = new NativeServer(9198, new ServerConfig(new BinaryFormatterAdapter()));
 			server.RegisterService<IStreamTest, StreamTest>();
 			server.Start();
 
-			await using var client = new NativeClient(9198, new ClientConfig() { DefaultSerializer = new BinaryFormatterAdapter() });
+			await using var client = new NativeClient(9198, new ClientConfig(new BinaryFormatterAdapter()));
 			
 			var proxy = client.CreateProxy<IStreamTest>();
 

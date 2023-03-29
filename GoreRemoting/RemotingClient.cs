@@ -16,7 +16,7 @@ namespace GoreRemoting
 
     public class RemotingClient
 	{
-        ClientConfig _config;
+        internal ClientConfig _config;
         CallInvoker _callInvoker;
 
         public RemotingClient(CallInvoker callInvoker, ClientConfig config)
@@ -39,11 +39,11 @@ namespace GoreRemoting
             return (T)proxy;
         }
 
-        internal void BeforeMethodCall(Type serviceType, MethodInfo mi, Metadata headers, ref ISerializerAdapter serializer) => 
-            _config.BeforeMethodCall?.Invoke(serviceType, mi, headers, ref serializer);
+        internal void BeforeMethodCall(Type serviceType, MethodInfo serviceMethod, Metadata headers, ref ISerializerAdapter serializer) => 
+            _config.BeforeMethodCall?.Invoke(serviceType, serviceMethod, headers, ref serializer);
 
 		public MethodCallMessageBuilder MethodCallMessageBuilder = new();
-        public ISerializerAdapter DefaultSerializer => _config.DefaultSerializer;
+
 
 		internal MethodResultMessage Invoke(byte[] req, Func<byte[], Func<byte[], Task>, Task<MethodResultMessage>> reponseHandler, CallOptions callOpt)
         {
@@ -51,46 +51,42 @@ namespace GoreRemoting
             {
                 try
                 {
-                    call.RequestStream.WriteAsync(req).GetAwaiter().GetResult();
-
-                    while (call.ResponseStream.MoveNext().GetAwaiter().GetResult())
+					call.RequestStream.WriteAsync(req).GetAwaiter().GetResult();
+					while (call.ResponseStream.MoveNext().GetAwaiter().GetResult())
                     {
                         var resultMsg = reponseHandler(call.ResponseStream.Current, bytes => call.RequestStream.WriteAsync(bytes)).GetAwaiter().GetResult();
                         if (resultMsg != null)
                             return resultMsg;
                     }
-                }
+					throw new Exception("No result message");
+				}
                 finally
                 {
-                    call.RequestStream.CompleteAsync().GetAwaiter().GetResult();
-                }
+					call.RequestStream.CompleteAsync().GetAwaiter().GetResult();
+				}
 			}
-
-            throw new Exception("No result message");
 		}
 
 		internal async Task<MethodResultMessage> InvokeAsync(byte[] req, Func<byte[], Func<byte[], Task>, Task<MethodResultMessage>> reponseHandler, CallOptions callOpt)
 		{
 			using (var call = _callInvoker.AsyncDuplexStreamingCall(GoreRemoting.Descriptors.DuplexCall, null, callOpt))
 			{
-				await call.RequestStream.WriteAsync(req).ConfigureAwait(false);
-
-				try
-				{
+                try
+                {
+					await call.RequestStream.WriteAsync(req).ConfigureAwait(false);
 					while (await call.ResponseStream.MoveNext().ConfigureAwait(false))
-					{
-						var resultMsg = await reponseHandler(call.ResponseStream.Current, bytes => call.RequestStream.WriteAsync(bytes)).ConfigureAwait(false);
-						if (resultMsg != null)
-							return resultMsg;
-					}
+                    {
+                        var resultMsg = await reponseHandler(call.ResponseStream.Current, bytes => call.RequestStream.WriteAsync(bytes)).ConfigureAwait(false);
+                        if (resultMsg != null)
+                            return resultMsg;
+                    }
+					throw new Exception("No result message");
 				}
-				finally
-				{
+                finally
+                {
 					await call.RequestStream.CompleteAsync().ConfigureAwait(false);
 				}
 			}
-
-			throw new Exception("No result message");
 		}
 
         public event EventHandler<Exception> OneWayException;
@@ -98,6 +94,8 @@ namespace GoreRemoting
 		{
             OneWayException?.Invoke(this, ex);
 		}
+
+        
 	}
 
 #if false

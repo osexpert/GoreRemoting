@@ -26,10 +26,9 @@ namespace ServerNet48
 
         void Go()
         {
-            var remServer = new RemotingServer(new ServerConfig 
+            var remServer = new RemotingServer(new ServerConfig(new BinaryFormatterAdapter())
             { 
                 CreateInstance = CreateInstance,
-                Serializer = new BinaryFormatterAdapter()
             });
             remServer.RegisterService<ITestService, TestService>();
 

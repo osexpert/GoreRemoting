@@ -42,7 +42,7 @@ namespace ServerNet60
 
 			services.AddSingleton<GoreRemotingService>();
 
-			var server = new RemotingServer(new ServerConfig { CreateInstance = CreateInstance, Serializer = new BinaryFormatterAdapter() });
+			var server = new RemotingServer(new ServerConfig(new BinaryFormatterAdapter()) { CreateInstance = CreateInstance });
 
 			server.RegisterService<ITestService, TestService>();
 

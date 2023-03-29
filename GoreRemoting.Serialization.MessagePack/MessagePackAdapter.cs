@@ -83,10 +83,10 @@ namespace GoreRemoting.Serialization.MessagePack
 
 			Exception res = null;
 
-			SerializationInfo info = null;
+
 			if (e.HasSerializationInfo)
 			{
-				info = new SerializationInfo(type, new MessagePackFormatterConverter(Options));
+				var info = new SerializationInfo(type, new MessagePackFormatterConverter(Options));
 
 				foreach (var kv in e.SerializationInfo)
 					info.AddValue(kv.Key, kv.Value);

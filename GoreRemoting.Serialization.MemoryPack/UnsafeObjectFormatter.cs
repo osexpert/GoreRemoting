@@ -7,6 +7,9 @@ using System.Text.RegularExpressions;
 
 namespace GoreRemoting.Serialization.MemoryPack
 {
+	/// <summary>
+	/// https://github.com/Cysharp/MemoryPack/issues/114
+	/// </summary>
 	public sealed class UnsafeObjectFormatterAttribute : MemoryPackCustomFormatterAttribute<UnsafeObjectFormatter, object>
 	{
 		public override UnsafeObjectFormatter GetFormatter()

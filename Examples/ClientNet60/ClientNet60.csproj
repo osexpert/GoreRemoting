@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\GoreRemoting.Serialization.BinaryFormatter\GoreRemoting.Serialization.BinaryFormatter.csproj" />
+    <ProjectReference Include="..\..\GoreRemoting.Serialization.MessagePack\GoreRemoting.Serialization.MessagePack.csproj" />
     <ProjectReference Include="..\..\GoreRemoting\GoreRemoting.csproj" />
   </ItemGroup>
 

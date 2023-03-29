@@ -32,7 +32,7 @@ namespace GoreRemoting.RpcMessaging
         /// <summary>
         /// Gets or sets an array of call context entries that should be send to the server.
         /// </summary>
-        //public CallContextEntry[] CallContextSnapshot { get; set; }
+        public CallContextEntry[] CallContextSnapshot { get; set; }
 
         /// <summary>
         /// Gets or sets an array of generic type parameter names.
@@ -50,6 +50,8 @@ namespace GoreRemoting.RpcMessaging
 			w.Write7BitEncodedInt(Arguments.Length);
             foreach (var a in Arguments)
                 a.Serialize(w, st);
+
+
         }
 
         public void Deserialize(GoreBinaryReader r)

@@ -1,4 +1,3 @@
-#if false
 using System.Threading;
 using System.Threading.Tasks;
 using GoreRemoting.Tests.Tools;
@@ -8,8 +7,12 @@ namespace GoreRemoting.Tests
 {
     public class CallContextTests
     {
-        [Fact]
-        public async Task CallContext_should_flow_from_client_to_server_and_back()
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		[InlineData(enSerializer.MessagePack)]
+		public async Task CallContext_should_flow_from_client_to_server_and_back(enSerializer ser)
         {
             var testService = 
                 new TestService
@@ -22,13 +25,13 @@ namespace GoreRemoting.Tests
                 };
 
             var serverConfig =
-                new ServerConfig()
+                new ServerConfig(Serializers.GetSerializer(ser))
                 {
                     //RegisterServicesAction = container =>
                     //    container.RegisterService<ITestService>(
                     //        factoryDelegate: () => testService,
                     //        lifetime: ServiceLifetime.Singleton)
-                    CreateInstance = (t) => testService
+                    CreateInstance = (_,_) => testService
                 };
 
             await using var server = new NativeServer(9093, serverConfig);
@@ -40,7 +43,7 @@ namespace GoreRemoting.Tests
                 {
                     CallContext.SetData("test", "CallContext");
 
-                    await using var client = new NativeClient(9093, new ClientConfig());
+                    await using var client = new NativeClient(9093, new ClientConfig(Serializers.GetSerializer(ser)));
 
                     var localCallContextValueBeforeRpc = CallContext.GetData("test");
                     
@@ -59,4 +62,3 @@ namespace GoreRemoting.Tests
         }
     }
 }
-#endif

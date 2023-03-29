@@ -1,3 +1,14 @@
+remote linq
+https://github.com/dotnet/csharplang/discussions/5555#discussioncomment-1852834
+https://github.com/6bee/Remote.Linq
+
+callcontext vs headers \ trailers of grpc?
+
+meaning, could we make a GrpgCallHeaders static class, that works similar?
+and meaning, could we make a GrpgCallTrailers static class, that works similar?
+
+
+
 Use headers to tell what\if compression to use? Compress\compressor: Deflate, gzip, etc.
 
 Use separate methods for bidir and unary? So if no callback delegate arguments can use unary.

@@ -67,12 +67,9 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MessagePack)]
 		public async void AsyncMethods_should_work(enSerializer ser)
 		{
-
-
 			var serverConfig =
-				new ServerConfig()
+				new ServerConfig(Serializers.GetSerializer(ser))
 				{
-					Serializer = Serializers.GetSerializer(ser)
 					//RegisterServicesAction = container =>
 					//    container.RegisterService<IAsyncService, AsyncService>(
 					//        lifetime: ServiceLifetime.Singleton)
@@ -82,7 +79,7 @@ namespace GoreRemoting.Tests
 			server.RegisterService<IAsyncService, AsyncService>();
 			server.Start();
 
-			await using var client = new NativeClient(9196, new ClientConfig() { DefaultSerializer = Serializers.GetSerializer(ser) });
+			await using var client = new NativeClient(9196, new ClientConfig(Serializers.GetSerializer(ser)));
 
 			var proxy = client.CreateProxy<IAsyncService>();
 
@@ -99,8 +96,6 @@ namespace GoreRemoting.Tests
 			Assert.Equal(new Version(2, 3, 5), res.Item3[1]);
 		}
 
-
-
 		/// <summary>
 		/// Awaiting for ordinary non-generic task method should not hangs. 
 		/// </summary>
@@ -115,9 +110,8 @@ namespace GoreRemoting.Tests
             var port = 9197;
             
             var serverConfig =
-                new ServerConfig()
+                new ServerConfig(Serializers.GetSerializer(ser))
                 {
-					Serializer = Serializers.GetSerializer(ser)
 					//RegisterServicesAction = container =>
 					//    container.RegisterService<IAsyncService, AsyncService>(
 					//        lifetime: ServiceLifetime.Singleton)
@@ -127,7 +121,7 @@ namespace GoreRemoting.Tests
 			server.RegisterService<IAsyncService, AsyncService>();
 			server.Start();
 
-            await using var client = new NativeClient(port, new ClientConfig() { DefaultSerializer = Serializers.GetSerializer(ser) });
+            await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
             var proxy = client.CreateProxy<IAsyncService>();
 

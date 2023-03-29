@@ -148,7 +148,8 @@ namespace GoreRemoting
 		{
 			var callMessage = Gorializer.GoreDeserialize<MethodCallMessage>(request, serializer);
 
-			//CallContext.RestoreFromSnapshot(callMessage.CallContextSnapshot);
+			if (_config.RestoreCallContext)
+				CallContext.RestoreFromSnapshot(callMessage.CallContextSnapshot);
 
 			(var parameterValues, var parameterTypes) = callMessage.UnwrapParametersFromDeserializedMethodCallMessage();
 
@@ -343,7 +344,8 @@ namespace GoreRemoting
 					MethodCallMessageBuilder.BuildMethodCallResultMessage(
 							method: method,
 							args: parameterValues,
-							returnValue: result);
+							returnValue: result,
+							setCallContext: _config.SetCallContext);
 			}
 			else
 			{
@@ -380,7 +382,7 @@ namespace GoreRemoting
 		{
 			var serializerName = context.RequestHeaders.GetValue(Constants.SerializerHeaderKey);
 
-			var serializer = _config.Serializers[serializerName];
+			var serializer = _config.GetSerializerByName(serializerName);
 
 			return DuplexCall(serializer, requestStream, responseStream, context);
 		}

@@ -17,33 +17,38 @@ namespace GoreRemoting
         /// </summary>
         public Func<Type, Metadata, object> CreateInstance { get; set; } = (t, m) => Activator.CreateInstance(t);
 
-        public Dictionary<string, ISerializerAdapter> Serializers { get; } = new();// = Init();
+        private Dictionary<string, ISerializerAdapter> _serializers = new();
 
-        public ISerializerAdapter Serializer
+        public ServerConfig()
         {
-            get => Serializers.Values.Single();
-            set
-            {
-                Serializers.Clear();
-                AddSerializers(value);
-			}
+            
+        }
+
+		public ServerConfig(params ISerializerAdapter[] serializers)
+		{
+            AddSerializers(serializers);
 		}
+
 
 		public void AddSerializers(params ISerializerAdapter[] adpaters)
         {
             foreach (var s in adpaters)
-                Serializers.Add(s.Name, s);
+                _serializers.Add(s.Name, s);
         }
 
-		//private static Dictionary<string, ISerializerAdapter> Init()
-		//{
-		//          var res = new Dictionary<string, ISerializerAdapter>();
-		//          res.Add(_binaryFormatter.Name, _binaryFormatter);
-		//          return res;
-		//}
+		internal ISerializerAdapter GetSerializerByName(string serializerName)
+		{
+            if (!_serializers.TryGetValue(serializerName, out var res))
+                throw new Exception("Serializer not found: " + serializerName);
+
+            return res;
+		}
 
 		// Use capacity of 1. We don't want to buffer anything, we just wanted to solve the problem of max 1 can write at a time,
 		// the buffering was a side effect that I think may cause problems, at least unbounded, it may use all memory.
 		public int? ResponseQueueLength { get; set; } = 1;
+
+		public bool SetCallContext { get; set; } = true;
+		public bool RestoreCallContext { get; set; } = true;
 	}
 }

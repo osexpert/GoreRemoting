@@ -30,10 +30,9 @@ namespace ClientNet60
 
             var channel = GrpcChannel.ForAddress("http://localhost:5000");
             
-            var c = new RemotingClient(channel.CreateCallInvoker(), new ClientConfig 
+            var c = new RemotingClient(channel.CreateCallInvoker(), new ClientConfig(new BinaryFormatterAdapter()) 
             { 
                 BeforeMethodCall = BeforeBuildMethodCallMessage,
-				DefaultSerializer = new BinaryFormatterAdapter()
             });
 
             var testServ = c.CreateProxy<ITestService>();
@@ -46,19 +45,7 @@ namespace ClientNet60
 
         public void BeforeBuildMethodCallMessage(Type t, MethodInfo mi, Metadata headers, ref ISerializerAdapter serializer)
         {
-			// check method...
-            var a1 = mi.GetCustomAttribute<MemoryPackSerializerAttribute>();
-            if (a1 != null)
-            {
-				serializer = new mempack();
-			}
-            else
-            {
-				// ...then service itself
-                var t1 = t.GetCustomAttribute<MemoryPackSerializerAttribute>();
-                if (t1 != null)
-                    serializer = new mempack();
-            }
+
 
 			headers.Add(Constants.SessionIdHeaderKey, pSessID.ToString());
 			//CallContext.SetData("SessionId", pSessID);

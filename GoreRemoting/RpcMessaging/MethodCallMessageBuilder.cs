@@ -23,8 +23,8 @@ namespace GoreRemoting.RpcMessaging
 		public MethodCallMessage BuildMethodCallMessage(
 			string remoteServiceName,
 			MethodInfo targetMethod,
-			object[] args
-			)
+			object[] args,
+			bool setCallContext)
 		{
 			if (targetMethod == null)
 				throw new ArgumentNullException(nameof(targetMethod));
@@ -40,8 +40,10 @@ namespace GoreRemoting.RpcMessaging
 					 args
 					).ToArray(),
 				IsGenericMethod = targetMethod.IsGenericMethod
-				//CallContextSnapshot = CallContext.GetSnapshot()
 			};
+
+			if (setCallContext)
+				message.CallContextSnapshot = CallContext.GetSnapshot();
 
 			return message;
 		}
@@ -112,7 +114,8 @@ namespace GoreRemoting.RpcMessaging
 		public MethodResultMessage BuildMethodCallResultMessage(
 			MethodInfo method,
 			object[] args,
-			object returnValue)
+			object returnValue,
+			bool setCallContext)
 		{
 
 			var parameterInfos = method.GetParameters();
@@ -141,7 +144,9 @@ namespace GoreRemoting.RpcMessaging
 			}
 
 			message.OutArguments = outArguments.ToArray();
-			//message.CallContextSnapshot = CallContext.GetSnapshot();
+
+			if (setCallContext)
+				message.CallContextSnapshot = CallContext.GetSnapshot();
 
 			return message;
 		}

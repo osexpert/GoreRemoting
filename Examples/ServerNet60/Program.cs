@@ -33,10 +33,9 @@ namespace ServerNet60
 
             var p = new Program();
 
-            var server = new RemotingServer(new ServerConfig
+            var server = new RemotingServer(new ServerConfig(new BinaryFormatterAdapter())
             {
                 CreateInstance = p.CreateInstance,
-                Serializer = new BinaryFormatterAdapter()
 			});
 
             server.RegisterService<ITestService, TestService>();

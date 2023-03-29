@@ -18,11 +18,11 @@ namespace GoreRemoting
 
 	internal class Gorializer
 	{
-		private static readonly RecyclableMemoryStreamManager manager = new RecyclableMemoryStreamManager();
+		private static readonly RecyclableMemoryStreamManager _manager = new RecyclableMemoryStreamManager();
 
 		public static byte[] GoreSerialize(IGorializer data, ISerializerAdapter serializer)
 		{
-			using var ms = manager.GetStream();
+			using var ms = _manager.GetStream();
 
 			var stack = new Stack<object>();
 
@@ -36,7 +36,7 @@ namespace GoreRemoting
 
 		public static T GoreDeserialize<T>(byte[] data, ISerializerAdapter serializer) where T : IGorializer, new()
 		{
-			using var ms = manager.GetStream(data);
+			using var ms = _manager.GetStream(data);
 			using var br = new GoreBinaryReader(ms, leaveOpen: true);
 
 			var res = new T();
@@ -74,4 +74,18 @@ namespace GoreRemoting
 		public new int Read7BitEncodedInt() => base.Read7BitEncodedInt();
 
 	}
+
+
+	public class SerializerAttribute : Attribute
+	{
+		public Type Serializer { get; }
+
+        public SerializerAttribute(Type t)
+        {
+			if (!typeof(ISerializerAdapter).IsAssignableFrom(t))
+				throw new Exception("Not ISerializerAdapter");
+
+			Serializer = t;
+        }
+    }
 }
