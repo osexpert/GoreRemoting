@@ -1,18 +1,26 @@
-﻿using System;
+﻿using GoreRemoting.Serialization.BinaryFormatter;
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using Castle.Components.DictionaryAdapter;
 using MemoryPack;
+using MemoryPack.Formatters;
+using MemoryPack.Internal;
 
 namespace GoreRemoting.Serialization.MemoryPack
 {
 	public class MemoryPackAdapter : ISerializerAdapter
 	{
 
-		public MemoryPackSerializerOptions Options { get; set; } = null;
+		public MemoryPackSerializerOptions Options { get; set; }
+
+		BinaryFormatterAdapter _bf = new();
 
 		/// <summary>
 		/// Serializes an object graph.
@@ -38,82 +46,187 @@ namespace GoreRemoting.Serialization.MemoryPack
 
 		public object GetSerializableException(Exception ex)
 		{
-			return new ExceptionWrapper(ex);
+			return new ExceptionWrapper2() { BinaryFormatterData = _bf.GetExceptionData(ex) };
+#if false
+			SerializationInfo info = null;
+
+			//if (ex.GetType().GetCustomAttribute<SerializableAttribute>() != null)
+			{
+				//info = new SerializationInfo(ex.GetType(), new DummyConverterFormatter());
+
+				try
+				{
+					info = ExceptionSerializationHelpers.GetObjectData(ex);
+				}
+				catch
+				{
+					// cannot serialize for some reason
+					info = null;
+				}
+			}
+
+			return new ExceptionWrapper(ex, info);
+#endif
 		}
 
 		public Exception RestoreSerializedException(object ex)
 		{
+
+			var e = (ExceptionWrapper2)ex;
+
+			return _bf.RestoreException(e.BinaryFormatterData);
+
+#if false
+
 			var e = (ExceptionWrapper)ex;
-			var exeptionType = Type.GetType(e.TypeName);
+			var type = Type.GetType(e.TypeName);
 
 			Exception res = null;
-			if (exeptionType != null)
+
+
+			if (e.HasSerializationInfo)
 			{
-				res = ExceptionHelper.ConstructException(e.Message, exeptionType);
+				var info = new SerializationInfo(type, new MemoryPackFormatterConverter(Options));
+
+				for (int i = 0; i < e.SerializationInfoNames.Length; i++)
+				{
+					var value = e.SerializationInfoValues[i];
+
+					if (e.SerializationInfoNames[i] == "Data")
+					{
+						if (value is IDictionary<object, object> d)
+						{
+							
+							var ld = new System.Collections.Specialized.ListDictionary();
+							foreach (var kv in d)
+							{
+								ld.Add(kv.Key, kv.Value);
+							}
+
+							value = ld;
+						}
+					}
+
+					//foreach (var kv in e.SerializationInfo)
+					info.AddValue(e.SerializationInfoNames[i], value);
+				}
+
+				try
+				{
+					res = ExceptionSerializationHelpers.DeserializingConstructor(type, info);// this.formatter.rpc?.TraceSource);
+
+					FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
+					//				remoteStackTraceString.SetValue(res, e.StackTrace);
+					remoteStackTraceString.SetValue(res, res.StackTrace + System.Environment.NewLine);
+				}
+				catch
+				{
+					// cannot deserialize for some reason
+					res = null;
+				}
+
+				
 			}
 
-			if (res == null)			
+
+			if (res == null)
 			{
-				res = new RemoteInvocationException(e.Message!, e.TypeName);
+				res = new RemoteInvocationException(e.Message!, e.ClassName);
+
+				FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
+				remoteStackTraceString.SetValue(res, e.StackTrace);
+				remoteStackTraceString.SetValue(res, res.StackTrace + System.Environment.NewLine);
 			}
 
-			// set stack
-			FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
-			remoteStackTraceString.SetValue(res, e.StackTrace + System.Environment.NewLine);
+
 
 			return res;
+#endif
 		}
+
 
 		public string Name => "MemoryPack";
 	}
 
 
-
-	/// <summary>
-	/// TODO: can this be used for anything?
-	/// </summary>
 	[MemoryPackable]
-	public /*abstract*/ partial class MemoryPackException : Exception
+	public partial class ExceptionWrapper2 //: Exception //seems impossible that MemPack can inherit exception?
 	{
-		[MemoryPackIgnore]
-		public new MethodBase TargetSite { get; }
+		public byte[] BinaryFormatterData { get; set; }
+	}
 
-		[MemoryPackIgnore]
-		public new IDictionary Data { get; }
-
-		[MemoryPackIgnore]
-		public new Exception InnerException { get; }
-
-		[MemoryPackConstructor]
-		public MemoryPackException(string message) : base(message)
-        {
-            
-        }
-    }
-
-
-
-
+#if false
 	[MemoryPackable]
-	partial class ExceptionWrapper //: Exception //seems impossible that MemPack can inherit exception?
+	public partial class ExceptionWrapper //: Exception //seems impossible that MemPack can inherit exception?
 	{
+		public string? ClassName { get; set; }
 		public string? TypeName { get; set; }
+
 		public string? Message { get; set; }
+
 		public string? StackTrace { get; set; }
 
-		[MemoryPackConstructor]
-        public ExceptionWrapper()
-        {
-            
-        }
+	
+		public string[] SerializationInfoNames { get; set; }
 
-		public ExceptionWrapper(Exception ex)
+		[SerInfoArrayFormatter]
+		public object[] SerializationInfoValues { get; set; }
+		//public Dictionary<string, object> SerializationInfo { get; set; }
+
+		public bool HasSerializationInfo { get; set; }
+
+		[MemoryPackConstructor]
+		public ExceptionWrapper()
+		{
+
+		}
+
+		public ExceptionWrapper(Exception ex, SerializationInfo info)
 		{
 			TypeName = TypeShortener.GetShortType(ex.GetType());
+			ClassName = ex.GetType().ToString();
 			Message = ex.Message;
 			StackTrace = ex.StackTrace;
+
+			if (info != null)
+			{
+				HasSerializationInfo = true;
+				//SerializationInfo = new();
+
+				SerializationInfoNames = new string[info.MemberCount];
+				SerializationInfoValues = new object[info.MemberCount];
+
+				int i = 0;
+				foreach (SerializationEntry se in info)
+				{
+					//SerializationInfo.Add(se.Name, se.Value);
+
+					var value = se.Value;
+
+					if (se.Name == "Data")
+					{
+						if (value is IDictionary)
+						{
+							var d = new Dictionary<object, object>();
+							foreach (DictionaryEntry de in (IDictionary)value)
+								d.Add(de.Key, de.Value);
+
+							value = d;
+							//			return;
+						}
+					}
+
+
+					SerializationInfoNames[i] = se.Name;
+					SerializationInfoValues[i] = value;
+					i++;
+				}
+			}
 		}
 	}
+#endif
+
+
 
 	[MemoryPackable]
 	partial class MemPackObjectArray
@@ -121,4 +234,15 @@ namespace GoreRemoting.Serialization.MemoryPack
 		[UnsafeObjectArrayFormatter]
 		public object[] Datas { get; set; } = null!;
 	}
+
+
+
+
+
+
+
+
+
+
+
 }

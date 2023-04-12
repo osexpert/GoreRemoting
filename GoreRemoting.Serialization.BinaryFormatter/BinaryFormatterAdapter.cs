@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices.ComTypes;
 using BF = System.Runtime.Serialization.Formatters.Binary;
 
 namespace GoreRemoting.Serialization.BinaryFormatter
@@ -138,10 +139,12 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 
 		public object GetSerializableException(Exception ex)
 		{
+			// FIXME: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
 			if (ex.GetType().IsSerializable)
 				return ex;
 
-			var res = new RemoteInvocationException(ex.Message, TypeShortener.GetShortType(ex.GetType()));
+			// do not use type shortener here, we never want assembly name in the type in exceptions
+			var res = new RemoteInvocationException(ex.Message, ex.GetType().ToString());
 
 			// TODO: set stack trace of RemoteInvocationException? yes!
 			// TODO: check if this works
@@ -162,7 +165,29 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		}
 
 		public string Name => "BinaryFormatter";
-    }
+
+		public byte[] GetExceptionData(Exception e)
+		{
+			var e2 = GetSerializableException(e);
+			var binaryFormatter = GetFormatter();
+			using var ms = new MemoryStream();
+			SerializeSafe(binaryFormatter, ms, e2, Options);
+			return ms.ToArray();
+		}
+
+		public Exception RestoreException(byte[] data)
+		{
+			var binaryFormatter = GetFormatter();
+			using var ms = new MemoryStream(data);
+			var e = (Exception)DeserializeSafe(binaryFormatter, ms, Options);
+
+			//FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
+			//remoteStackTraceString.SetValue(e, e.StackTrace + System.Environment.NewLine);
+
+			return RestoreSerializedException(e);
+
+		}
+	}
 
     public class BinarySerializerOptions
     {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GoreRemoting.Serialization.BinaryFormatter;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -10,12 +11,55 @@ using TupleAsJsonArray;
 namespace GoreRemoting.Serialization.Json
 {
 
+	//public class FailsafeFormatter : JsonConverter<Dictionary<string, object>>
+	//{
+	//	public override Dictionary<string, object> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+	//	{
+	//		// this will always succeed i think, because we do not resolve types here, it will be left as object, whatever it contains
+	//		return JsonSerializer.Deserialize<Dictionary<string, object>>(ref reader, options);
+	//	}
+
+	//	public override void Write(Utf8JsonWriter writer, Dictionary<string, object> value, JsonSerializerOptions options)
+	//	{
+	//		foreach (var kv in value)
+	//		{
+	//			writer.WritePropertyName(kv.Key);
+
+	//			if (kv.Value == null)
+	//			{
+	//				writer.WriteNullValue();
+	//			}
+	//			else
+	//			{
+	//				// what input type to use???
+	//				byte[] bytes = null;
+	//				try
+	//				{
+	//					bytes = JsonSerializer.SerializeToUtf8Bytes(kv.Value, kv.Value.GetType(), options);
+
+	//				}
+	//				catch
+	//				{
+	//				}
+
+	//				if (bytes != null)
+	//					writer.WriteRawValue(bytes);
+	//				else
+	//				{
+	//					// write null
+	//					writer.WriteNullValue();
+	//				}
+
+
+	//				//JsonSerializer.ser
+	//			}
+	//		}
+	//	}
+	//}
+
+
 	public class TypelessFormatter : JsonConverter<object>
 	{
-		// WHAT ISTHE POINT OF THIS?
-		//public override bool HandleNull => true;
-
-	//	public override bool HandleNull => true;//base.HandleNull;
 
 		public override object Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 		{
@@ -100,6 +144,8 @@ namespace GoreRemoting.Serialization.Json
 	{
 		public JsonSerializerOptions Options { get; }
 
+		BinaryFormatterAdapter _bf = new();
+
 		public JsonAdapter()
         {
 			Options = CreateOptions();
@@ -114,8 +160,7 @@ namespace GoreRemoting.Serialization.Json
 				ReferenceHandler = ReferenceHandler.Preserve,
 				Converters =
 				{
-					new TupleConverterFactory(),
-					//new FixedVersionConverter()
+					new TupleConverterFactory()
 				}
 
 			};
@@ -129,7 +174,6 @@ namespace GoreRemoting.Serialization.Json
 		/// <returns>Serialized data</returns>
 		public void Serialize(Stream stream, object[] graph)
 		{
-
 			ObjectOnly[] typeAndObjects = new ObjectOnly[graph.Length];
 
 			for (int i = 0; i < graph.Length; i++)
@@ -137,44 +181,9 @@ namespace GoreRemoting.Serialization.Json
 				var obj = graph[i];
 
 				typeAndObjects[i] = new ObjectOnly { Data = obj };
-				//if (obj != null)
-				//{
-				//	var t = obj.GetType();
-				//	var tao = new TypeAndObject() { TypeName = TypeShortener.GetShortType(t), Data = obj };
-				//	typeAndObjects[i] = tao;
-				//}
-				//else
-				//	typeAndObjects[i] = null;
 			}
 
-			System.Text.Json.JsonSerializer.Serialize<ObjectOnly[]>(stream, typeAndObjects, Options);
-
-			//TypeAndObject[] typeAndObjects = new TypeAndObject[graph.Length];
-
-			//for (int i = 0; i < graph.Length; i++)
-			//{
-			//	var obj = graph[i];
-
-			//	if (obj != null)
-			//	{
-			//		var t = obj.GetType();
-			//		var tao = new TypeAndObject() { TypeName = TypeShortener.GetShortType(t), Data = obj };
-			//		typeAndObjects[i] = tao;
-			//	}
-			//	else
-			//		typeAndObjects[i] = null;
-			//}
-
-			//System.Text.Json.JsonSerializer.Serialize<TypeAndObject[]>(stream, typeAndObjects, Options);
-
-
-
-			//stream.Flush();
-			//stream.Position = 0;
-			//using (var fs = File.OpenWrite("e:\\fff.json"))
-			//{
-			//	stream.CopyTo(fs);
-			//}
+			JsonSerializer.Serialize<ObjectOnly[]>(stream, typeAndObjects, Options);
 		}
 
 		class ObjectOnly
@@ -191,7 +200,6 @@ namespace GoreRemoting.Serialization.Json
 		/// <returns>Deserialized object graph</returns>
 		public object[] Deserialize(Stream stream)
 		{
-
 			var typeAndObjects = JsonSerializer.Deserialize<ObjectOnly[]>(stream, Options)!;
 
 			object[] res = new object[typeAndObjects.Length];
@@ -200,129 +208,211 @@ namespace GoreRemoting.Serialization.Json
 			{
 				var to = typeAndObjects[i];
 				res[i] = to.Data;
-				//if (to != null)
-				//{
-				//	var t = Type.GetType(to.TypeName);
-				//	res[i] = ((System.Text.Json.JsonElement)to.Data).Deserialize(t, Options);
-				//}
-				//else
-				//	res[i] = null;
 			}
 
 			return res;
-
-
-			//var typeAndObjects = JsonSerializer.Deserialize<TypeAndObject[]>(stream, Options)!;
-
-			//object[] res = new object[typeAndObjects.Length];
-
-			//for (int i = 0; i < typeAndObjects.Length; i++)
-			//{
-			//	var to = typeAndObjects[i];
-			//	if (to != null)
-			//	{
-			//		var t = Type.GetType(to.TypeName);
-			//		res[i] = ((System.Text.Json.JsonElement)to.Data).Deserialize(t, Options);
-			//	}
-			//	else
-			//		res[i] = null;
-			//}
-
-			//return res;
-
 
 			//// maybe we can convert to same type as parameters?
 			////https://stackoverflow.com/questions/58138793/system-text-json-jsonelement-toobject-workaround
 			//	throw new NotImplementedException();
 		}
 
+		class ExceptionWrapper2
+		{
+			public byte[] BinaryFormatterData { get; set; }
+		}
+
+#if false
 		class ExceptionWrapper //: Exception //seems impossible that MemPack can inherit exception?
 		{
 			public string? TypeName { get; set; }
+			public string? ClassName { get; set; }
+
 			public string? Message { get; set; }
 			public string? StackTrace { get; set; }
 
+			/// <summary>
+			/// We always want serialization\desser of this to not fail.
+			/// </summary>
+//			[JsonConverter(typeof(FailsafeFormatter))]
 			public Dictionary<string, object> SerializationInfo { get; set; }
-			public bool HasSerializationInfo { get; set; }
+
+			//public bool HasSerializationInfo { get; set; }
 
 			public ExceptionWrapper()
 			{
 
 			}
 
-			public ExceptionWrapper(Exception ex, SerializationInfo info)
+			public ExceptionWrapper(Exception ex, Dictionary<string, object> info)
 			{
 				TypeName = TypeShortener.GetShortType(ex.GetType());
+				ClassName = ex.GetType().ToString();
 				Message = ex.Message;
 				StackTrace = ex.StackTrace;
 
-				if (info != null)
-				{
-					HasSerializationInfo = true;
-					SerializationInfo = new();
-					foreach (SerializationEntry se in info)
-					{
-						SerializationInfo.Add(se.Name, se.Value);
-					}
-				}
+				SerializationInfo = info;
+//				if (info != null)
+//				{
+////					HasSerializationInfo = true;
+//					SerializationInfo = new();
+//					foreach (SerializationEntry se in info)
+//					{
+
+
+//						SerializationInfo.Add(se.Name, se.Value);
+//					}
+				
 			}
 		}
+#endif
+
 
 		public object GetSerializableException(Exception ex)
 		{
-			SerializationInfo info = null;
+			// TODO: this can fail. Catch it and failover to a wrapped exception?
 
-			if (ex.GetType().GetCustomAttribute<SerializableAttribute>() != null)
+			return new ExceptionWrapper2() { BinaryFormatterData = _bf.GetExceptionData(ex) };
+
+			//SerializationInfo info = GetObjectData(ex);
+
+			//Dictionary<string, object> b =  FilterInfo(info);
+
+			//return new ExceptionWrapper(ex, b);
+		}
+
+#if false
+
+		/// <summary>
+		/// Filter out those that can't be serialized
+		/// </summary>
+		/// <param name="info"></param>
+		/// <returns></returns>
+		private Dictionary<string, object> FilterInfo(SerializationInfo info)
+		{
+			Dictionary<string, object> res = new();
+
+			foreach (SerializationEntry se in info)
 			{
-				info = new SerializationInfo(ex.GetType(), new JsonConverterFormatter(Options));
-
 				try
 				{
-					ExceptionSerializationHelpers.Serialize(ex, info);
+					if (se.Value != null)
+					{
+						// TODO: would be nice if we could keep this data...instad of waisting it
+						var dummy = JsonSerializer.SerializeToUtf8Bytes(se.Value, se.Value.GetType(), Options);
+						res.Add(se.Name, se.Value);
+					}
+					else
+					{
+						res.Add(se.Name, null);
+					}
 				}
 				catch
 				{
-					// cannot serialize for some reason
-					info = null;
+					res.TryAdd(se.Name, null);
 				}
 			}
 
-			return new ExceptionWrapper(ex, info);
+			return res;
 		}
+#endif
+
+#if false
+		private SerializationInfo GetObjectData(Exception ex)
+		{
+			try
+			{
+				//if (ex.GetType().GetCustomAttribute<SerializableAttribute>() != null)
+				{
+					// BUT...is JsonConverterFormatter used for serializing???
+					// use a fake converter here?
+					
+
+					// write exeption into info
+					return ExceptionSerializationHelpers.GetObjectData(ex);
+					//return info;
+				}
+			}
+			catch
+			{
+				return null;
+			}
+		}
+#endif
 
 		public Exception RestoreSerializedException(object ex)
 		{
-			var e = (ExceptionWrapper)ex;
+			var e = (ExceptionWrapper2)ex;
+
+			return _bf.RestoreException(e.BinaryFormatterData);
+
+#if false
 			var type = Type.GetType(e.TypeName);
+
+			if (type != null)
+			{
+				if (!typeof(Exception).IsAssignableFrom(type))
+				{
+					throw new NotSupportedException($"{e.TypeName} does not derive from {typeof(Exception).FullName}.");
+				}
+			}
 
 			Exception res = null;
 
-			if (e.HasSerializationInfo)
+			if (type != null)
 			{
 				var info = new SerializationInfo(type, new JsonConverterFormatter(Options));
 
-				foreach (var kv in e.SerializationInfo)
-					info.AddValue(kv.Key, kv.Value);
+				if (e.SerializationInfo != null)
+					foreach (var kv in e.SerializationInfo)
+						info.AddValue(kv.Key, kv.Value);
 
 				try
 				{
-					res = ExceptionSerializationHelpers.Deserialize<Exception>(info, null);// this.formatter.rpc?.TraceSource);
+					res = ExceptionSerializationHelpers.DeserializingConstructor(type, info);
+				}
+				catch { }
 
+				if (res != null)
+				{
 					FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
 					//				remoteStackTraceString.SetValue(res, e.StackTrace);
 					remoteStackTraceString.SetValue(res, res.StackTrace + System.Environment.NewLine);
 				}
-				catch
-				{
-					// cannot deserialize for some reason
-					res = null;
-				}
 			}
 
+			if (res == null && type != null)
+			{
+				// Use some strandard ctor
+				res = ExceptionHelper.ConstructException(e.Message, type);
+
+				FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
+				remoteStackTraceString.SetValue(res, e.StackTrace);
+				remoteStackTraceString.SetValue(res, res.StackTrace + System.Environment.NewLine);
+			}
+
+			if (res == null && type != null)
+			{
+				var info = new SerializationInfo(type, new JsonConverterFormatter(Options));
+
+				if (e.SerializationInfo != null)
+					foreach (var kv in e.SerializationInfo)
+						info.AddValue(kv.Key, kv.Value);
+
+				try
+				{
+					res = ExceptionSerializationHelpers.DeserializingConstructor(typeof(RemoteInvocationException), info);
+
+				}
+				catch { }
+				//FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
+				//remoteStackTraceString.SetValue(res, e.StackTrace);
+				//remoteStackTraceString.SetValue(res, res.StackTrace + System.Environment.NewLine);
+			}
 
 			if (res == null)
 			{
-				res = new RemoteInvocationException(e.Message!, e.TypeName);
+				res = new RemoteInvocationException(e.Message!, e.ClassName);
 
 				FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
 				remoteStackTraceString.SetValue(res, e.StackTrace);
@@ -346,6 +436,7 @@ namespace GoreRemoting.Serialization.Json
 
 
 			return res;
+#endif
 		}
 
 
@@ -353,12 +444,14 @@ namespace GoreRemoting.Serialization.Json
 		public string Name => "Json";
 	}
 
-	class TypeAndObject
-	{
-		public string TypeName { get; set; }
-		public object Data { get; set; }
-	}
+	//class TypeAndObject
+	//{
+	//	public string TypeName { get; set; }
+	//	public object Data { get; set; }
+	//}
 
+
+#if false
 	class JsonConverterFormatter : IFormatterConverter
 	{
 		private readonly JsonSerializerOptions _options;
@@ -368,15 +461,37 @@ namespace GoreRemoting.Serialization.Json
 			_options = options;
 		}
 
-		public object Convert(object value, Type type) => ((JsonElement)value).Deserialize(type, this._options);
+		public object Convert(object value, Type type)
+		{
+			try
+			{
+				return ((JsonElement)value).Deserialize(type, this._options);
+			}
+			catch
+			{
+				// ignore errors
+				return null;
+			}
+		}
 
 		public object Convert(object value, TypeCode typeCode)
 		{
-			return typeCode switch
+			if (typeCode == TypeCode.Object)
 			{
-				TypeCode.Object => ((JsonElement)value).Deserialize(typeof(object), this._options),
-				_ => ExceptionSerializationHelpers.Convert(this, value, typeCode),
-			};
+				try
+				{
+					return ((JsonElement)value).Deserialize<object>(this._options);
+				}
+				catch
+				{
+					// ignore errors
+					return null;
+				}
+			}
+			else
+			{
+				return ExceptionSerializationHelpers.Convert(this, value, typeCode);
+			}
 		}
 
 		public bool ToBoolean(object value) => ((JsonElement)value).Deserialize<bool>(this._options);
@@ -410,25 +525,7 @@ namespace GoreRemoting.Serialization.Json
 		public ulong ToUInt64(object value) => ((JsonElement)value).Deserialize<ulong>(this._options);
 	}
 
-	//public class FixedVersionConverter : JsonConverter<Version>
-	//{
-	//	private readonly static JsonConverter<Version> s_defaultConverter =
-	//		(JsonConverter<Version>)JsonSerializerOptions.Default.GetConverter(typeof(Version));
+#endif
+	
 
- //       public override Version Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-	//	{
-	//		if (reader.TokenType == JsonTokenType.Null)
-	//			return null;
-
-	//		return s_defaultConverter.Read(ref reader, typeToConvert, options);
-	//	}
-
-	//	public override void Write(Utf8JsonWriter writer, Version value, JsonSerializerOptions options)
-	//	{
-	//		if (value == null)
-	//			writer.WriteNullValue();
-	//		else
-	//			s_defaultConverter.Write(writer, value, options);
-	//	}
-	//}
 }

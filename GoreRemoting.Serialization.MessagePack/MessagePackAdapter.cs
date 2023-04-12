@@ -5,12 +5,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Serialization;
+using GoreRemoting.Serialization.BinaryFormatter;
 
 namespace GoreRemoting.Serialization.MessagePack
 {
 	public class MessagePackAdapter : ISerializerAdapter
 	{
 		public string Name => "MessagePack";
+
+		BinaryFormatterAdapter _bf = new();
 
 		public MessagePackSerializerOptions Options { get; set; } = null;
 
@@ -54,15 +57,18 @@ namespace GoreRemoting.Serialization.MessagePack
 
 		public object GetSerializableException(Exception ex)
 		{
+			return new ExceptionWrapper2() { BinaryFormatterData = _bf.GetExceptionData(ex) };
+
+#if false
 			SerializationInfo info = null;
 
-			if (ex.GetType().GetCustomAttribute<SerializableAttribute>() != null)
+			//if (ex.GetType().GetCustomAttribute<SerializableAttribute>() != null)
 			{
-				info = new SerializationInfo(ex.GetType(), new MessagePackFormatterConverter(Options));
+				//info = new SerializationInfo(ex.GetType(), new DummyConverterFormatter());
 
 				try
 				{
-					ExceptionSerializationHelpers.Serialize(ex, info);
+					info = ExceptionSerializationHelpers.GetObjectData(ex);
 				}
 				catch
 				{
@@ -72,12 +78,18 @@ namespace GoreRemoting.Serialization.MessagePack
 			}
 
 			return new ExceptionWrapper(ex, info);
+#endif
 		}
 
 		public Exception RestoreSerializedException(object ex)
 		{
 			//	return (Exception)ex;
 
+			var e = (ExceptionWrapper2)ex;
+
+			return _bf.RestoreException(e.BinaryFormatterData);
+
+#if false
 			var e = (ExceptionWrapper)ex;
 			var type = Type.GetType(e.TypeName);
 
@@ -93,7 +105,7 @@ namespace GoreRemoting.Serialization.MessagePack
 
 				try
 				{
-					res = ExceptionSerializationHelpers.Deserialize<Exception>(info, null);// this.formatter.rpc?.TraceSource);
+					res = ExceptionSerializationHelpers.DeserializingConstructor(type, info);// this.formatter.rpc?.TraceSource);
 
 					FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
 					//				remoteStackTraceString.SetValue(res, e.StackTrace);
@@ -119,9 +131,17 @@ namespace GoreRemoting.Serialization.MessagePack
 
 
 			return res;
-
+#endif
 		}
 
+		[MessagePackObject]
+		public class ExceptionWrapper2
+		{
+			[Key(0)] 
+			public byte[] BinaryFormatterData { get; set; }
+		}
+
+#if false
 		[MessagePackObject]
 		public class ExceptionWrapper //: Exception //seems impossible that MemPack can inherit exception?
 		{
@@ -160,6 +180,6 @@ namespace GoreRemoting.Serialization.MessagePack
 			}
 		}
 
-
+#endif
 	}
 }

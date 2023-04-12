@@ -1,4 +1,5 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿#if false
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace GoreRemoting
@@ -15,50 +16,56 @@ namespace GoreRemoting
 
 		private static StreamingContext Context => new StreamingContext(StreamingContextStates.Remoting);
 
-		public static T Deserialize<T>(SerializationInfo info, TraceSource? traceSource)
-			where T : Exception
+		public static Exception DeserializingConstructor(Type type, SerializationInfo info)
 		{
-			string? runtimeTypeName = info.GetString("ClassName");
-			if (runtimeTypeName is null)
-			{
-				throw new NotSupportedException("ClassName was not found in the serialized data.");
-			}
 
-			Type? runtimeType = Type.GetType(runtimeTypeName);
-			if (runtimeType is null)
-			{
-				if (traceSource?.Switch.ShouldTrace(TraceEventType.Warning) ?? false)
-				{
-					traceSource.TraceEvent(TraceEventType.Warning, 1,//(int)JsonRpc.TraceEvents.ExceptionTypeNotFound, 
-						"{0} type could not be loaded. Falling back to System.Exception.", runtimeTypeName);
-				}
 
-				// fallback to deserializing the base Exception type.
-				runtimeType = typeof(Exception);
-			}
+			//Type? runtimeType = Type.GetType(typeName);// runtimeTypeName);
+			//if (runtimeType is null)
+			//{
+			//	if (traceSource?.Switch.ShouldTrace(TraceEventType.Warning) ?? false)
+			//	{
+			//		traceSource.TraceEvent(TraceEventType.Warning, 1,//(int)JsonRpc.TraceEvents.ExceptionTypeNotFound, 
+			//			"{0} type could not be loaded. Falling back to System.Exception.", typeName);// runtimeTypeName);
+			//	}
+
+			//	// fallback to deserializing the base Exception type.
+			//	runtimeType = typeof(RemoteInvocationException);
+			//	//return null;
+			//	//throw new Exception("Type not found");
+			//}
 
 			// Sanity/security check: ensure the runtime type derives from the expected type.
-			if (!typeof(T).IsAssignableFrom(runtimeType))
-			{
-				throw new NotSupportedException($"{runtimeTypeName} does not derive from {typeof(T).FullName}.");
-			}
+			//if (!typeof(T).IsAssignableFrom(runtimeType))
+			//{
+			//	throw new NotSupportedException($"{typeName} does not derive from {typeof(T).FullName}.");
+			//}
 
-			EnsureSerializableAttribute(runtimeType);
+			//			EnsureSerializableAttribute(runtimeType);
 
-			ConstructorInfo? ctor = FindDeserializingConstructor(runtimeType);
+			ConstructorInfo ctor = FindDeserializingConstructor(type);
 			if (ctor is null)
 			{
-				throw new NotSupportedException($"{runtimeType.FullName} does not declare a deserializing constructor with signature ({string.Join(", ", DeserializingConstructorParameterTypes.Select(t => t.FullName))}).");
+				throw new Exception("deserializing constructor not found");
+				//throw new NotSupportedException($"{runtimeType.FullName} does not declare a deserializing constructor with signature ({string.Join(", ", DeserializingConstructorParameterTypes.Select(t => t.FullName))}).");
 			}
 
-			return (T)ctor.Invoke(new object?[] { info, Context });
+			var res = (Exception)ctor.Invoke(new object?[] { info, Context });
+
+	
+
+			return res;
 		}
 
-		public static void Serialize(Exception exception, SerializationInfo info)
+		public static SerializationInfo GetObjectData(Exception ex)//,  info)
 		{
-			Type exceptionType = exception.GetType();
-			EnsureSerializableAttribute(exceptionType);
-			exception.GetObjectData(info, Context);
+			SerializationInfo info = new SerializationInfo(ex.GetType(), new DummyConverterFormatter());
+
+			//Type exceptionType = exception.GetType();
+			//			EnsureSerializableAttribute(exceptionType);
+			ex.GetObjectData(info, Context);
+
+			return info;
 		}
 
 		public static object Convert(IFormatterConverter formatterConverter, object value, TypeCode typeCode)
@@ -84,14 +91,56 @@ namespace GoreRemoting
 			};
 		}
 
-		private static void EnsureSerializableAttribute(Type runtimeType)
-		{
-			if (runtimeType.GetCustomAttribute<SerializableAttribute>() is null)
-			{
-				throw new NotSupportedException($"{runtimeType.FullName} is not marked with the {typeof(SerializableAttribute).FullName}.");
-			}
-		}
+		//private static void EnsureSerializableAttribute(Type runtimeType)
+		//{
+		//	if (runtimeType.GetCustomAttribute<SerializableAttribute>() is null)
+		//	{
+		//		throw new NotSupportedException($"{runtimeType.FullName} is not marked with the {typeof(SerializableAttribute).FullName}.");
+		//	}
+		//}
 
 		private static ConstructorInfo? FindDeserializingConstructor(Type runtimeType) => runtimeType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, DeserializingConstructorParameterTypes, null);
 	}
+
+	public class DummyConverterFormatter : IFormatterConverter
+	{
+
+
+		public object Convert(object value, Type type) => throw new NotImplementedException();
+
+		public object Convert(object value, TypeCode typeCode) => throw new NotImplementedException();
+
+
+		public bool ToBoolean(object value) => throw new NotImplementedException();
+
+		public byte ToByte(object value) => throw new NotImplementedException();
+
+		public char ToChar(object value) => throw new NotImplementedException();
+
+		public DateTime ToDateTime(object value) => throw new NotImplementedException();
+
+		public decimal ToDecimal(object value) => throw new NotImplementedException();
+
+		public double ToDouble(object value) => throw new NotImplementedException();
+
+		public short ToInt16(object value) => throw new NotImplementedException();
+
+		public int ToInt32(object value) => throw new NotImplementedException();
+
+		public long ToInt64(object value) => throw new NotImplementedException();
+
+		public sbyte ToSByte(object value) => throw new NotImplementedException();
+
+		public float ToSingle(object value) => throw new NotImplementedException();
+
+		public string ToString(object value) => throw new NotImplementedException();
+
+		public ushort ToUInt16(object value) => throw new NotImplementedException();
+
+		public uint ToUInt32(object value) => throw new NotImplementedException();
+
+		public ulong ToUInt64(object value) => throw new NotImplementedException();
+	}
+
 }
+#endif
