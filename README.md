@@ -3,7 +3,7 @@
 GoreRemoting is based on CoreRemoting  
 https://github.com/theRainbird/CoreRemoting  
 
-GoreRemoting is (just like CoreRemoting) a way to migrate from .NET Remoting.  
+GoreRemoting is (just like CoreRemoting) a way to migrate from .NET Remoting, but with Grpc instead of Websockets\Sockets.
 
 How it works:
 Services are always stateless\single call. If you need to store state, store in a session etc.
