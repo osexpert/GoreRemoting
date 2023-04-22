@@ -1,3 +1,52 @@
+lz4
+zstd
+deflate
+gzip
+
+compress if over 1000 bytes?
+
+
+
+    info.AddValue("ClassName", GetClassName(), typeof(string)); // Do not rename (binary serialization)
+            info.AddValue("Message", _message, typeof(string)); // Do not rename (binary serialization)
+            info.AddValue("Data", _data, typeof(IDictionary)); // Do not rename (binary serialization)
+            info.AddValue("InnerException", _innerException, typeof(Exception)); // Do not rename (binary serialization)
+            info.AddValue("HelpURL", _helpURL, typeof(string)); // Do not rename (binary serialization)
+            info.AddValue("StackTraceString", SerializationStackTraceString, typeof(string)); // Do not rename (binary serialization)
+            info.AddValue("RemoteStackTraceString", _remoteStackTraceString, typeof(string)); // Do not rename (binary serialization)
+            info.AddValue("RemoteStackIndex", 0, typeof(int)); // Do not rename (binary serialization)
+            info.AddValue("ExceptionMethod", null, typeof(string)); // Do not rename (binary serialization)
+            info.AddValue("HResult", _HResult); // Do not rename (binary serialization)
+            info.AddValue("Source", _source, typeof(string)); // Do not rename (binary serialization)
+            info.AddValue("WatsonBuckets", SerializationWatsonBuckets, typeof(byte[])); // Do not rename (binary serialization)
+        }
+       protected Exception(SerializationInfo info, StreamingContext context)
+        {
+            if (info == null)
+                throw new ArgumentNullException(nameof(info));
+
+            _message = info.GetString("Message"); // Do not rename (binary serialization)
+            _data = (IDictionary?)(info.GetValueNoThrow("Data", typeof(IDictionary))); // Do not rename (binary serialization)
+            _innerException = (Exception?)(info.GetValue("InnerException", typeof(Exception))); // Do not rename (binary serialization)
+            _helpURL = info.GetString("HelpURL"); // Do not rename (binary serialization)
+            _stackTraceString = info.GetString("StackTraceString"); // Do not rename (binary serialization)
+            _remoteStackTraceString = info.GetString("RemoteStackTraceString"); // Do not rename (binary serialization)
+            _HResult = info.GetInt32("HResult"); // Do not rename (binary serialization)
+            _source = info.GetString("Source"); // Do not rename (binary serialization)
+
+            RestoreRemoteStackTrace(info, context);
+        }
+        
+special ctor for exceptions?
+has to be serializable?
+Check this: StreamJsonRpc 
+
+security: check that types are of same types in service methods?
+so would loop methods with same name and same numer of args. Then check if types sent match those types,
+and only then deserialize to real type.
+BUT is this really a problem for json and memorypack etc? I dont think so...
+
+
 remote linq
 https://github.com/dotnet/csharplang/discussions/5555#discussioncomment-1852834
 https://github.com/6bee/Remote.Linq

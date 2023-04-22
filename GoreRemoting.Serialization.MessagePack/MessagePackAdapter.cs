@@ -57,7 +57,8 @@ namespace GoreRemoting.Serialization.MessagePack
 
 		public object GetSerializableException(Exception ex)
 		{
-			return new ExceptionWrapper2() { BinaryFormatterData = _bf.GetExceptionData(ex) };
+			//return new ExceptionWrapper2() { BinaryFormatterData = _bf.GetExceptionData(ex) };
+			return _bf.GetExceptionData(ex);
 
 #if false
 			SerializationInfo info = null;
@@ -85,9 +86,9 @@ namespace GoreRemoting.Serialization.MessagePack
 		{
 			//	return (Exception)ex;
 
-			var e = (ExceptionWrapper2)ex;
+			//var e = (ExceptionWrapper2)ex;
 
-			return _bf.RestoreException(e.BinaryFormatterData);
+			return _bf.RestoreException((byte[])ex);//.BinaryFormatterData);
 
 #if false
 			var e = (ExceptionWrapper)ex;
@@ -134,12 +135,12 @@ namespace GoreRemoting.Serialization.MessagePack
 #endif
 		}
 
-		[MessagePackObject]
-		public class ExceptionWrapper2
-		{
-			[Key(0)] 
-			public byte[] BinaryFormatterData { get; set; }
-		}
+		//[MessagePackObject]
+		//public class ExceptionWrapper2
+		//{
+		//	[Key(0)] 
+		//	public byte[] BinaryFormatterData { get; set; }
+		//}
 
 #if false
 		[MessagePackObject]

@@ -23,6 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\GoreRemoting.Compression.Lz4\GoreRemoting.Compression.Lz4.csproj" />
       <ProjectReference Include="..\GoreRemoting.Serialization.BinaryFormatter\GoreRemoting.Serialization.BinaryFormatter.csproj" />
       <ProjectReference Include="..\GoreRemoting.Serialization.Json\GoreRemoting.Serialization.Json.csproj" />
       <ProjectReference Include="..\GoreRemoting.Serialization.MemoryPack\GoreRemoting.Serialization.MemoryPack.csproj" />

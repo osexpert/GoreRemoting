@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using GoreRemoting.Serialization.BinaryFormatter;
+using Grpc.Net.Compression;
 
 namespace ClientNet60
 {
@@ -43,11 +44,11 @@ namespace ClientNet60
 
         Guid pSessID = Guid.NewGuid();
 
-        public void BeforeBuildMethodCallMessage(Type t, MethodInfo mi, Metadata headers, ref ISerializerAdapter serializer)
+        public void BeforeBuildMethodCallMessage(BeforeMethodCallParams p)
         {
 
 
-			headers.Add(Constants.SessionIdHeaderKey, pSessID.ToString());
+			p.Headers.Add(Constants.SessionIdHeaderKey, pSessID.ToString());
 			//CallContext.SetData("SessionId", pSessID);
         }
 

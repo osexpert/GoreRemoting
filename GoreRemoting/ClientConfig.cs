@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
+using Grpc.Net.Compression;
 
 namespace GoreRemoting
 {
@@ -15,10 +16,11 @@ namespace GoreRemoting
     {
         /// <summary>
         /// Set to be notified before a method call
-        /// </summary>
-        public ActionRef<Type, MethodInfo, Metadata, ISerializerAdapter> BeforeMethodCall { get; set; }
+        /// </summary>BeforeMethodCall
+  //      public ActionRef<Type, MethodInfo, Metadata, ISerializerAdapter, ICompressionProvider> BeforeMethodCall { get; set; }
 
-		public delegate void ActionRef<T1, T2, T3, T4>(T1 a, T2 b, T3 c, ref T4 d);
+		//public delegate void ActionRef<T1, T2, T3, T4, T5>(T1 a, T2 b, T3 c, ref T4 d, ref T5 e);
+        public Action<BeforeMethodCallParams> BeforeMethodCall { get; set; }
 
         public ClientConfig()
         {
@@ -28,7 +30,7 @@ namespace GoreRemoting
 
 		public ClientConfig(params ISerializerAdapter[] serializers)
 		{
-            AddSerializers(serializers);
+            AddSerializer(serializers);
 		}
 
 
@@ -58,7 +60,7 @@ namespace GoreRemoting
 
         private Dictionary<Type, ISerializerAdapter> _serializers = new();
 
-        public void AddSerializers(params ISerializerAdapter[] adapters)
+        public void AddSerializer(params ISerializerAdapter[] adapters)
         {
             foreach (var ada in adapters)
 				_serializers.Add(ada.GetType(), ada);
@@ -75,8 +77,82 @@ namespace GoreRemoting
             return res;
 		}
 
-        public bool SetCallContext { get; set; } = true;
+		public ICompressionProvider GetCompressorByType(Type compressor)
+		{
+			if (!typeof(ICompressionProvider).IsAssignableFrom(compressor))
+				throw new Exception("Not ICompressionProvider");
+
+			if (!_compressors.TryGetValue(compressor, out var res))
+				throw new Exception("Compressor not found: " + compressor);
+
+			return res;
+		}
+
+		public bool SetCallContext { get; set; } = true;
 
 		public bool RestoreCallContext { get; set; } = true;
+
+
+		private Dictionary<Type, ICompressionProvider> _compressors = new();
+
+
+		Type _defaultCompressor;
+
+		/// <summary>
+		/// If more than one serializer added, must specify here which one is default
+		/// </summary>
+		public Type DefaultCompressor
+		{
+			get
+			{
+				if (_defaultCompressor != null)
+					return _defaultCompressor;
+
+				// if we have only one, default is implied
+				if (_compressors.Count() == 1)
+					return _compressors.Single().Key;
+
+				return null;
+			}
+			set
+			{
+				_defaultCompressor = value;
+			}
+		}
+
+		public void AddCompressor(params ICompressionProvider[] adapters)
+		{
+			foreach (var ada in adapters)
+				_compressors.Add(ada.GetType(), ada);
+		}
+	}
+
+
+
+	public class BeforeMethodCallParams
+    {
+		/// <summary>
+		/// FIXME: does ref work here?
+		/// </summary>
+		/// <param name="type"></param>
+		/// <param name="targetMethod"></param>
+		/// <param name="headers"></param>
+		public BeforeMethodCallParams(Type type, MethodInfo targetMethod, Metadata headers, ISerializerAdapter s, ICompressionProvider cp)
+		{
+			ServiceType = type;
+			TargetMethod = targetMethod;
+			Headers = headers;
+			Compressor = cp;
+			Serializer = s;
+		}
+
+		public Metadata Headers { get; }
+
+		public Type ServiceType { get; }
+
+		public MethodInfo TargetMethod { get; }
+
+		public ISerializerAdapter Serializer { get; }
+		public ICompressionProvider Compressor { get; }
 	}
 }

@@ -217,10 +217,10 @@ namespace GoreRemoting.Serialization.Json
 			//	throw new NotImplementedException();
 		}
 
-		class ExceptionWrapper2
-		{
-			public byte[] BinaryFormatterData { get; set; }
-		}
+		//class ExceptionWrapper2
+		//{
+		//	public byte[] BinaryFormatterData { get; set; }
+		//}
 
 #if false
 		class ExceptionWrapper //: Exception //seems impossible that MemPack can inherit exception?
@@ -272,7 +272,8 @@ namespace GoreRemoting.Serialization.Json
 		{
 			// TODO: this can fail. Catch it and failover to a wrapped exception?
 
-			return new ExceptionWrapper2() { BinaryFormatterData = _bf.GetExceptionData(ex) };
+			//return new ExceptionWrapper2() { BinaryFormatterData = _bf.GetExceptionData(ex) };
+			return _bf.GetExceptionData(ex);
 
 			//SerializationInfo info = GetObjectData(ex);
 
@@ -342,9 +343,9 @@ namespace GoreRemoting.Serialization.Json
 
 		public Exception RestoreSerializedException(object ex)
 		{
-			var e = (ExceptionWrapper2)ex;
+			//var e = (ExceptionWrapper2)ex;
 
-			return _bf.RestoreException(e.BinaryFormatterData);
+			return _bf.RestoreException((byte[])ex);
 
 #if false
 			var type = Type.GetType(e.TypeName);

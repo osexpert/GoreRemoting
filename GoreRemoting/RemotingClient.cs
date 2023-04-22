@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Grpc.Core;
 using GoreRemoting.RpcMessaging;
 using GoreRemoting.Serialization;
+using Grpc.Net.Compression;
 
 namespace GoreRemoting
 {
@@ -39,11 +40,7 @@ namespace GoreRemoting
             return (T)proxy;
         }
 
-        internal void BeforeMethodCall(Type serviceType, MethodInfo serviceMethod, Metadata headers, ref ISerializerAdapter serializer) => 
-            _config.BeforeMethodCall?.Invoke(serviceType, serviceMethod, headers, ref serializer);
-
 		public MethodCallMessageBuilder MethodCallMessageBuilder = new();
-
 
 		internal MethodResultMessage Invoke(byte[] req, Func<byte[], Func<byte[], Task>, Task<MethodResultMessage>> reponseHandler, CallOptions callOpt)
         {

@@ -31,7 +31,7 @@ namespace GoreRemoting.Tests
                     //    container.RegisterService<ITestService>(
                     //        factoryDelegate: () => testService,
                     //        lifetime: ServiceLifetime.Singleton)
-                    CreateInstance = (_,_) => testService
+                    CreateService = (_,_) => testService
                 };
 
             await using var server = new NativeServer(9093, serverConfig);

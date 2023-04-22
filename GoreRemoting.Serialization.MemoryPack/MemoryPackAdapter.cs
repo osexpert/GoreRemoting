@@ -46,7 +46,8 @@ namespace GoreRemoting.Serialization.MemoryPack
 
 		public object GetSerializableException(Exception ex)
 		{
-			return new ExceptionWrapper2() { BinaryFormatterData = _bf.GetExceptionData(ex) };
+			//return new ExceptionWrapper2() { BinaryFormatterData = _bf.GetExceptionData(ex) };
+			return _bf.GetExceptionData(ex);
 #if false
 			SerializationInfo info = null;
 
@@ -72,9 +73,9 @@ namespace GoreRemoting.Serialization.MemoryPack
 		public Exception RestoreSerializedException(object ex)
 		{
 
-			var e = (ExceptionWrapper2)ex;
+			//var e = (ExceptionWrapper2)ex;
 
-			return _bf.RestoreException(e.BinaryFormatterData);
+			return _bf.RestoreException((byte[])ex);//.BinaryFormatterData);
 
 #if false
 
@@ -149,11 +150,11 @@ namespace GoreRemoting.Serialization.MemoryPack
 	}
 
 
-	[MemoryPackable]
-	public partial class ExceptionWrapper2 //: Exception //seems impossible that MemPack can inherit exception?
-	{
-		public byte[] BinaryFormatterData { get; set; }
-	}
+	//[MemoryPackable]
+	//public partial class ExceptionWrapper2 //: Exception //seems impossible that MemPack can inherit exception?
+	//{
+	//	public byte[] BinaryFormatterData { get; set; }
+	//}
 
 #if false
 	[MemoryPackable]

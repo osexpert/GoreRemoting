@@ -28,7 +28,7 @@ namespace ServerNet48
         {
             var remServer = new RemotingServer(new ServerConfig(new BinaryFormatterAdapter())
             { 
-                CreateInstance = CreateInstance,
+                CreateService = CreateInstance,
             });
             remServer.RegisterService<ITestService, TestService>();
 

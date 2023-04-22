@@ -15,6 +15,7 @@ using GoreRemoting.RpcMessaging;
 using GoreRemoting.Serialization;
 using stakx.DynamicProxy;
 using System.IO;
+using Grpc.Net.Compression;
 
 namespace GoreRemoting
 {
@@ -48,10 +49,13 @@ namespace GoreRemoting
 
 			var headers = new Metadata();
 			var serializer = ChooseSerializer(typeof(T), targetMethod);
+			var compressor = ChooseCompressor(typeof(T), targetMethod);
 
-			_client.BeforeMethodCall(typeof(T), targetMethod, headers, ref serializer);
+			_client._config.BeforeMethodCall?.Invoke(new BeforeMethodCallParams(typeof(T), targetMethod, headers, serializer, compressor));
 
 			headers.Add(Constants.SerializerHeaderKey, serializer.Name);
+			if (compressor != null)
+				headers.Add(Constants.CompressorHeaderKey, compressor.EncodingName);
 
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
 				remoteServiceName: _serviceName,
@@ -60,10 +64,10 @@ namespace GoreRemoting
 				setCallContext: _client._config.SetCallContext
 				);
 
-			var bytes = Gorializer.GoreSerialize(callMessage, serializer);
+			var bytes = Gorializer.GoreSerialize(callMessage, serializer, compressor);
 
 			var resultMessage = _client.Invoke(bytes, 
-				(callback, res) => HandleResponseAsync(serializer, callback, res, args, streamingDelePos), 
+				(callback, res) => HandleResponseAsync(serializer, compressor, callback, res, args, streamingDelePos), 
 				new CallOptions(headers: headers, cancellationToken: cancel));
 
 			if (resultMessage.Exception != null)
@@ -93,10 +97,13 @@ namespace GoreRemoting
 
 			var headers = new Metadata();
 			var serializer = ChooseSerializer(typeof(T), targetMethod);
+			var compressor = ChooseCompressor(typeof(T), targetMethod);
 
-			_client.BeforeMethodCall(typeof(T), targetMethod, headers, ref serializer);
+			_client._config.BeforeMethodCall?.Invoke(new BeforeMethodCallParams(typeof(T), targetMethod, headers, serializer, compressor));
 
 			headers.Add(Constants.SerializerHeaderKey, serializer.Name);
+			if (compressor != null)
+				headers.Add(Constants.CompressorHeaderKey, compressor.EncodingName);
 
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
 				remoteServiceName: _serviceName, 
@@ -105,10 +112,10 @@ namespace GoreRemoting
 				setCallContext: _client._config.SetCallContext
 				);
 
-			var bytes = Gorializer.GoreSerialize(callMessage, serializer);
+			var bytes = Gorializer.GoreSerialize(callMessage, serializer, compressor);
 
 			var resultMessage =  await _client.InvokeAsync(bytes,
-				(callback, req) => HandleResponseAsync(serializer, callback, req, args.ToArray(), streamingDelePos),
+				(callback, req) => HandleResponseAsync(serializer, compressor, callback, req, args.ToArray(), streamingDelePos),
 				new CallOptions(headers: headers, cancellationToken: cancel)).ConfigureAwait(false);
 
 			if (resultMessage.Exception != null)
@@ -125,33 +132,62 @@ namespace GoreRemoting
 
 		private ISerializerAdapter ChooseSerializer(Type t, MethodInfo mi)
 		{
+			var st = ChooseSerializerType(t, mi);
+
+			if (st == null)
+				throw new Exception("Serializer not set");
+
+			return _client._config.GetSerializerByType(st);
+		}
+
+		private Type ChooseSerializerType(Type t, MethodInfo mi)
+		{
 			// check method...
 			var a1 = mi.GetCustomAttribute<SerializerAttribute>();
 			if (a1 != null)
-			{
-				return _client._config.GetSerializerByType(a1.Serializer);
-			}
-			else
-			{
-				// ...then service itself
-				var t1 = t.GetCustomAttribute<SerializerAttribute>();
-				if (t1 != null)
-					return _client._config.GetSerializerByType(a1.Serializer);
-			}
+				return a1.Serializer;
+
+			// ...then service itself
+			var t1 = t.GetCustomAttribute<SerializerAttribute>();
+			if (t1 != null)
+				return a1.Serializer;
 
 			// else default
-			var defSerializer = _client._config.DefaultSerializer;
-			if (defSerializer == null)
-				throw new Exception("DefaultSerializer not set");
+			return _client._config.DefaultSerializer;
+		}
 
-			return _client._config.GetSerializerByType(defSerializer);
+		private ICompressionProvider ChooseCompressor(Type t, MethodInfo mi)
+		{
+			var ct = ChooseCompressorType(t, mi);
+
+			if (ct == null || ct == typeof(NoCompressionProvider))
+				return null;
+
+			return _client._config.GetCompressorByType(ct);
+		}
+
+		private Type ChooseCompressorType(Type t, MethodInfo mi)
+		{
+			// check method...
+			var a1 = mi.GetCustomAttribute<CompressorAttribute>();
+			if (a1 != null)
+				return a1.Compressor;
+
+			// ...then service itself
+			var t1 = t.GetCustomAttribute<CompressorAttribute>();
+			if (t1 != null)
+				return a1.Compressor;
+
+			// else check default
+			return _client._config.DefaultCompressor;
 		}
 
 
-		private async Task<MethodResultMessage> HandleResponseAsync(ISerializerAdapter serializer, byte[] callback, Func<byte[], Task> res, object[] args,
+
+		private async Task<MethodResultMessage> HandleResponseAsync(ISerializerAdapter serializer, ICompressionProvider compressor, byte[] callback, Func<byte[], Task> res, object[] args,
 			int? streamingDelegatePosition)
 		{
-			var callbackData = Gorializer.GoreDeserialize<WireResponseMessage>(callback, serializer);
+			var callbackData = Gorializer.GoreDeserialize<WireResponseMessage>(callback, serializer, compressor);
 
 			switch (callbackData.ResponseType)
 			{
@@ -215,7 +251,7 @@ namespace GoreRemoting
 						else
 							msg = new DelegateResultMessage{ Position = delegateMsg.Position, Result = result, StreamingStatus = streamingStatus };
 
-						var data = Gorializer.GoreSerialize(msg, serializer);
+						var data = Gorializer.GoreSerialize(msg, serializer, compressor);
 
 						await res(data).ConfigureAwait(false);
 

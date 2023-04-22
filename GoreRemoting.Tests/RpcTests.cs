@@ -18,6 +18,7 @@ using MemoryPack;
 using GoreRemoting.Serialization.Json;
 using GoreRemoting.Serialization.MessagePack;
 using MessagePack;
+using GoreRemoting.Compression.Lz4;
 
 namespace GoreRemoting.Tests
 {
@@ -33,11 +34,15 @@ namespace GoreRemoting.Tests
         }
 
 		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		public async Task Call_on_Proxy_should_be_invoked_on_remote_service(enSerializer ser)
+		[InlineData(enSerializer.BinaryFormatter, false)]
+		[InlineData(enSerializer.MemoryPack, false)]
+		[InlineData(enSerializer.Json, false)]
+		[InlineData(enSerializer.MessagePack, false)]
+		[InlineData(enSerializer.BinaryFormatter,true)]
+		[InlineData(enSerializer.MemoryPack, true)]
+		[InlineData(enSerializer.Json, true)]
+		[InlineData(enSerializer.MessagePack, true)]
+		public async Task Call_on_Proxy_should_be_invoked_on_remote_service(enSerializer ser, bool compress)
         {
             bool remoteServiceCalled = false;
 
@@ -54,8 +59,10 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig(Serializers.GetSerializer(ser))
                 {
-					CreateInstance = (t, c) => testService
+					CreateService = (t, c) => testService
                 };
+            if (compress)
+                serverConfig.AddCompressor(new Lz4CompressionProvider());
 
 			await using var server = new NativeServer(9094, serverConfig);
 			server.Start();
@@ -68,7 +75,11 @@ namespace GoreRemoting.Tests
                     var stopWatch = new Stopwatch();
                     stopWatch.Start();
 
-                    await using var client = new NativeClient(9094, new ClientConfig(Serializers.GetSerializer(ser)));
+                    var cc = new ClientConfig(Serializers.GetSerializer(ser));
+                    if (compress)
+                        cc.AddCompressor(new Lz4CompressionProvider()); // default since only 1
+
+					await using var client = new NativeClient(9094, cc);
 
                     stopWatch.Stop();
                     _testOutputHelper.WriteLine($"Creating client took {stopWatch.ElapsedMilliseconds} ms");
@@ -147,7 +158,7 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig(Serializers.GetSerializer(ser))
                 {
-					CreateInstance = (t,c) => testService
+					CreateService = (t,c) => testService
                 };
 
           
@@ -271,7 +282,7 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig(Serializers.GetSerializer(ser))
                 {
-					CreateInstance = (t, c) => testService
+					CreateService = (t, c) => testService
                 };
 
             bool serviceEventCalled = false;
@@ -329,7 +340,7 @@ namespace GoreRemoting.Tests
             var serverConfig =
                 new ServerConfig(Serializers.GetSerializer(ser))
                 { 
-					CreateInstance = (t,c) => testService
+					CreateService = (t,c) => testService
                 };
 
            

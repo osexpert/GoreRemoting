@@ -35,7 +35,7 @@ namespace ServerNet60
 
             var server = new RemotingServer(new ServerConfig(new BinaryFormatterAdapter())
             {
-                CreateInstance = p.CreateInstance,
+                CreateService = p.CreateInstance,
 			});
 
             server.RegisterService<ITestService, TestService>();

@@ -19,6 +19,8 @@ namespace GoreRemoting.Tests.Tools
             options.Add(new ChannelOption(ChannelOptions.MaxReceiveMessageLength, int.MaxValue));
             options.Add(new ChannelOption(ChannelOptions.MaxSendMessageLength, int.MaxValue));
 
+            
+
             _server = new Grpc.Core.Server(options)
             {
                 Services =
