@@ -22,6 +22,8 @@ namespace GoreRemoting.Serialization.MemoryPack
 
 		BinaryFormatterAdapter _bf = new();
 
+		public ExceptionMarshalStrategy ExceptionMarshalStrategy { get; set; } = ExceptionMarshalStrategy.BinaryFormatter;
+
 		/// <summary>
 		/// Serializes an object graph.
 		/// </summary>
@@ -46,188 +48,85 @@ namespace GoreRemoting.Serialization.MemoryPack
 
 		public object GetSerializableException(Exception ex)
 		{
-			//return new ExceptionWrapper2() { BinaryFormatterData = _bf.GetExceptionData(ex) };
-			return _bf.GetExceptionData(ex);
-#if false
-			SerializationInfo info = null;
-
-			//if (ex.GetType().GetCustomAttribute<SerializableAttribute>() != null)
+			if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.BinaryFormatter)
 			{
-				//info = new SerializationInfo(ex.GetType(), new DummyConverterFormatter());
-
-				try
-				{
-					info = ExceptionSerializationHelpers.GetObjectData(ex);
-				}
-				catch
-				{
-					// cannot serialize for some reason
-					info = null;
-				}
+				return _bf.GetExceptionData(ex);
 			}
-
-			return new ExceptionWrapper(ex, info);
-#endif
+			else if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.UninitializedObject)
+			{
+				var ed = ExceptionSerializationHelpers.GetExceptionData(ex);
+				return new ExceptionWrapper
+				{
+					Message = ed.Message,
+					ClassName = ed.ClassName,
+					StackTrace = ed.StackTrace,
+					TypeName = ed.TypeName,
+					PropertyData = ed.PropertyData
+				};
+			}
+			else if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.RemoteInvocationException)
+			{
+				var ed = ExceptionSerializationHelpers.GetExceptionData(ex);
+				return new ExceptionWrapper
+				{
+					Message = ed.Message,
+					ClassName = ed.ClassName,
+					StackTrace = ed.StackTrace,
+					TypeName = ed.TypeName,
+					PropertyData = ed.PropertyData
+				};
+			}
+			else
+				throw new NotSupportedException(ExceptionMarshalStrategy.ToString());
 		}
 
 		public Exception RestoreSerializedException(object ex)
 		{
-
-			//var e = (ExceptionWrapper2)ex;
-
-			return _bf.RestoreException((byte[])ex);//.BinaryFormatterData);
-
-#if false
-
-			var e = (ExceptionWrapper)ex;
-			var type = Type.GetType(e.TypeName);
-
-			Exception res = null;
-
-
-			if (e.HasSerializationInfo)
+			if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.BinaryFormatter)
 			{
-				var info = new SerializationInfo(type, new MemoryPackFormatterConverter(Options));
-
-				for (int i = 0; i < e.SerializationInfoNames.Length; i++)
-				{
-					var value = e.SerializationInfoValues[i];
-
-					if (e.SerializationInfoNames[i] == "Data")
-					{
-						if (value is IDictionary<object, object> d)
-						{
-							
-							var ld = new System.Collections.Specialized.ListDictionary();
-							foreach (var kv in d)
-							{
-								ld.Add(kv.Key, kv.Value);
-							}
-
-							value = ld;
-						}
-					}
-
-					//foreach (var kv in e.SerializationInfo)
-					info.AddValue(e.SerializationInfoNames[i], value);
-				}
-
-				try
-				{
-					res = ExceptionSerializationHelpers.DeserializingConstructor(type, info);// this.formatter.rpc?.TraceSource);
-
-					FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
-					//				remoteStackTraceString.SetValue(res, e.StackTrace);
-					remoteStackTraceString.SetValue(res, res.StackTrace + System.Environment.NewLine);
-				}
-				catch
-				{
-					// cannot deserialize for some reason
-					res = null;
-				}
-
-				
+				return _bf.RestoreException((byte[])ex);
 			}
-
-
-			if (res == null)
+			else if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.UninitializedObject)
 			{
-				res = new RemoteInvocationException(e.Message!, e.ClassName);
-
-				FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
-				remoteStackTraceString.SetValue(res, e.StackTrace);
-				remoteStackTraceString.SetValue(res, res.StackTrace + System.Environment.NewLine);
+				var ew = (ExceptionWrapper)ex;
+				return ExceptionSerializationHelpers.RestoreWithGetUninitializedObject(new ExceptionData
+				{
+					Message = ew.Message,
+					ClassName = ew.ClassName,
+					TypeName = ew.TypeName,
+					StackTrace = ew.StackTrace,
+					PropertyData = ew.PropertyData
+				});
 			}
-
-
-
-			return res;
-#endif
+			else if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.RemoteInvocationException)
+			{
+				var ew = (ExceptionWrapper)ex;
+				return ExceptionSerializationHelpers.RestoreAsRemoteInvocationException(new ExceptionData
+				{
+					Message = ew.Message,
+					ClassName = ew.ClassName,
+					TypeName = ew.TypeName,
+					StackTrace = ew.StackTrace,
+					PropertyData = ew.PropertyData
+				});
+			}
+			else
+				throw new NotSupportedException(ExceptionMarshalStrategy.ToString());
 		}
 
 
 		public string Name => "MemoryPack";
 	}
 
-
-	//[MemoryPackable]
-	//public partial class ExceptionWrapper2 //: Exception //seems impossible that MemPack can inherit exception?
-	//{
-	//	public byte[] BinaryFormatterData { get; set; }
-	//}
-
-#if false
 	[MemoryPackable]
-	public partial class ExceptionWrapper //: Exception //seems impossible that MemPack can inherit exception?
+	public partial class ExceptionWrapper
 	{
-		public string? ClassName { get; set; }
-		public string? TypeName { get; set; }
-
-		public string? Message { get; set; }
-
-		public string? StackTrace { get; set; }
-
-	
-		public string[] SerializationInfoNames { get; set; }
-
-		[SerInfoArrayFormatter]
-		public object[] SerializationInfoValues { get; set; }
-		//public Dictionary<string, object> SerializationInfo { get; set; }
-
-		public bool HasSerializationInfo { get; set; }
-
-		[MemoryPackConstructor]
-		public ExceptionWrapper()
-		{
-
-		}
-
-		public ExceptionWrapper(Exception ex, SerializationInfo info)
-		{
-			TypeName = TypeShortener.GetShortType(ex.GetType());
-			ClassName = ex.GetType().ToString();
-			Message = ex.Message;
-			StackTrace = ex.StackTrace;
-
-			if (info != null)
-			{
-				HasSerializationInfo = true;
-				//SerializationInfo = new();
-
-				SerializationInfoNames = new string[info.MemberCount];
-				SerializationInfoValues = new object[info.MemberCount];
-
-				int i = 0;
-				foreach (SerializationEntry se in info)
-				{
-					//SerializationInfo.Add(se.Name, se.Value);
-
-					var value = se.Value;
-
-					if (se.Name == "Data")
-					{
-						if (value is IDictionary)
-						{
-							var d = new Dictionary<object, object>();
-							foreach (DictionaryEntry de in (IDictionary)value)
-								d.Add(de.Key, de.Value);
-
-							value = d;
-							//			return;
-						}
-					}
-
-
-					SerializationInfoNames[i] = se.Name;
-					SerializationInfoValues[i] = value;
-					i++;
-				}
-			}
-		}
+		public string ClassName { get; set; }
+		public string TypeName { get; set; }
+		public string Message { get; set; }
+		public string StackTrace { get; set; }
+		public Dictionary<string, string> PropertyData { get; set; }
 	}
-#endif
-
-
 
 	[MemoryPackable]
 	partial class MemPackObjectArray
@@ -235,15 +134,5 @@ namespace GoreRemoting.Serialization.MemoryPack
 		[UnsafeObjectArrayFormatter]
 		public object[] Datas { get; set; } = null!;
 	}
-
-
-
-
-
-
-
-
-
-
 
 }

@@ -33,6 +33,8 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 			Options = GetOptions(netCore);
         }
 
+		public ExceptionMarshalStrategy ExceptionMarshalStrategy { get; set; } = ExceptionMarshalStrategy.BinaryFormatter;
+
 		private static BinarySerializerOptions GetOptions(bool netCore)
 		{
 			var opt = new BinarySerializerOptions(netCore);
@@ -139,29 +141,87 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 
 		public object GetSerializableException(Exception ex)
 		{
-			// FIXME: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
-			if (ex.GetType().IsSerializable)
-				return ex;
+			if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.BinaryFormatter)
+			{
+				// FIXME: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
+				if (ex.GetType().IsSerializable)
+					return ex;
 
-			// do not use type shortener here, we never want assembly name in the type in exceptions
-			var res = new RemoteInvocationException(ex.Message, ex.GetType().ToString());
-
-			// TODO: set stack trace of RemoteInvocationException? yes!
-			// TODO: check if this works
-			FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
-			remoteStackTraceString.SetValue(res, ex.StackTrace);
-
-			return res;
+				var ed = ExceptionSerializationHelpers.GetExceptionData(ex);
+				return ExceptionSerializationHelpers.RestoreAsRemoteInvocationException(ed);
+			}
+			else if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.UninitializedObject)
+			{
+				var ed = ExceptionSerializationHelpers.GetExceptionData(ex);
+				return new ExceptionWrapper
+				{
+					Message = ed.Message,
+					ClassName = ed.ClassName,
+					StackTrace = ed.StackTrace,
+					TypeName = ed.TypeName,
+					PropertyData = ed.PropertyData
+				};
+			}
+			else if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.RemoteInvocationException)
+			{
+				var ed = ExceptionSerializationHelpers.GetExceptionData(ex);
+				return new ExceptionWrapper
+				{
+					Message = ed.Message,
+					ClassName = ed.ClassName,
+					StackTrace = ed.StackTrace,
+					TypeName = ed.TypeName,
+					PropertyData = ed.PropertyData
+				};
+			}
+			else
+				throw new NotSupportedException(ExceptionMarshalStrategy.ToString());
 		}
 
 		public Exception RestoreSerializedException(object ex)
 		{
-            var e = (Exception)ex;
+			if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.BinaryFormatter)
+			{
+				var e = (Exception)ex;
+				ExceptionHelper.SetRemoteStackTraceString(e, e.StackTrace + System.Environment.NewLine);
+				return e;
+			}
+			else if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.UninitializedObject)
+			{
+				var ew = (ExceptionWrapper)ex;
+				return ExceptionSerializationHelpers.RestoreWithGetUninitializedObject(new ExceptionData
+				{
+					Message = ew.Message,
+					ClassName = ew.ClassName,
+					TypeName = ew.TypeName,
+					StackTrace = ew.StackTrace,
+					PropertyData = ew.PropertyData
+				});
+			}
+			else if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.RemoteInvocationException)
+			{
+				var ew = (ExceptionWrapper)ex;
+				return ExceptionSerializationHelpers.RestoreAsRemoteInvocationException(new ExceptionData
+				{
+					Message = ew.Message,
+					ClassName = ew.ClassName,
+					TypeName = ew.TypeName,
+					StackTrace = ew.StackTrace,
+					PropertyData = ew.PropertyData
+				});
+			}
+			else
+				throw new NotSupportedException(ExceptionMarshalStrategy.ToString());
+		}
 
-			FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
-			remoteStackTraceString.SetValue(e, e.StackTrace + System.Environment.NewLine);
-
-            return e;
+		[Serializable]
+		class ExceptionWrapper
+		{
+			public string Message { get; set; }
+			public string StackTrace { get; set; }
+			public string TypeName { get; set; }
+			public string ClassName { get; set; }
+			public Dictionary<string, string> PropertyData { get; set; }
 		}
 
 		public string Name => "BinaryFormatter";
@@ -180,12 +240,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 			var binaryFormatter = GetFormatter();
 			using var ms = new MemoryStream(data);
 			var e = (Exception)DeserializeSafe(binaryFormatter, ms, Options);
-
-			//FieldInfo remoteStackTraceString = ExceptionHelper.GetRemoteStackTraceString();
-			//remoteStackTraceString.SetValue(e, e.StackTrace + System.Environment.NewLine);
-
 			return RestoreSerializedException(e);
-
 		}
 	}
 

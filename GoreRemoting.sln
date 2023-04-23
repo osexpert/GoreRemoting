@@ -31,9 +31,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoreRemoting.Serialization.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoreRemoting.Serialization.Json", "GoreRemoting.Serialization.Json\GoreRemoting.Serialization.Json.csproj", "{8338BB65-54FC-4C5D-940B-D67A24A42188}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoreRemoting.Serialization.MessagePack", "GoreRemoting.Serialization.MessagePack\GoreRemoting.Serialization.MessagePack.csproj", "{E84C725D-5B78-48E8-A303-294706D503F4}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoreRemoting.Compression.Lz4", "GoreRemoting.Compression.Lz4\GoreRemoting.Compression.Lz4.csproj", "{343C913F-68CB-4625-A26A-19979CCB643A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoreRemoting.Serialization.MessagePack", "GoreRemoting.Serialization.MessagePack\GoreRemoting.Serialization.MessagePack.csproj", "{5D7CF749-B924-4740-824D-966A53601D1F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -93,14 +93,14 @@ Global
 		{8338BB65-54FC-4C5D-940B-D67A24A42188}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8338BB65-54FC-4C5D-940B-D67A24A42188}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8338BB65-54FC-4C5D-940B-D67A24A42188}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E84C725D-5B78-48E8-A303-294706D503F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E84C725D-5B78-48E8-A303-294706D503F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E84C725D-5B78-48E8-A303-294706D503F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E84C725D-5B78-48E8-A303-294706D503F4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{343C913F-68CB-4625-A26A-19979CCB643A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{343C913F-68CB-4625-A26A-19979CCB643A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{343C913F-68CB-4625-A26A-19979CCB643A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{343C913F-68CB-4625-A26A-19979CCB643A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D7CF749-B924-4740-824D-966A53601D1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D7CF749-B924-4740-824D-966A53601D1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D7CF749-B924-4740-824D-966A53601D1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D7CF749-B924-4740-824D-966A53601D1F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

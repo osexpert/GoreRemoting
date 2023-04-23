@@ -1,146 +1,139 @@
-﻿#if false
-// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+using System.Collections.Generic;
+using System.Dynamic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
+using System.Security.Cryptography;
+using System.Text.Json;
 
 namespace GoreRemoting
 {
-	using System;
-	using System.Diagnostics;
-	using System.Linq;
-	using System.Reflection;
-	using System.Runtime.Serialization;
 
 	public static class ExceptionSerializationHelpers
 	{
-		private static readonly Type[] DeserializingConstructorParameterTypes = new Type[] { typeof(SerializationInfo), typeof(StreamingContext) };
+		static JsonSerializerOptions _jsonOptions = new();
 
-		private static StreamingContext Context => new StreamingContext(StreamingContextStates.Remoting);
-
-		public static Exception DeserializingConstructor(Type type, SerializationInfo info)
+		public static ExceptionData GetExceptionData(Exception ex)
 		{
+			Dictionary<string, string> propertyData = new();
 
-
-			//Type? runtimeType = Type.GetType(typeName);// runtimeTypeName);
-			//if (runtimeType is null)
-			//{
-			//	if (traceSource?.Switch.ShouldTrace(TraceEventType.Warning) ?? false)
-			//	{
-			//		traceSource.TraceEvent(TraceEventType.Warning, 1,//(int)JsonRpc.TraceEvents.ExceptionTypeNotFound, 
-			//			"{0} type could not be loaded. Falling back to System.Exception.", typeName);// runtimeTypeName);
-			//	}
-
-			//	// fallback to deserializing the base Exception type.
-			//	runtimeType = typeof(RemoteInvocationException);
-			//	//return null;
-			//	//throw new Exception("Type not found");
-			//}
-
-			// Sanity/security check: ensure the runtime type derives from the expected type.
-			//if (!typeof(T).IsAssignableFrom(runtimeType))
-			//{
-			//	throw new NotSupportedException($"{typeName} does not derive from {typeof(T).FullName}.");
-			//}
-
-			//			EnsureSerializableAttribute(runtimeType);
-
-			ConstructorInfo ctor = FindDeserializingConstructor(type);
-			if (ctor is null)
+			foreach (var p in ex.GetType().GetProperties())
 			{
-				throw new Exception("deserializing constructor not found");
-				//throw new NotSupportedException($"{runtimeType.FullName} does not declare a deserializing constructor with signature ({string.Join(", ", DeserializingConstructorParameterTypes.Select(t => t.FullName))}).");
+				if (p.Name == nameof(Exception.Message) 
+					|| p.Name == nameof(Exception.StackTrace) 
+					|| p.Name == nameof(Exception.TargetSite))
+					continue;
+
+				try
+				{
+					var value = JsonSerializer.SerializeToElement(p.GetValue(ex), _jsonOptions).ToString();
+					propertyData.Add(p.Name, value);
+				}
+				catch
+				{
+					propertyData.Add(p.Name, p.GetValue(ex)?.ToString());
+				}
 			}
 
-			var res = (Exception)ctor.Invoke(new object?[] { info, Context });
-
-	
-
-			return res;
-		}
-
-		public static SerializationInfo GetObjectData(Exception ex)//,  info)
-		{
-			SerializationInfo info = new SerializationInfo(ex.GetType(), new DummyConverterFormatter());
-
-			//Type exceptionType = exception.GetType();
-			//			EnsureSerializableAttribute(exceptionType);
-			ex.GetObjectData(info, Context);
-
-			return info;
-		}
-
-		public static object Convert(IFormatterConverter formatterConverter, object value, TypeCode typeCode)
-		{
-			return typeCode switch
+			// TODO: ex.ToString() will sometimes get more info??
+			return new ExceptionData
 			{
-				TypeCode.Boolean => formatterConverter.ToBoolean(value),
-				TypeCode.Byte => formatterConverter.ToBoolean(value),
-				TypeCode.Char => formatterConverter.ToChar(value),
-				TypeCode.DateTime => formatterConverter.ToDateTime(value),
-				TypeCode.Decimal => formatterConverter.ToDecimal(value),
-				TypeCode.Double => formatterConverter.ToDouble(value),
-				TypeCode.Int16 => formatterConverter.ToInt16(value),
-				TypeCode.Int32 => formatterConverter.ToInt32(value),
-				TypeCode.Int64 => formatterConverter.ToInt64(value),
-				TypeCode.SByte => formatterConverter.ToSByte(value),
-				TypeCode.Single => formatterConverter.ToSingle(value),
-				TypeCode.String => formatterConverter.ToString(value),
-				TypeCode.UInt16 => formatterConverter.ToUInt16(value),
-				TypeCode.UInt32 => formatterConverter.ToUInt32(value),
-				TypeCode.UInt64 => formatterConverter.ToUInt64(value),
-				_ => throw new NotSupportedException("Unsupported type code: " + typeCode),
+				Message = ex.Message,
+				StackTrace = ex.StackTrace,
+				TypeName = TypeShortener.GetShortType(ex.GetType()),
+				ClassName = ex.GetType().ToString(),
+				PropertyData = propertyData
 			};
 		}
 
-		//private static void EnsureSerializableAttribute(Type runtimeType)
-		//{
-		//	if (runtimeType.GetCustomAttribute<SerializableAttribute>() is null)
-		//	{
-		//		throw new NotSupportedException($"{runtimeType.FullName} is not marked with the {typeof(SerializableAttribute).FullName}.");
-		//	}
-		//}
+		public static Exception RestoreAsRemoteInvocationException(ExceptionData ed)
+		{
+			var res = new RemoteInvocationException(ed.Message, ed.ClassName, ed.PropertyData);
+			ExceptionHelper.SetRemoteStackTraceString(res, ed.StackTrace);
+			ExceptionHelper.SetClassName(res, ed.ClassName);
+			return res;
+		}
 
-		private static ConstructorInfo? FindDeserializingConstructor(Type runtimeType) => runtimeType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, DeserializingConstructorParameterTypes, null);
+		public static Exception RestoreWithGetUninitializedObject(ExceptionData ed)
+		{
+			var t = Type.GetType(ed.TypeName, false);
+			if (t == null)
+			{
+				return RestoreAsRemoteInvocationException(ed);
+			}
+			else
+			{
+				if (!typeof(Exception).IsAssignableFrom(t))
+				{
+					throw new NotSupportedException($"Security check: {ed.TypeName} does not derive from Exception.");
+				}
+
+#if NETSTANDARD2_1_OR_GREATER
+				var e = (Exception)RuntimeHelpers.GetUninitializedObject(t);
+#else
+				var e = (Exception)FormatterServices.GetUninitializedObject(t);
+#endif
+
+				ExceptionHelper.SetMessage(e, ed.Message);
+				ExceptionHelper.SetRemoteStackTraceString(e, ed.StackTrace);
+				ExceptionHelper.SetClassName(e, ed.ClassName);
+				e.Data.Add(RemoteInvocationException.GoreRemotingPropertyDataKey, ed.PropertyData);
+
+				return e;
+			}
+		}
 	}
 
-	public class DummyConverterFormatter : IFormatterConverter
+	public class ExceptionHelper
 	{
+		public static void SetRemoteStackTraceString(Exception e, string stackTrace)
+		{
+			FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
+			remoteStackTraceString.SetValue(e, stackTrace);
+		}
 
+		public static void SetMessage(Exception e, string message)
+		{
+			var msgField = typeof(Exception).GetField("_message", BindingFlags.Instance | BindingFlags.NonPublic);
+			msgField.SetValue(e, message);
+		}
 
-		public object Convert(object value, Type type) => throw new NotImplementedException();
+		public static void SetClassName(Exception e, string className)
+		{
+			// does not exist in later .net versions
+			var classNameField = typeof(Exception).GetField("_className ", BindingFlags.Instance | BindingFlags.NonPublic);
+			classNameField?.SetValue(e, className);
+		}
+	}
 
-		public object Convert(object value, TypeCode typeCode) => throw new NotImplementedException();
+	public class ExceptionData
+	{
+		public string Message;
+		public string StackTrace;
+		public string TypeName;
+		public string ClassName;
+		public Dictionary<string, string> PropertyData;
+	}
 
-
-		public bool ToBoolean(object value) => throw new NotImplementedException();
-
-		public byte ToByte(object value) => throw new NotImplementedException();
-
-		public char ToChar(object value) => throw new NotImplementedException();
-
-		public DateTime ToDateTime(object value) => throw new NotImplementedException();
-
-		public decimal ToDecimal(object value) => throw new NotImplementedException();
-
-		public double ToDouble(object value) => throw new NotImplementedException();
-
-		public short ToInt16(object value) => throw new NotImplementedException();
-
-		public int ToInt32(object value) => throw new NotImplementedException();
-
-		public long ToInt64(object value) => throw new NotImplementedException();
-
-		public sbyte ToSByte(object value) => throw new NotImplementedException();
-
-		public float ToSingle(object value) => throw new NotImplementedException();
-
-		public string ToString(object value) => throw new NotImplementedException();
-
-		public ushort ToUInt16(object value) => throw new NotImplementedException();
-
-		public uint ToUInt32(object value) => throw new NotImplementedException();
-
-		public ulong ToUInt64(object value) => throw new NotImplementedException();
+	public enum ExceptionMarshalStrategy
+	{
+		/// <summary>
+		/// BinaryFormatter used (if serializable, everything is preserved)
+		/// </summary>
+		BinaryFormatter = 1,
+		/// <summary>
+		/// Same type, with only Message and StackTrace set
+		/// </summary>
+		UninitializedObject = 2,
+		/// <summary>
+		/// Always type RemoteInvocationException, with only Message, StackTrace and ClassName set
+		/// </summary>
+		RemoteInvocationException = 3
 	}
 
 }
-#endif
