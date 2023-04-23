@@ -143,7 +143,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		{
 			if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.BinaryFormatter)
 			{
-				// FIXME: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
+				// INFO: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
 				if (ex.GetType().IsSerializable)
 					return ex;
 

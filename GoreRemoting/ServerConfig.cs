@@ -30,7 +30,6 @@ namespace GoreRemoting
             AddSerializer(serializers);
 		}
 
-
 		public void AddSerializer(params ISerializerAdapter[] adapters)
         {
             foreach (var s in adapters)
