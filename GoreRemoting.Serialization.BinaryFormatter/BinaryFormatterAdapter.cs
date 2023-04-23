@@ -230,7 +230,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		{
 			var e2 = GetSerializableException(e);
 			var binaryFormatter = GetFormatter();
-			using var ms = new MemoryStream();
+			using var ms = PooledMemoryStream.GetStream();
 			SerializeSafe(binaryFormatter, ms, e2, Options);
 			return ms.ToArray();
 		}

@@ -16,14 +16,20 @@ namespace GoreRemoting
 		void Deserialize(Stack<object> st);
 	}
 
-
-	internal class Gorializer
+	public static class PooledMemoryStream
 	{
 		private static readonly RecyclableMemoryStreamManager _manager = new RecyclableMemoryStreamManager();
 
+		public static MemoryStream GetStream() => _manager.GetStream();
+	}
+
+	internal class Gorializer
+	{
+		
+
 		public static byte[] GoreSerialize(IGorializer data, ISerializerAdapter serializer, ICompressionProvider compressor)
 		{
-			using var ms = _manager.GetStream();
+			using var ms = PooledMemoryStream.GetStream();
 
 			var cs = GetCompressor(compressor, ms) ?? ms;
 			try
@@ -56,7 +62,6 @@ namespace GoreRemoting
 
 		public static T GoreDeserialize<T>(byte[] data, ISerializerAdapter serializer, ICompressionProvider compressor) where T : IGorializer, new()
 		{
-			//using var ms = _manager.GetStream(data);
 			using var ms = new MemoryStream(data);
 
 			var res = new T();
