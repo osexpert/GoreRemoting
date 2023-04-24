@@ -24,9 +24,11 @@ namespace GoreRemoting
 
 			foreach (var p in ex.GetType().GetProperties())
 			{
-				if (p.Name == nameof(Exception.Message) 
-					|| p.Name == nameof(Exception.StackTrace) 
-					|| p.Name == nameof(Exception.TargetSite))
+				if (p.Name == nameof(Exception.Message) // already in ExceptionData
+					|| p.Name == nameof(Exception.StackTrace) // already in ExceptionData
+					|| p.Name == nameof(Exception.TargetSite) // a type or method?
+					//|| p.Name == nameof(Exception.Data) TODO: skip Data? Is it really helpful?
+					)
 					continue;
 
 				try
@@ -51,6 +53,12 @@ namespace GoreRemoting
 			};
 		}
 
+		public static Exception RestoreAsBinaryFormatter(Exception e)
+		{
+			ExceptionHelper.SetRemoteStackTraceString(e, e.StackTrace + System.Environment.NewLine);
+			return e;
+		}
+
 		public static Exception RestoreAsRemoteInvocationException(ExceptionData ed)
 		{
 			var res = new RemoteInvocationException(ed.Message, ed.ClassName, ed.PropertyData);
@@ -59,7 +67,7 @@ namespace GoreRemoting
 			return res;
 		}
 
-		public static Exception RestoreWithGetUninitializedObject(ExceptionData ed)
+		public static Exception RestoreAsUninitializedObject(ExceptionData ed)
 		{
 			var t = Type.GetType(ed.TypeName, false);
 			if (t == null)
@@ -120,20 +128,39 @@ namespace GoreRemoting
 		public Dictionary<string, string> PropertyData;
 	}
 
-	public enum ExceptionMarshalStrategy
+	public enum ExceptionFormatStrategy
 	{
 		/// <summary>
-		/// BinaryFormatter used (if serializable, everything is preserved)
+		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)
+		/// </summary>
+		BinaryFormatterOrUninitializedObject = 1,
+		/// <summary>
+		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as RemoteInvocationException)
+		/// </summary>
+		BinaryFormatterOrRemoteInvocationException = 2,
+		/// <summary>
+		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
+		/// </summary>
+		UninitializedObject = 3,
+		/// <summary>
+		/// Always type RemoteInvocationException, with only Message, StackTrace, ClassName and PropertyData set
+		/// </summary>
+		RemoteInvocationException = 4
+	}
+
+	public enum ExceptionFormat
+	{
+		/// <summary>
+		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)
 		/// </summary>
 		BinaryFormatter = 1,
 		/// <summary>
-		/// Same type, with only Message and StackTrace set
+		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
 		/// </summary>
 		UninitializedObject = 2,
 		/// <summary>
-		/// Always type RemoteInvocationException, with only Message, StackTrace and ClassName set
+		/// Always type RemoteInvocationException, with only Message, StackTrace, ClassName and PropertyData set
 		/// </summary>
 		RemoteInvocationException = 3
 	}
-
 }

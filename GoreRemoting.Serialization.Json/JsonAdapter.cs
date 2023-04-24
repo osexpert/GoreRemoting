@@ -15,7 +15,7 @@ namespace GoreRemoting.Serialization.Json
 	{
 		public JsonSerializerOptions Options { get; }
 
-		public ExceptionMarshalStrategy ExceptionMarshalStrategy { get; set; } = ExceptionMarshalStrategy.BinaryFormatter;
+		public ExceptionFormatStrategy ExceptionStrategy { get; set; } = ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject;
 
 		BinaryFormatterAdapter _bf = new();
 
@@ -90,6 +90,8 @@ namespace GoreRemoting.Serialization.Json
 
 		class ExceptionWrapper
 		{
+			public ExceptionFormat Format { get; set; }
+			public byte[] BinaryFormatterData { get; set; }
 			public string Message { get; set; }
 			public string StackTrace { get; set; }
 			public string TypeName { get; set; }
@@ -99,70 +101,64 @@ namespace GoreRemoting.Serialization.Json
 
 		public object GetSerializableException(Exception ex)
 		{
-			if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.BinaryFormatter)
+			if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject ||
+							ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrRemoteInvocationException)
 			{
-				return _bf.GetExceptionData(ex);
-			}
-			else if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.UninitializedObject)
-			{
+				// INFO: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
+				if (ex.GetType().IsSerializable)
+					return new ExceptionWrapper { Format = ExceptionFormat.BinaryFormatter, BinaryFormatterData = _bf.GetExceptionData(ex) };
+
 				var ed = ExceptionSerializationHelpers.GetExceptionData(ex);
-				return new ExceptionWrapper
-				{
-					Message = ed.Message,
-					ClassName = ed.ClassName,
-					StackTrace = ed.StackTrace,
-					TypeName = ed.TypeName,
-					PropertyData = ed.PropertyData
-				};
+				if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject)
+					return ToExceptionWrapper(ed, ExceptionFormat.UninitializedObject);
+				else if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrRemoteInvocationException)
+					return ToExceptionWrapper(ed, ExceptionFormat.RemoteInvocationException);
+				else
+					throw new NotSupportedException(ExceptionStrategy.ToString());
 			}
-			else if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.RemoteInvocationException)
-			{
-				var ed = ExceptionSerializationHelpers.GetExceptionData(ex);
-				return new ExceptionWrapper
-				{
-					Message = ed.Message,
-					ClassName = ed.ClassName,
-					StackTrace = ed.StackTrace,
-					TypeName = ed.TypeName,
-					PropertyData = ed.PropertyData
-				};
-			}
+			else if (ExceptionStrategy == ExceptionFormatStrategy.UninitializedObject)
+				return ToExceptionWrapper(ExceptionSerializationHelpers.GetExceptionData(ex), ExceptionFormat.UninitializedObject);
+			else if (ExceptionStrategy == ExceptionFormatStrategy.RemoteInvocationException)
+				return ToExceptionWrapper(ExceptionSerializationHelpers.GetExceptionData(ex), ExceptionFormat.RemoteInvocationException);
 			else
-				throw new NotSupportedException(ExceptionMarshalStrategy.ToString());
+				throw new NotSupportedException(ExceptionStrategy.ToString());
 		}
 
 		public Exception RestoreSerializedException(object ex)
 		{
-			if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.BinaryFormatter)
+			var ew = (ExceptionWrapper)ex;
+			return ew.Format switch
 			{
-				return _bf.RestoreException((byte[])ex);
-			}
-			else if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.UninitializedObject)
+				ExceptionFormat.BinaryFormatter => _bf.RestoreException(ew.BinaryFormatterData),
+				ExceptionFormat.UninitializedObject => ExceptionSerializationHelpers.RestoreAsUninitializedObject(ToExceptionData(ew)),
+				ExceptionFormat.RemoteInvocationException => ExceptionSerializationHelpers.RestoreAsRemoteInvocationException(ToExceptionData(ew)),
+				_ => throw new NotSupportedException(ew.Format.ToString())
+			};
+		}
+
+		private static ExceptionWrapper ToExceptionWrapper(ExceptionData ed, ExceptionFormat format)
+		{
+			return new ExceptionWrapper
 			{
-				var ew = (ExceptionWrapper)ex;
-				return ExceptionSerializationHelpers.RestoreWithGetUninitializedObject(new ExceptionData
-				{
-					Message = ew.Message,
-					ClassName = ew.ClassName,
-					TypeName = ew.TypeName,
-					StackTrace = ew.StackTrace,
-					PropertyData = ew.PropertyData
-				});
-			}
-			else if (ExceptionMarshalStrategy == ExceptionMarshalStrategy.RemoteInvocationException)
+				Message = ed.Message,
+				ClassName = ed.ClassName,
+				StackTrace = ed.StackTrace,
+				TypeName = ed.TypeName,
+				PropertyData = ed.PropertyData,
+				Format = format
+			};
+		}
+
+		private static ExceptionData ToExceptionData(ExceptionWrapper ew)
+		{
+			return new ExceptionData
 			{
-				var ew = (ExceptionWrapper)ex;
-				return ExceptionSerializationHelpers.RestoreAsRemoteInvocationException(new ExceptionData
-				{
-					Message = ew.Message,
-					ClassName = ew.ClassName,
-					TypeName = ew.TypeName,
-					StackTrace = ew.StackTrace,
-					PropertyData = ew.PropertyData
-				});
-			}
-			else
-				throw new NotSupportedException(ExceptionMarshalStrategy.ToString());
+				Message = ew.Message,
+				ClassName = ew.ClassName,
+				StackTrace = ew.StackTrace,
+				TypeName = ew.TypeName,
+				PropertyData = ew.PropertyData
+			};
 		}
 
 		public string Name => "Json";
