@@ -103,7 +103,7 @@ namespace GoreRemoting
 				return false;
 			}
 
-			var delegateType = TypeFormatter.ParseType(remoteDelegateInfo.DelegateTypeName);
+			var delegateType = Type.GetType(remoteDelegateInfo.DelegateTypeName);
             if (delegateType == null)
                 throw new Exception("Delegate type not found: " + remoteDelegateInfo.DelegateTypeName);
 

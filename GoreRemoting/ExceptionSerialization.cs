@@ -3,67 +3,121 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
-using System.Text.Json;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace GoreRemoting
 {
 
 	public static class ExceptionSerializationHelpers
 	{
-		static JsonSerializerOptions _jsonOptions = new();
-
 		public static ExceptionData GetExceptionData(Exception ex)
 		{
 			Dictionary<string, string> propertyData = new();
 
 			foreach (var p in ex.GetType().GetProperties())
 			{
-				if (p.Name == nameof(Exception.Message) // already in ExceptionData
-					|| p.Name == nameof(Exception.StackTrace) // already in ExceptionData
-					|| p.Name == nameof(Exception.TargetSite) // a type or method?
-					//|| p.Name == nameof(Exception.Data) TODO: skip Data? Is it really helpful?
-					)
-					continue;
-
-				try
+				var val = p.GetValue(ex);
+				if (val != null)
 				{
-					var value = JsonSerializer.SerializeToElement(p.GetValue(ex), _jsonOptions).ToString();
-					propertyData.Add(p.Name, value);
-				}
-				catch
-				{
-					propertyData.Add(p.Name, p.GetValue(ex)?.ToString());
+					try
+					{
+						// Do not try to be smart, only write basic values.
+						// Writing complete object graphs with eg. json may be tempting, but it can fail in various edge cases.
+						// Better to just KISS.
+						propertyData.Add(p.Name, XLinq_GetStringValue(val));
+					}
+					catch
+					{
+					}
 				}
 			}
 
-			// TODO: ex.ToString() will sometimes get more info??
+			propertyData.Add(ExceptionData.ClassNameKey, ex.GetType().ToString());
+
 			return new ExceptionData
 			{
-				Message = ex.Message,
-				StackTrace = ex.StackTrace,
 				TypeName = TypeShortener.GetShortType(ex.GetType()),
-				ClassName = ex.GetType().ToString(),
 				PropertyData = propertyData
 			};
 		}
 
+		/// <summary>
+		/// https://github.com/microsoft/referencesource/blob/master/System.Xml.Linq/System/Xml/Linq/XLinq.cs
+		/// </summary>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		/// <exception cref="ArgumentException"></exception>
+		internal static string XLinq_GetStringValue(object value)
+		{
+			string s;
+			if (value is string)
+			{
+				s = (string)value;
+			}
+			else if (value is double)
+			{
+				s = XmlConvert.ToString((double)value);
+			}
+			else if (value is float)
+			{
+				s = XmlConvert.ToString((float)value);
+			}
+			else if (value is decimal)
+			{
+				s = XmlConvert.ToString((decimal)value);
+			}
+			else if (value is bool)
+			{
+				s = XmlConvert.ToString((bool)value);
+			}
+			else if (value is DateTime)
+			{
+				s = GetDateTimeString((DateTime)value);
+			}
+			else if (value is DateTimeOffset)
+			{
+				s = XmlConvert.ToString((DateTimeOffset)value);
+			}
+			else if (value is TimeSpan)
+			{
+				s = XmlConvert.ToString((TimeSpan)value);
+			}
+			else if (value is XObject)
+			{
+				throw new ArgumentException();// Res.GetString(Res.Argument_XObjectValue));
+			}
+			else
+			{
+				s = value.ToString();
+			}
+			if (s == null) throw new ArgumentException();// Res.GetString(Res.Argument_ConvertToString));
+			return s;
+		}
+
+		internal static string GetDateTimeString(DateTime value)
+		{
+			return XmlConvert.ToString(value, XmlDateTimeSerializationMode.RoundtripKind);
+		}
+
 		public static Exception RestoreAsBinaryFormatter(Exception e)
 		{
-			ExceptionHelper.SetRemoteStackTraceString(e, e.StackTrace + System.Environment.NewLine);
+			ExceptionHelper.SetRemoteStackTrace(e, e.StackTrace);
 			return e;
 		}
 
 		public static Exception RestoreAsRemoteInvocationException(ExceptionData ed)
 		{
-			var res = new RemoteInvocationException(ed.Message, ed.ClassName, ed.PropertyData);
-			ExceptionHelper.SetRemoteStackTraceString(res, ed.StackTrace);
-			ExceptionHelper.SetClassName(res, ed.ClassName);
+			var res = new RemoteInvocationException(ed);
+			ExceptionHelper.SetRemoteStackTrace(res, ed.FullStackTrace());
 			return res;
 		}
 
@@ -88,9 +142,9 @@ namespace GoreRemoting
 #endif
 
 				ExceptionHelper.SetMessage(e, ed.Message);
-				ExceptionHelper.SetRemoteStackTraceString(e, ed.StackTrace);
-				ExceptionHelper.SetClassName(e, ed.ClassName);
-				e.Data.Add(RemoteInvocationException.GoreRemotingPropertyDataKey, ed.PropertyData);
+				ExceptionHelper.SetRemoteStackTrace(e, ed.FullStackTrace());
+
+				e.Data.Add(RemoteInvocationException.PropertyDataKey, ed.PropertyData);
 
 				return e;
 			}
@@ -99,32 +153,70 @@ namespace GoreRemoting
 
 	public class ExceptionHelper
 	{
-		public static void SetRemoteStackTraceString(Exception e, string stackTrace)
+		private static void SetRemoteStackTraceString(Exception e, string stackTrace)
 		{
 			FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
 			remoteStackTraceString.SetValue(e, stackTrace);
 		}
 
+#if NET6_0_OR_GREATER
+		public static void SetRemoteStackTrace(Exception e, string stackTrace) => ExceptionDispatchInfo.SetRemoteStackTrace(e, stackTrace);
+#else
+		public static void SetRemoteStackTrace(Exception e, string stackTrace)
+		{
+			//            if (!CanSetRemoteStackTrace())
+			//          {
+			//            return; // early-exit
+			//      }
+
+			// Store the provided text into the "remote" stack trace, following the same format SetCurrentStackTrace
+			// would have generated.
+			var _remoteStackTraceString = stackTrace + Environment.NewLine +
+			//SR.Exception_EndStackTraceFromPreviousThrow 
+			"--- End of stack trace from previous location ---"
+			+ Environment.NewLine;
+
+			SetRemoteStackTraceString(e, _remoteStackTraceString);
+		}
+#endif
 		public static void SetMessage(Exception e, string message)
 		{
 			var msgField = typeof(Exception).GetField("_message", BindingFlags.Instance | BindingFlags.NonPublic);
 			msgField.SetValue(e, message);
 		}
-
-		public static void SetClassName(Exception e, string className)
-		{
-			// does not exist in later .net versions
-			var classNameField = typeof(Exception).GetField("_className ", BindingFlags.Instance | BindingFlags.NonPublic);
-			classNameField?.SetValue(e, className);
-		}
 	}
 
 	public class ExceptionData
 	{
-		public string Message;
-		public string StackTrace;
 		public string TypeName;
-		public string ClassName;
+
+		public const string MessageKey = nameof(Exception.Message);
+		public const string StackTraceKey = nameof(Exception.StackTrace);
+		public const string InnerExceptionKey = nameof(Exception.InnerException);
+		public const string ClassNameKey = nameof(RemoteInvocationException.ClassName);
+
+		public string GetValue(string key)
+		{
+			if (PropertyData.TryGetValue(key, out var value))
+				return value;
+			return null;
+		}
+
+		public string ClassName => GetValue(ClassNameKey);
+		public string Message => GetValue(MessageKey);
+		public string StackTrace => GetValue(StackTraceKey);
+		public string InnerException => GetValue(InnerExceptionKey);
+
+		public string FullStackTrace()
+		{
+			// https://github.com/microsoft/referencesource/blob/master/mscorlib/system/exception.cs
+			var ie = InnerException;
+			if (ie != null)
+				return " ---> " + ie + Environment.NewLine + "   " + "--- End of inner exception stack trace ---" + Environment.NewLine + StackTrace;
+			else
+				return StackTrace;
+		}
+
 		public Dictionary<string, string> PropertyData;
 	}
 

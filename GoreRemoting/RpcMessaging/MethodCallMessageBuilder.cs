@@ -98,7 +98,7 @@ namespace GoreRemoting.RpcMessaging
 					new MethodCallArgument()
 					{
 						ParameterName = parameterInfo.Name,
-						TypeName = TypeFormatter.FormatType(paramType),
+						TypeName = TypeShortener.GetShortType(paramType),
 						Value = arg// parameterValue
 					};
 			}

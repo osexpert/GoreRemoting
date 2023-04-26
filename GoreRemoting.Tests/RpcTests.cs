@@ -312,7 +312,7 @@ namespace GoreRemoting.Tests
                 ex = e;
             }
             Assert.Equal("Too late, result sent", ex.Message);
-			Assert.Equal(14, ex.ToString().Split(Environment.NewLine).Length);
+			Assert.Equal(15, ex.ToString().Split(Environment.NewLine).Length);
 
 			Assert.False(serviceEventCalled);
         }

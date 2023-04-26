@@ -180,9 +180,6 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		{
 			return new ExceptionWrapper
 			{
-				Message = ed.Message,
-				ClassName = ed.ClassName,
-				StackTrace = ed.StackTrace,
 				TypeName = ed.TypeName,
 				PropertyData = ed.PropertyData,
 				Format = format
@@ -193,9 +190,6 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		{
 			return new ExceptionData
 			{
-				Message = ew.Message,
-				ClassName = ew.ClassName,
-				StackTrace = ew.StackTrace,
 				TypeName = ew.TypeName,
 				PropertyData = ew.PropertyData
 			};
@@ -206,10 +200,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		{
 			public ExceptionFormat Format { get; set; }
 			public Exception BinaryFormatterData { get; set; }
-			public string Message { get; set; }
-			public string StackTrace { get; set; }
 			public string TypeName { get; set; }
-			public string ClassName { get; set; }
 			public Dictionary<string, string> PropertyData { get; set; }
 		}
 
@@ -231,7 +222,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 			var binaryFormatter = GetFormatter();
 			using var ms = new MemoryStream(data);
 			var e = (Exception)DeserializeSafe(binaryFormatter, ms, Options);
-			ExceptionHelper.SetRemoteStackTraceString(e, e.StackTrace + System.Environment.NewLine);
+			ExceptionHelper.SetRemoteStackTrace(e, e.StackTrace);
 			return e;
 		}
 	}

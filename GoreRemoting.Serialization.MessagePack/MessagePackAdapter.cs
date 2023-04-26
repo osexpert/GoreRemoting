@@ -91,9 +91,6 @@ namespace GoreRemoting.Serialization.MessagePack
 		{
 			return new ExceptionWrapper
 			{
-				Message = ed.Message,
-				ClassName = ed.ClassName,
-				StackTrace = ed.StackTrace,
 				TypeName = ed.TypeName,
 				PropertyData = ed.PropertyData,
 				Format = format
@@ -104,32 +101,18 @@ namespace GoreRemoting.Serialization.MessagePack
 		{
 			return new ExceptionData
 			{
-				Message = ew.Message,
-				ClassName = ew.ClassName,
-				StackTrace = ew.StackTrace,
 				TypeName = ew.TypeName,
 				PropertyData = ew.PropertyData
 			};
 		}
 
-		[MessagePackObject]
+		[MessagePackObject(true)]
 		public class ExceptionWrapper
 		{
-			[Key(0)]
 			public string TypeName { get; set; }
-			[Key(1)]
-			public string Message { get; set; }
-			[Key(2)]
-			public string StackTrace { get; set; }
-			[Key(3)]
-			public string ClassName { get; set; }
-			[Key(4)]
 			public Dictionary<string, string> PropertyData { get; set; }
-			[Key(5)]
 			public byte[] BinaryFormatterData { get; set; }
-			[Key(6)]
 			public ExceptionFormat Format { get; set; }
-
 		}
 
 	}

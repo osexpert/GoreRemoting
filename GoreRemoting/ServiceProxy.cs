@@ -346,7 +346,7 @@ namespace GoreRemoting
 
 			var remoteDelegateInfo =
 				new RemoteDelegateInfo(
-					delegateTypeName: TypeFormatter.FormatType(argumentType),
+					delegateTypeName: TypeShortener.GetShortType(argumentType),
 					// TODO: use a OneWay attribute instead?
 					hasResult: !(delegateReturnType == typeof(void) || delegateReturnType == typeof(Task) || delegateReturnType == typeof(ValueTask))
 					);

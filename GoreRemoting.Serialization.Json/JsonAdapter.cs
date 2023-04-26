@@ -92,10 +92,7 @@ namespace GoreRemoting.Serialization.Json
 		{
 			public ExceptionFormat Format { get; set; }
 			public byte[] BinaryFormatterData { get; set; }
-			public string Message { get; set; }
-			public string StackTrace { get; set; }
 			public string TypeName { get; set; }
-			public string ClassName { get; set; }
 			public Dictionary<string, string> PropertyData { get; set; }
 		}
 
@@ -140,9 +137,6 @@ namespace GoreRemoting.Serialization.Json
 		{
 			return new ExceptionWrapper
 			{
-				Message = ed.Message,
-				ClassName = ed.ClassName,
-				StackTrace = ed.StackTrace,
 				TypeName = ed.TypeName,
 				PropertyData = ed.PropertyData,
 				Format = format
@@ -153,9 +147,6 @@ namespace GoreRemoting.Serialization.Json
 		{
 			return new ExceptionData
 			{
-				Message = ew.Message,
-				ClassName = ew.ClassName,
-				StackTrace = ew.StackTrace,
 				TypeName = ew.TypeName,
 				PropertyData = ew.PropertyData
 			};

@@ -22,7 +22,7 @@ namespace GoreRemoting.RpcMessaging
             for (int i = 0; i < callMessage.Arguments.Length; i++)
             {
                 var parameter = callMessage.Arguments[i];
-                var parameterType = TypeFormatter.ParseType(parameter.TypeName);
+                var parameterType = Type.GetType(parameter.TypeName);
                 if (parameterType == null)
                     throw new Exception("Parameter type not found: " + parameter.TypeName);
                 parameterTypes[i] = parameterType;
