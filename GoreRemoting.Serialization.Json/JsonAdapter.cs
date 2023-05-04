@@ -20,7 +20,7 @@ namespace GoreRemoting.Serialization.Json
 		readonly Lazy<BinaryFormatterAdapter> _bfa = new(() => new());
 
 		public JsonAdapter()
-        {
+		{
 			Options = CreateOptions();
 		}
 

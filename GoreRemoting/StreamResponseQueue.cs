@@ -30,7 +30,7 @@ namespace GoreRemoting
 		private readonly IServerStreamWriter<T> _stream;
 		private readonly Task _consumer;
 
-		private readonly Channel<T> _channel; 
+		private readonly Channel<T> _channel;
 
 
 		public StreamResponseQueue(
@@ -85,9 +85,9 @@ namespace GoreRemoting
 		{
 
 #if NETSTANDARD2_0
-            // Using Open.ChannelExtensions since ReadAllAsync not available in netstandard 2.0
-            // ValueTask confusion here...
-            var _ = await _channel.Reader.ReadAllAsync(cancellationToken, msg => new ValueTask(_stream.WriteAsync(msg))).ConfigureAwait(false);
+			// Using Open.ChannelExtensions since ReadAllAsync not available in netstandard 2.0
+			// ValueTask confusion here...
+			var _ = await _channel.Reader.ReadAllAsync(cancellationToken, msg => new ValueTask(_stream.WriteAsync(msg))).ConfigureAwait(false);
 #else
 
 			await foreach (var message in _channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))

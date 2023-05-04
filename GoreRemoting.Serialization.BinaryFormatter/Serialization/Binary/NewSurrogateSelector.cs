@@ -95,17 +95,17 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		}
 	}
 
-    /// <summary>
-    /// Extend <see cref="ISerializationSurrogate"/> with a "tester" method used by <see cref="SafeSurrogateSelector"/>.
-    /// </summary>
-    public interface ISurrogate : ISerializationSurrogate
-    {
-        /// <summary>
-        /// Determine whether this surrogate provider handles this type.
-        /// </summary>
-        /// <param name="type">The query type.</param>
-        /// <param name="context">The serialization context.</param>
-        /// <returns>True if this provider handles this type, false otherwise.</returns>
-        bool Handles(Type type, StreamingContext context);
-    }
+	/// <summary>
+	/// Extend <see cref="ISerializationSurrogate"/> with a "tester" method used by <see cref="SafeSurrogateSelector"/>.
+	/// </summary>
+	public interface ISurrogate : ISerializationSurrogate
+	{
+		/// <summary>
+		/// Determine whether this surrogate provider handles this type.
+		/// </summary>
+		/// <param name="type">The query type.</param>
+		/// <param name="context">The serialization context.</param>
+		/// <returns>True if this provider handles this type, false otherwise.</returns>
+		bool Handles(Type type, StreamingContext context);
+	}
 }

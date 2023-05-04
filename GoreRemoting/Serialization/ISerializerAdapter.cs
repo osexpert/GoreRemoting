@@ -4,11 +4,11 @@ using System.IO;
 
 namespace GoreRemoting.Serialization
 {
-    /// <summary>
-    /// Interface that serializer adapter components must implement.
-    /// </summary>
-    public interface ISerializerAdapter
-    {
+	/// <summary>
+	/// Interface that serializer adapter components must implement.
+	/// </summary>
+	public interface ISerializerAdapter
+	{
 		void Serialize(Stream stream, object[] graph);
 
 		object[] Deserialize(Stream stream);
@@ -18,5 +18,5 @@ namespace GoreRemoting.Serialization
 		Exception RestoreSerializedException(object ex);
 
 		string Name { get; }
-    }
+	}
 }

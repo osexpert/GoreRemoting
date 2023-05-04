@@ -10,9 +10,9 @@ namespace Nerdbank.Streams
 	using System.Threading.Tasks;
 	using Microsoft;
 
-	internal class ReadOnlySequenceStream : Stream , IDisposableObservable
+	internal class ReadOnlySequenceStream : Stream, IDisposableObservable
 	{
-//		private static readonly Task<int> TaskOfZero = Task.FromResult(0);
+		//		private static readonly Task<int> TaskOfZero = Task.FromResult(0);
 
 		private readonly Action<object?>? disposeAction;
 		private readonly object? disposeActionArg;
@@ -180,7 +180,7 @@ namespace Nerdbank.Streams
 		public override void WriteByte(byte value) => this.ThrowDisposedOr(new NotSupportedException());
 
 		/// <inheritdoc/>
-		public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) 
+		public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
 			=> throw this.ThrowDisposedOr(new NotSupportedException());
 
 		/// <inheritdoc/>

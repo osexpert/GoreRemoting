@@ -387,7 +387,7 @@ namespace GoreRemoting.Tests
 			// because it can't find "Test"?
 			Assert.IsType<SerExOk>(e3);
 
-//			Assert.Equal("tull", e3.Data["teste"]);
+			//			Assert.Equal("tull", e3.Data["teste"]);
 			//Assert.Equal(1, e3.Data.Count);
 		}
 
@@ -435,7 +435,7 @@ namespace GoreRemoting.Tests
 			// because it can't find "Test"?
 			Assert.IsType<SerExOk>(e4);
 
-	//		Assert.Equal("tull", e4.Data["teste"]);
+			//		Assert.Equal("tull", e4.Data["teste"]);
 			Assert.Equal(1, e4.Data.Count);
 		}
 	}

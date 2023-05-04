@@ -43,6 +43,6 @@ namespace Nerdbank.Streams
 		public static Stream AsStream(this IBufferWriter<byte> writer) => new BufferWriterStream(writer);
 
 
-	
+
 	}
 }

@@ -83,7 +83,7 @@ namespace GoreRemoting.Tests
 				return AsyncEnumerableAdapter.ServerProduce(() => Jild3Int(t), outt);
 
 
-//				return AsyncEnumerableAdapter.Produce(cancel => Jild3Int(t, cancel), outt, new CancellationToken());
+				//				return AsyncEnumerableAdapter.Produce(cancel => Jild3Int(t, cancel), outt, new CancellationToken());
 			}
 
 			private async IAsyncEnumerable<string> Jild3Int(int x)
@@ -91,7 +91,7 @@ namespace GoreRemoting.Tests
 				await Task.CompletedTask;
 				yield return "1";
 				yield return "2";
-		
+
 				//while (true)
 				//{
 				//	yield return Random.Shared.Next().ToString();// "2";
@@ -203,11 +203,11 @@ namespace GoreRemoting.Tests
 
 		class NonoEx2 : Exception
 		{
-            public NonoEx2(object t, string mess) : base(mess)
-            {
-               
-            }
-        }
+			public NonoEx2(object t, string mess) : base(mess)
+			{
+
+			}
+		}
 
 
 
@@ -362,10 +362,10 @@ namespace GoreRemoting.Tests
 			public void Report(T value)
 			{
 				ProCha?.Invoke(this, value);
-								
+
 			}
 		}
 	}
 
-	
+
 }

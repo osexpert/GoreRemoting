@@ -25,7 +25,7 @@ namespace GoreRemoting
 			PropertyData = ed.PropertyData;
 		}
 
-	
+
 	}
 
 

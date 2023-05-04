@@ -66,8 +66,8 @@ namespace GoreRemoting
 
 			var bytes = new GoreRequestMessage(callMessage, serializer, compressor);
 
-			var resultMessage = _client.Invoke(bytes, 
-				(callback, res) => HandleResponseAsync(serializer, compressor, callback, res, args, streamingDelePos), 
+			var resultMessage = _client.Invoke(bytes,
+				(callback, res) => HandleResponseAsync(serializer, compressor, callback, res, args, streamingDelePos),
 				new CallOptions(headers: headers, cancellationToken: cancel));
 
 			if (resultMessage.Exception != null)
@@ -86,7 +86,7 @@ namespace GoreRemoting
 			// restore context flow from server
 			if (_client._config.RestoreCallContext)
 				CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
-        }
+		}
 
 		async ValueTask InterceptAsync(IAsyncInvocation invocation)
 		{
@@ -106,7 +106,7 @@ namespace GoreRemoting
 			//	headers.Add(Constants.CompressorHeaderKey, compressor.EncodingName);
 
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
-				remoteServiceName: _serviceName, 
+				remoteServiceName: _serviceName,
 				targetMethod: targetMethod,
 				args: arguments,
 				setCallContext: _client._config.SetCallContext
@@ -114,7 +114,7 @@ namespace GoreRemoting
 
 			var requestMsg = new GoreRequestMessage(callMessage, serializer, compressor);
 
-			var resultMessage =  await _client.InvokeAsync(requestMsg,
+			var resultMessage = await _client.InvokeAsync(requestMsg,
 				(callback, req) => HandleResponseAsync(serializer, compressor, callback, req, args.ToArray(), streamingDelePos),
 				new CallOptions(headers: headers, cancellationToken: cancel)).ConfigureAwait(false);
 
@@ -128,7 +128,7 @@ namespace GoreRemoting
 			// restore context flow from server
 			if (_client._config.RestoreCallContext)
 				CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
-        }
+		}
 
 		private ISerializerAdapter ChooseSerializer(Type t, MethodInfo mi)
 		{
@@ -184,7 +184,7 @@ namespace GoreRemoting
 
 
 
-		private async Task<MethodResultMessage> HandleResponseAsync(ISerializerAdapter serializer, ICompressionProvider compressor, GoreResponseMessage callbackData, 
+		private async Task<MethodResultMessage> HandleResponseAsync(ISerializerAdapter serializer, ICompressionProvider compressor, GoreResponseMessage callbackData,
 			Func<GoreRequestMessage, Task> res, object[] args,
 			int? streamingDelegatePosition)
 		{
@@ -246,9 +246,9 @@ namespace GoreRemoting
 
 						DelegateResultMessage msg;
 						if (exception != null)
-							msg = new DelegateResultMessage{ Position = delegateMsg.Position, Exception = exception };
+							msg = new DelegateResultMessage { Position = delegateMsg.Position, Exception = exception };
 						else
-							msg = new DelegateResultMessage{ Position = delegateMsg.Position, Result = result, StreamingStatus = streamingStatus };
+							msg = new DelegateResultMessage { Position = delegateMsg.Position, Result = result, StreamingStatus = streamingStatus };
 
 						var requestMsg = new GoreRequestMessage(msg, serializer, compressor);
 
@@ -353,7 +353,7 @@ namespace GoreRemoting
 			mappedArgument = remoteDelegateInfo;
 			return true;
 		}
-    }
+	}
 
 
 	internal static class TaskResultHelper

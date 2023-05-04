@@ -2,12 +2,12 @@
 
 namespace KPreisser
 {
-    internal static partial class TimeUtils
-    {
-        private static class NativeMethodsWindows
-        {
-            [DllImport("kernel32.dll", EntryPoint = "QueryUnbiasedInterruptTime", ExactSpelling = true)]
-            public static extern bool QueryUnbiasedInterruptTime(out long value);
-        }
-    }
+	internal static partial class TimeUtils
+	{
+		private static class NativeMethodsWindows
+		{
+			[DllImport("kernel32.dll", EntryPoint = "QueryUnbiasedInterruptTime", ExactSpelling = true)]
+			public static extern bool QueryUnbiasedInterruptTime(out long value);
+		}
+	}
 }

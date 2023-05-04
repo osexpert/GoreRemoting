@@ -53,36 +53,36 @@ namespace stakx.DynamicProxy
 
 
 	public partial class AsyncInterceptor //: IInterceptor
-    {
-        public AsyncInterceptor(Action<ISyncInvocation> sync, Func<IAsyncInvocation, ValueTask> asyncc)
-        {
-            _sync = sync;
-            _asyncc = asyncc;
+	{
+		public AsyncInterceptor(Action<ISyncInvocation> sync, Func<IAsyncInvocation, ValueTask> asyncc)
+		{
+			_sync = sync;
+			_asyncc = asyncc;
 
-        }
+		}
 
-        Action<ISyncInvocation> _sync;
-        Func<IAsyncInvocation, ValueTask> _asyncc;
+		Action<ISyncInvocation> _sync;
+		Func<IAsyncInvocation, ValueTask> _asyncc;
 
 		public void Intercept(ISyncInvocation invocation)
-        {
-            var returnType = invocation.Method.ReturnType;
-            var builder = AsyncMethodBuilder.TryCreate(returnType);
-            if (builder != null)
-            {
-                var asyncInvocation = new AsyncInvocation(invocation);
-                var stateMachine = new AsyncStateMachine(asyncInvocation, builder, task: _asyncc(asyncInvocation));
+		{
+			var returnType = invocation.Method.ReturnType;
+			var builder = AsyncMethodBuilder.TryCreate(returnType);
+			if (builder != null)
+			{
+				var asyncInvocation = new AsyncInvocation(invocation);
+				var stateMachine = new AsyncStateMachine(asyncInvocation, builder, task: _asyncc(asyncInvocation));
 				builder.Start(stateMachine);
-                invocation.ReturnValue = builder.Task();
-            }
-            else
-            {
+				invocation.ReturnValue = builder.Task();
+			}
+			else
+			{
 				_sync(invocation);
-            }
-        }
+			}
+		}
 
-        //protected abstract void Intercept(IInvocation invocation);
+		//protected abstract void Intercept(IInvocation invocation);
 
-        //protected abstract ValueTask InterceptAsync(IAsyncInvocation invocation);
-    }
+		//protected abstract ValueTask InterceptAsync(IAsyncInvocation invocation);
+	}
 }

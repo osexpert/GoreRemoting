@@ -3,52 +3,52 @@ using GoreRemoting.Tests.ExternalTypes;
 
 namespace GoreRemoting.Tests.Tools
 {
-    public class TestService : ITestService
-    {
-        private int _counter = 0;
-        
-        public Func<object, object> TestMethodFake { get; set; }
+	public class TestService : ITestService
+	{
+		private int _counter = 0;
 
-        public Action OneWayMethodFake { get; set; }
-        
-        public Action<DataClass> TestExternalTypeParameterFake { get; set; }
-        
-        public event Action ServiceEvent; 
-        
-        public object TestMethod(object arg)
-        {
-            return TestMethodFake?.Invoke(arg);
-        }
+		public Func<object, object> TestMethodFake { get; set; }
 
-        public void TestMethodWithDelegateArg(Action<string> callback)
-        {
-            callback("test");
-        }
+		public Action OneWayMethodFake { get; set; }
 
-        public void FireServiceEvent()
-        {
-            ServiceEvent?.Invoke();
-        }
-        
-        public void OneWayMethod()
-        {
-            OneWayMethodFake?.Invoke();
-        }
+		public Action<DataClass> TestExternalTypeParameterFake { get; set; }
 
-        public void TestExternalTypeParameter(DataClass data)
-        {
-            TestExternalTypeParameterFake?.Invoke(data);
-        }
+		public event Action ServiceEvent;
 
-        public string Echo(string text)
-        {
-            return text;
-        }
+		public object TestMethod(object arg)
+		{
+			return TestMethodFake?.Invoke(arg);
+		}
 
-        public void MethodWithOutParameter(out int counter)
-        {
-            _counter++;
-            counter = _counter;
-        }
-    }
+		public void TestMethodWithDelegateArg(Action<string> callback)
+		{
+			callback("test");
+		}
+
+		public void FireServiceEvent()
+		{
+			ServiceEvent?.Invoke();
+		}
+
+		public void OneWayMethod()
+		{
+			OneWayMethodFake?.Invoke();
+		}
+
+		public void TestExternalTypeParameter(DataClass data)
+		{
+			TestExternalTypeParameterFake?.Invoke(data);
+		}
+
+		public string Echo(string text)
+		{
+			return text;
+		}
+
+		public void MethodWithOutParameter(out int counter)
+		{
+			_counter++;
+			counter = _counter;
+		}
+	}
 }

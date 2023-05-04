@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace stakx.DynamicProxy
 {
-    public interface IAsyncInvocation
-    {
-        IReadOnlyList<object> Arguments { get; }
-        MethodInfo Method { get; }
-        object Result { get; set; }
-        //ValueTask ProceedAsync();
-    }
+	public interface IAsyncInvocation
+	{
+		IReadOnlyList<object> Arguments { get; }
+		MethodInfo Method { get; }
+		object Result { get; set; }
+		//ValueTask ProceedAsync();
+	}
 }

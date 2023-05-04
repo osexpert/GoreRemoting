@@ -15,37 +15,37 @@ using Grpc.Net.Compression;
 
 namespace ClientNet48
 {
-    internal class Program
-    {
-        static void Main(string[] args)
-        {
-            var p = new Program();
-            p.Go();
-        }
+	internal class Program
+	{
+		static void Main(string[] args)
+		{
+			var p = new Program();
+			p.Go();
+		}
 
 
-        public void Go()
-        {
+		public void Go()
+		{
 			var channel = new Channel("localhost", 5000, ChannelCredentials.Insecure);
-            var c = new RemotingClient(channel.CreateCallInvoker(), new ClientConfig(new BinaryFormatterAdapter()) 
-            { 
-                BeforeMethodCall = BeforeBuildMethodCallMessage,
-            });
-            var testServ = c.CreateProxy<ITestService>();
+			var c = new RemotingClient(channel.CreateCallInvoker(), new ClientConfig(new BinaryFormatterAdapter())
+			{
+				BeforeMethodCall = BeforeBuildMethodCallMessage,
+			});
+			var testServ = c.CreateProxy<ITestService>();
 
-            var cs = new ClientTest();
-            cs.Test(testServ);
-        }
+			var cs = new ClientTest();
+			cs.Test(testServ);
+		}
 
-        Guid pSessID = Guid.NewGuid();
+		Guid pSessID = Guid.NewGuid();
 
-        public void BeforeBuildMethodCallMessage(BeforeMethodCallParams p)
-        {
+		public void BeforeBuildMethodCallMessage(BeforeMethodCallParams p)
+		{
 			//CallContext.SetData("SessionId", pSessID);
 			p.Headers.Add(Constants.SessionIdHeaderKey, pSessID.ToString());
-        }
-    }
+		}
+	}
 
- 
+
 
 }

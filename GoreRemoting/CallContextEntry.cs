@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 namespace GoreRemoting
 {
-    /// <summary>
-    /// Describes a single call context entry.
-    /// </summary>
-    
-    public class CallContextEntry : IGorializer
+	/// <summary>
+	/// Describes a single call context entry.
+	/// </summary>
+
+	public class CallContextEntry : IGorializer
 	{
 		public CallContextEntry()
 		{
@@ -22,11 +22,11 @@ namespace GoreRemoting
 		/// Gets or sets the name of the call context entry. 
 		/// </summary>
 		public string Name { get; set; }
-        
-        /// <summary>
-        /// Gets or sets the value of the call context entry.
-        /// </summary>
-        public object Value { get; set; }
+
+		/// <summary>
+		/// Gets or sets the value of the call context entry.
+		/// </summary>
+		public object Value { get; set; }
 
 		public void Deserialize(GoreBinaryReader r)
 		{

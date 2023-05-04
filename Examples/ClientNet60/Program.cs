@@ -14,45 +14,45 @@ using Grpc.Net.Compression;
 
 namespace ClientNet60
 {
-    internal class Program
-    {
-        static void Main(string[] args)
-        {
+	internal class Program
+	{
+		static void Main(string[] args)
+		{
 
 
-            var p = new Program();
-            p.Go();
+			var p = new Program();
+			p.Go();
 
-        }
+		}
 
 
-        public void Go()
-        {
+		public void Go()
+		{
 
-            var channel = GrpcChannel.ForAddress("http://localhost:5000");
-            
-            var c = new RemotingClient(channel.CreateCallInvoker(), new ClientConfig(new BinaryFormatterAdapter()) 
-            { 
-                BeforeMethodCall = BeforeBuildMethodCallMessage,
-            });
+			var channel = GrpcChannel.ForAddress("http://localhost:5000");
 
-            var testServ = c.CreateProxy<ITestService>();
+			var c = new RemotingClient(channel.CreateCallInvoker(), new ClientConfig(new BinaryFormatterAdapter())
+			{
+				BeforeMethodCall = BeforeBuildMethodCallMessage,
+			});
 
-            var cs = new ClientTest();
-            cs.Test(testServ);
-        }
+			var testServ = c.CreateProxy<ITestService>();
 
-        Guid pSessID = Guid.NewGuid();
+			var cs = new ClientTest();
+			cs.Test(testServ);
+		}
 
-        public void BeforeBuildMethodCallMessage(BeforeMethodCallParams p)
-        {
+		Guid pSessID = Guid.NewGuid();
+
+		public void BeforeBuildMethodCallMessage(BeforeMethodCallParams p)
+		{
 
 
 			p.Headers.Add(Constants.SessionIdHeaderKey, pSessID.ToString());
 			//CallContext.SetData("SessionId", pSessID);
-        }
+		}
 
-    }
+	}
 
 	class mempack : ISerializerAdapter
 	{

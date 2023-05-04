@@ -17,7 +17,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 			return canHandle;
 		}
 
-        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
+		[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
 		public void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
 		{
 			var ci = (CultureInfo)obj;
@@ -26,7 +26,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 			info.AddValue("UseUserOverride", ci.UseUserOverride);
 		}
 
-        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
+		[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
 		public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
 		{
 			//return new CultureInfo(info.GetString("Name"), info.GetBoolean("UseUserOverride"));

@@ -9,7 +9,7 @@ namespace GoreRemoting.Tests
 {
     public class LinqExpressionTests
     {
-        #region Service with method using expressions
+#region Service with method using expressions
 
         public class Hobbit
         {
@@ -40,7 +40,7 @@ namespace GoreRemoting.Tests
             }
         }
 
-        #endregion
+#endregion
         
         [Fact]
         public void LinqExpression_should_be_serialized_and_deserialized()

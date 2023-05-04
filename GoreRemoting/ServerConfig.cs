@@ -8,40 +8,40 @@ using Grpc.Net.Compression;
 
 namespace GoreRemoting
 {
-    /// <summary>
-    /// Describes the configuration settings of a CoreRemoting service instance.
-    /// </summary>
-    public class ServerConfig
-    {
-        /// <summary>
-        /// Set this to overide the default Activator.CreateInstance
-        /// </summary>
-        public Func<Type, Metadata, object> CreateService { get; set; } = (t, m) => Activator.CreateInstance(t);
+	/// <summary>
+	/// Describes the configuration settings of a CoreRemoting service instance.
+	/// </summary>
+	public class ServerConfig
+	{
+		/// <summary>
+		/// Set this to overide the default Activator.CreateInstance
+		/// </summary>
+		public Func<Type, Metadata, object> CreateService { get; set; } = (t, m) => Activator.CreateInstance(t);
 
-        private Dictionary<string, ISerializerAdapter> _serializers = new();
+		private Dictionary<string, ISerializerAdapter> _serializers = new();
 
-        public ServerConfig()
-        {
-            
-        }
+		public ServerConfig()
+		{
+
+		}
 
 		public ServerConfig(params ISerializerAdapter[] serializers)
 		{
-            AddSerializer(serializers);
+			AddSerializer(serializers);
 		}
 
 		public void AddSerializer(params ISerializerAdapter[] serializers)
-        {
-            foreach (var serializer in serializers)
-                _serializers.Add(serializer.Name, serializer);
-        }
+		{
+			foreach (var serializer in serializers)
+				_serializers.Add(serializer.Name, serializer);
+		}
 
 		internal ISerializerAdapter GetSerializerByName(string serializerName)
 		{
-            if (!_serializers.TryGetValue(serializerName, out var res))
-                throw new Exception("Serializer not found: " + serializerName);
+			if (!_serializers.TryGetValue(serializerName, out var res))
+				throw new Exception("Serializer not found: " + serializerName);
 
-            return res;
+			return res;
 		}
 
 		internal ICompressionProvider GetCompressorByName(string compressorName)

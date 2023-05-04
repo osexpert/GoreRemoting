@@ -3,24 +3,24 @@ using GoreRemoting.Tests.ExternalTypes;
 
 namespace GoreRemoting.Tests.Tools
 {
-//    [ReturnAsProxy]
-    public interface ITestService
-    {
-        event Action ServiceEvent;
-        
-        object TestMethod(object arg);
+	//    [ReturnAsProxy]
+	public interface ITestService
+	{
+		event Action ServiceEvent;
 
-        void TestMethodWithDelegateArg(Action<string> callback);
+		object TestMethod(object arg);
 
-        void FireServiceEvent();
+		void TestMethodWithDelegateArg(Action<string> callback);
 
-//        [OneWay]
-        void OneWayMethod();
+		void FireServiceEvent();
 
-        void TestExternalTypeParameter(DataClass data);
+		//        [OneWay]
+		void OneWayMethod();
 
-        string Echo(string text);
+		void TestExternalTypeParameter(DataClass data);
 
-        void MethodWithOutParameter(out int counter);
-    }
+		string Echo(string text);
+
+		void MethodWithOutParameter(out int counter);
+	}
 }

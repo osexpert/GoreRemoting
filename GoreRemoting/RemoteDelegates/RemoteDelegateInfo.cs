@@ -6,26 +6,26 @@ using System.Runtime.Serialization;
 
 namespace GoreRemoting.RemoteDelegates
 {
-    /// <summary>
-    /// Describes a remote delegate.
-    /// </summary>
+	/// <summary>
+	/// Describes a remote delegate.
+	/// </summary>
 
-    public class RemoteDelegateInfo : IGorializer
-    {
-        private string _delegateTypeName;
+	public class RemoteDelegateInfo : IGorializer
+	{
+		private string _delegateTypeName;
 
-        private bool _hasResult;
+		private bool _hasResult;
 
-        /// <summary>
-        /// Creates a new instance of the RemoteDelegateInfo class.
-        /// </summary>
-        /// <param name="delegateTypeName">Type name of the client delegate</param>
-        /// <param name="hasResult">Has result</param>
+		/// <summary>
+		/// Creates a new instance of the RemoteDelegateInfo class.
+		/// </summary>
+		/// <param name="delegateTypeName">Type name of the client delegate</param>
+		/// <param name="hasResult">Has result</param>
 		public RemoteDelegateInfo(string delegateTypeName, bool hasResult)
-        {
-            _delegateTypeName = delegateTypeName;
+		{
+			_delegateTypeName = delegateTypeName;
 			_hasResult = hasResult;
-        }
+		}
 
 		public RemoteDelegateInfo(GoreBinaryReader r)
 		{
@@ -37,10 +37,10 @@ namespace GoreRemoting.RemoteDelegates
 		/// </summary>
 		public string DelegateTypeName => _delegateTypeName;
 
-        /// <summary>
-        /// HasResult
-        /// </summary>
-        public bool HasResult => _hasResult;
+		/// <summary>
+		/// HasResult
+		/// </summary>
+		public bool HasResult => _hasResult;
 
 		public void Deserialize(GoreBinaryReader r)
 		{
@@ -63,11 +63,11 @@ namespace GoreRemoting.RemoteDelegates
 
 	public class CancellationTokenDummy : IGorializer
 	{
-        public CancellationTokenDummy()
-        {
-            
-        }
-        public CancellationTokenDummy(GoreBinaryReader r)
+		public CancellationTokenDummy()
+		{
+
+		}
+		public CancellationTokenDummy(GoreBinaryReader r)
 		{
 			Deserialize(r);
 		}

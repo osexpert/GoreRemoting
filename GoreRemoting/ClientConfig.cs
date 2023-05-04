@@ -9,60 +9,60 @@ using Grpc.Net.Compression;
 
 namespace GoreRemoting
 {
-    /// <summary>
-    /// Provides configuration settings for a CoreRemoting client instance.
-    /// </summary>
-    public class ClientConfig
-    {
-        /// <summary>
-        /// Set to be notified before a method call
-        /// </summary>BeforeMethodCall
-  //      public ActionRef<Type, MethodInfo, Metadata, ISerializerAdapter, ICompressionProvider> BeforeMethodCall { get; set; }
+	/// <summary>
+	/// Provides configuration settings for a CoreRemoting client instance.
+	/// </summary>
+	public class ClientConfig
+	{
+		/// <summary>
+		/// Set to be notified before a method call
+		/// </summary>BeforeMethodCall
+		//      public ActionRef<Type, MethodInfo, Metadata, ISerializerAdapter, ICompressionProvider> BeforeMethodCall { get; set; }
 
 		//public delegate void ActionRef<T1, T2, T3, T4, T5>(T1 a, T2 b, T3 c, ref T4 d, ref T5 e);
-        public Action<BeforeMethodCallParams> BeforeMethodCall { get; set; }
+		public Action<BeforeMethodCallParams> BeforeMethodCall { get; set; }
 
-        public ClientConfig()
-        {
-            
-        }
+		public ClientConfig()
+		{
+
+		}
 
 
 		public ClientConfig(params ISerializerAdapter[] serializers)
 		{
-            AddSerializer(serializers);
+			AddSerializer(serializers);
 		}
 
 
-        Type _defaultSerializer;
+		Type _defaultSerializer;
 
 		/// <summary>
-        /// If more than one serializer added, must specify here which one is default
-        /// </summary>
-        public Type DefaultSerializer 
-        {
-            get
-            {
-                if (_defaultSerializer != null)
-				    return _defaultSerializer;
+		/// If more than one serializer added, must specify here which one is default
+		/// </summary>
+		public Type DefaultSerializer
+		{
+			get
+			{
+				if (_defaultSerializer != null)
+					return _defaultSerializer;
 
-                // if we have only one, default is implied
+				// if we have only one, default is implied
 				if (_serializers.Count() == 1)
-                    return _serializers.Single().Key;
+					return _serializers.Single().Key;
 
-                return null;
+				return null;
 			}
-            set
-            {
-                _defaultSerializer = value;
+			set
+			{
+				_defaultSerializer = value;
 			}
-        }
+		}
 
-        private Dictionary<Type, ISerializerAdapter> _serializers = new();
+		private Dictionary<Type, ISerializerAdapter> _serializers = new();
 		private Dictionary<string, ISerializerAdapter> _serializerByName = new();
 
 		public void AddSerializer(params ISerializerAdapter[] serializers)
-        {
+		{
 			foreach (var serializer in serializers)
 			{
 				_serializers.Add(serializer.GetType(), serializer);
@@ -70,15 +70,15 @@ namespace GoreRemoting
 			}
 		}
 
-        public ISerializerAdapter GetSerializerByType(Type serializer)
-        {
-            if (!typeof(ISerializerAdapter).IsAssignableFrom(serializer))
-                throw new Exception("Not ISerializerAdapter");
+		public ISerializerAdapter GetSerializerByType(Type serializer)
+		{
+			if (!typeof(ISerializerAdapter).IsAssignableFrom(serializer))
+				throw new Exception("Not ISerializerAdapter");
 
-            if (!_serializers.TryGetValue(serializer, out var res))
-                throw new Exception("Serializer not found: " + serializer);
+			if (!_serializers.TryGetValue(serializer, out var res))
+				throw new Exception("Serializer not found: " + serializer);
 
-            return res;
+			return res;
 		}
 
 		public ICompressionProvider GetCompressorByType(Type compressor)
@@ -154,7 +154,7 @@ namespace GoreRemoting
 
 
 	public class BeforeMethodCallParams
-    {
+	{
 		/// <summary>
 		/// FIXME: does ref work here?
 		/// </summary>

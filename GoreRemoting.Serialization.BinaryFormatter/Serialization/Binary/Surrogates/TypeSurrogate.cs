@@ -26,7 +26,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 			return handles;
 		}
 
-        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
+		[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
 		public void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
 		{
 			var type = (Type)obj;
@@ -34,11 +34,11 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 			// that are not forwareded to mscorlib, including System.RuntimeType
 			info.SetType(typeof(TypeReference));
 			info.AddValue("TypeName", TypeShortener.GetShortType(type));
-//			info.AddValue("AssemblyName", type.Assembly.FullName);
-	//		info.AddValue("FullName", type.FullName);
+			//			info.AddValue("AssemblyName", type.Assembly.FullName);
+			//		info.AddValue("FullName", type.FullName);
 		}
 
-        [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
+		[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
 		public object SetObjectData(object obj, SerializationInfo info, StreamingContext context,
 			ISurrogateSelector selector)
 		{

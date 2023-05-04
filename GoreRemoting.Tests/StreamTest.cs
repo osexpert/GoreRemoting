@@ -17,7 +17,7 @@ namespace GoreRemoting.Tests
 		//Task StreamToServer(Func<int, (byte[], int, int)> read);
 		Task ServerPushDataToClient(Func<byte[], Task> push);
 
-		Task ServerPullDataFromClient([StreamingFunc]Func<Task<byte[]>> pull);
+		Task ServerPullDataFromClient([StreamingFunc] Func<Task<byte[]>> pull);
 
 		Task ServerPullStringDataFromClient(Func<Task<(string, bool)>> pull);
 	}
@@ -93,7 +93,7 @@ namespace GoreRemoting.Tests
 			server.Start();
 
 			await using var client = new NativeClient(9198, new ClientConfig(new BinaryFormatterAdapter()));
-			
+
 			var proxy = client.CreateProxy<IStreamTest>();
 
 			int i = 0;
@@ -131,9 +131,9 @@ namespace GoreRemoting.Tests
 
 			var fileReadS = File.OpenRead("");
 
-	//		await AsyncEnumerableAdapter.ClientProduce<byte[]>(GetDataFromFileStream(fileReadS), lol => proxy.ServerPullDataFromClient(() => lol()));
+			//		await AsyncEnumerableAdapter.ClientProduce<byte[]>(GetDataFromFileStream(fileReadS), lol => proxy.ServerPullDataFromClient(() => lol()));
 
-//			await StreamAdapter.ClientProduce(fileReadS, lol => proxy.ServerPullDataFromClient(() => lol()));
+			//			await StreamAdapter.ClientProduce(fileReadS, lol => proxy.ServerPullDataFromClient(() => lol()));
 			//var writeTo = new WriteStreaam(cprod);
 			// server kommer og gir klient data
 			//Stream readstreamm = StreamAdapter.ClientConsume(bb => proxy.ServerPushDataToClient(x => bb(x)));
@@ -202,7 +202,7 @@ namespace GoreRemoting.Tests
 				{
 					if (buff.Length != i)
 						Array.Resize(ref buff, i); // stream via IAsyncEnumerable er lite ideellt....
-					// DET ER BEST HVIS SERVER SPØR OM DATA OG LENGDE!
+												   // DET ER BEST HVIS SERVER SPØR OM DATA OG LENGDE!
 					yield return buff;
 				}
 			}
@@ -265,7 +265,7 @@ namespace GoreRemoting.Tests
 
 			public override void Write(byte[] buffer, int offset, int count)
 			{
-				
+
 			}
 		}
 

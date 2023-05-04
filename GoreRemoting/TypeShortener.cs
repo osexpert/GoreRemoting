@@ -26,7 +26,7 @@ namespace GoreRemoting
 				// shortened: "System.Tuple`2[[System.String, System.Private.CoreLib],[System.Int32, System.Private.CoreLib]], System.Private.CoreLib"
 				// n: "System.Tuple`2[[System.String, System.Private.CoreLib, Version=6.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Int32, System.Private.CoreLib, Version=6.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib"
 				//if (shortened != n)
-					//throw new Exception("lol not the same");
+				//throw new Exception("lol not the same");
 
 				if (Type.GetType(shortened, false) == null)
 				{

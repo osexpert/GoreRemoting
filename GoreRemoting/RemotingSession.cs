@@ -24,7 +24,7 @@ namespace CoreRemoting
     /// </summary>
     public class RemotingSession : IDisposable
     {
-        #region Fields
+#region Fields
 
         private readonly IRemotingServer _server;
         private IRawMessageTransport _rawMessageTransport;
@@ -42,9 +42,9 @@ namespace CoreRemoting
         /// </summary>
         public event Action BeforeDispose;
         
-        #endregion
+#endregion
 
-        #region Construction
+#region Construction
 
         /// <summary>
         /// Creates a new instance of the RemotingSession class.
@@ -163,9 +163,9 @@ namespace CoreRemoting
             ((RemotingServer)_server).OnError(exception);
         }
 
-        #endregion
+#endregion
 
-        #region Properties
+#region Properties
 
         /// <summary>
         /// Gets the timestamp of the last activity of this session.
@@ -219,9 +219,9 @@ namespace CoreRemoting
         [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
         public RemotingIdentity Identity { get; private set; }
 
-        #endregion
+#endregion
 
-        #region Handling received messages
+#region Handling received messages
 
         /// <summary>
         /// Event procedure: Called when the ReceiveMessage event is fired on the raw message transport component.
@@ -642,9 +642,9 @@ namespace CoreRemoting
             return true;
         }
         
-        #endregion
+#endregion
 
-        #region IDisposable implementation
+#region IDisposable implementation
 
         /// <summary>
         /// Frees managed resources.
@@ -660,7 +660,7 @@ namespace CoreRemoting
             _rawMessageTransport = null;
         }
 
-        #endregion
+#endregion
     }
 }
 #endif

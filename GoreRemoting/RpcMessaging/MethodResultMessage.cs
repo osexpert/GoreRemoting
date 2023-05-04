@@ -5,42 +5,42 @@ using System.Runtime.Serialization;
 
 namespace GoreRemoting.RpcMessaging
 {
-    /// <summary>
-    /// Serializable message that describes the result of a remote method call.
-    /// </summary>
-    public class MethodResultMessage : IGorializer
-    {
-        public MethodResultMessage()
-        {
-        }
+	/// <summary>
+	/// Serializable message that describes the result of a remote method call.
+	/// </summary>
+	public class MethodResultMessage : IGorializer
+	{
+		public MethodResultMessage()
+		{
+		}
 
-        public MethodResultMessage(GoreBinaryReader r)
-        {
-            Deserialize(r);
-        }
+		public MethodResultMessage(GoreBinaryReader r)
+		{
+			Deserialize(r);
+		}
 
-        /// <summary>
-        /// Gets or sets the return value of the invoked method.
-        /// 
-        /// TODO: enum with Result or Exception?
-        /// </summary>
-        public object ReturnValue { get; set; }
-        
-        /// <summary>
-        /// Exception
-        /// </summary>
-        public object Exception { get; set; }
+		/// <summary>
+		/// Gets or sets the return value of the invoked method.
+		/// 
+		/// TODO: enum with Result or Exception?
+		/// </summary>
+		public object ReturnValue { get; set; }
 
-        /// <summary>
-        /// Gets or sets an array of out parameters.
-        /// </summary>
-        public MethodOutArgument[] OutArguments { get; set; }
+		/// <summary>
+		/// Exception
+		/// </summary>
+		public object Exception { get; set; }
+
+		/// <summary>
+		/// Gets or sets an array of out parameters.
+		/// </summary>
+		public MethodOutArgument[] OutArguments { get; set; }
 
 		public void Deserialize(GoreBinaryReader r)
 		{
-            var n = r.Read7BitEncodedInt();
+			var n = r.Read7BitEncodedInt();
 			OutArguments = new MethodOutArgument[n];
-            for (int i = 0; i < n; i++)
+			for (int i = 0; i < n; i++)
 				OutArguments[i] = new MethodOutArgument(r);
 
 			var c = r.Read7BitEncodedInt();
@@ -49,13 +49,13 @@ namespace GoreRemoting.RpcMessaging
 				CallContextSnapshot[j] = new CallContextEntry(r);
 		}
 
-        public void Deserialize(Stack<object> st)
-        {
-            ReturnValue = st.Pop();
-            Exception = st.Pop();
+		public void Deserialize(Stack<object> st)
+		{
+			ReturnValue = st.Pop();
+			Exception = st.Pop();
 
-            foreach (var oa in OutArguments)
-                oa.Deserialize(st);
+			foreach (var oa in OutArguments)
+				oa.Deserialize(st);
 
 			foreach (var cc in CallContextSnapshot)
 				cc.Deserialize(st);
@@ -66,19 +66,19 @@ namespace GoreRemoting.RpcMessaging
 			st.Push(ReturnValue);
 			st.Push(Exception);
 
-            if (OutArguments == null)
-                w.Write7BitEncodedInt(0);
-            else
-            {
-                w.Write7BitEncodedInt(OutArguments.Length);
-                foreach (var oa in OutArguments)
-                    oa.Serialize(w, st);
-            }
+			if (OutArguments == null)
+				w.Write7BitEncodedInt(0);
+			else
+			{
+				w.Write7BitEncodedInt(OutArguments.Length);
+				foreach (var oa in OutArguments)
+					oa.Serialize(w, st);
+			}
 
-            if (CallContextSnapshot == null)
-                w.Write7BitEncodedInt(0);
-            else
-            {
+			if (CallContextSnapshot == null)
+				w.Write7BitEncodedInt(0);
+			else
+			{
 				w.Write7BitEncodedInt(CallContextSnapshot.Length);
 				foreach (var cc in CallContextSnapshot)
 					cc.Serialize(w, st);

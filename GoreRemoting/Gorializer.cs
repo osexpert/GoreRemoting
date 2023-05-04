@@ -47,7 +47,7 @@ namespace GoreRemoting
 				if (cs != ms)
 					cs.Dispose();
 			}
-			  
+
 			//return ms.ToArray();
 		}
 
@@ -61,7 +61,7 @@ namespace GoreRemoting
 
 		public static T GoreDeserialize<T>(Stream ms, ISerializerAdapter serializer, ICompressionProvider compressor) where T : IGorializer, new()
 		{
-//			using var ms = new MemoryStream(data);
+			//			using var ms = new MemoryStream(data);
 
 			var res = new T();
 
@@ -98,10 +98,10 @@ namespace GoreRemoting
 	{
 		static Encoding _utf8NoBom = new UTF8Encoding(false);
 
-        public GoreBinaryWriter(Stream outp, bool leaveOpen = false) : base(outp, _utf8NoBom, leaveOpen)
-        {
-			
-        }
+		public GoreBinaryWriter(Stream outp, bool leaveOpen = false) : base(outp, _utf8NoBom, leaveOpen)
+		{
+
+		}
 
 		public new void Write7BitEncodedInt(int i) => base.Write7BitEncodedInt(i);
 	}
@@ -110,9 +110,9 @@ namespace GoreRemoting
 	{
 		static Encoding _utf8NoBom = new UTF8Encoding(false);
 
-        public GoreBinaryReader(Stream inp, bool leaveOpen = false) : base(inp, _utf8NoBom, leaveOpen)
-        {
-        }
+		public GoreBinaryReader(Stream inp, bool leaveOpen = false) : base(inp, _utf8NoBom, leaveOpen)
+		{
+		}
 
 		public new int Read7BitEncodedInt() => base.Read7BitEncodedInt();
 
@@ -123,14 +123,14 @@ namespace GoreRemoting
 	{
 		public Type Serializer { get; }
 
-        public SerializerAttribute(Type t)
-        {
+		public SerializerAttribute(Type t)
+		{
 			if (!typeof(ISerializerAdapter).IsAssignableFrom(t))
 				throw new Exception("Not ISerializerAdapter");
 
 			Serializer = t;
-        }
-    }
+		}
+	}
 
 	public class CompressorAttribute : Attribute
 	{

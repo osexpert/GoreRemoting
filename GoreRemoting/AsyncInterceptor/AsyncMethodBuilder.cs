@@ -9,68 +9,68 @@ using System.Threading.Tasks;
 
 namespace stakx.DynamicProxy
 {
-    internal static class AsyncMethodBuilder
-    {
-     
+	internal static class AsyncMethodBuilder
+	{
 
-        public static Builder TryCreate(Type returnType)
-        {
-            var builderType = GetAsyncMethodBuilderType(returnType);
-            if (builderType != null)
-            {
-                var createMethod = builderType.GetMethod("Create", BindingFlags.Public | BindingFlags.Static);
-                var builder = createMethod.Invoke(null, null);
-                return new Builder(builder);
-            }
-            else
-            {
-                return null;
-            }
-        }
 
-        private static Type GetAsyncMethodBuilderType(Type returnType)
-        {
-            var asyncMethodBuilderAttribute = (AsyncMethodBuilderAttribute)Attribute.GetCustomAttribute(returnType, typeof(AsyncMethodBuilderAttribute), inherit: false);
-            if (asyncMethodBuilderAttribute != null)
-            {
-                var builderType = asyncMethodBuilderAttribute.BuilderType;
-                if (builderType.IsGenericTypeDefinition)
-                {
-                    Debug.Assert(returnType.IsConstructedGenericType);
-                    return builderType.MakeGenericType(returnType.GetGenericArguments());
-                }
-                else
-                {
-                    return builderType;
-                }
-            }
-            else if (returnType == typeof(ValueTask))
-            {
-                return typeof(AsyncValueTaskMethodBuilder);
-            }
-            else if (returnType == typeof(Task))
-            {
-                return typeof(AsyncTaskMethodBuilder);
-            }
-            else if (returnType.IsGenericType)
-            {
-                var returnTypeDefinition = returnType.GetGenericTypeDefinition();
-                if (returnTypeDefinition == typeof(ValueTask<>))
-                {
-                    return typeof(AsyncValueTaskMethodBuilder<>).MakeGenericType(returnType.GetGenericArguments()[0]); // .Single?
-                }
-                else if (returnTypeDefinition == typeof(Task<>))
-                {
-                    return typeof(AsyncTaskMethodBuilder<>).MakeGenericType(returnType.GetGenericArguments()[0]); // .Single?
+		public static Builder TryCreate(Type returnType)
+		{
+			var builderType = GetAsyncMethodBuilderType(returnType);
+			if (builderType != null)
+			{
+				var createMethod = builderType.GetMethod("Create", BindingFlags.Public | BindingFlags.Static);
+				var builder = createMethod.Invoke(null, null);
+				return new Builder(builder);
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		private static Type GetAsyncMethodBuilderType(Type returnType)
+		{
+			var asyncMethodBuilderAttribute = (AsyncMethodBuilderAttribute)Attribute.GetCustomAttribute(returnType, typeof(AsyncMethodBuilderAttribute), inherit: false);
+			if (asyncMethodBuilderAttribute != null)
+			{
+				var builderType = asyncMethodBuilderAttribute.BuilderType;
+				if (builderType.IsGenericTypeDefinition)
+				{
+					Debug.Assert(returnType.IsConstructedGenericType);
+					return builderType.MakeGenericType(returnType.GetGenericArguments());
 				}
-            }
-            // NOTE: `AsyncVoidMethodBuilder` is intentionally excluded here because we want to end up in a synchronous
-            // `Intercept` callback for non-awaitable methods.
-            return null;
-        }
+				else
+				{
+					return builderType;
+				}
+			}
+			else if (returnType == typeof(ValueTask))
+			{
+				return typeof(AsyncValueTaskMethodBuilder);
+			}
+			else if (returnType == typeof(Task))
+			{
+				return typeof(AsyncTaskMethodBuilder);
+			}
+			else if (returnType.IsGenericType)
+			{
+				var returnTypeDefinition = returnType.GetGenericTypeDefinition();
+				if (returnTypeDefinition == typeof(ValueTask<>))
+				{
+					return typeof(AsyncValueTaskMethodBuilder<>).MakeGenericType(returnType.GetGenericArguments()[0]); // .Single?
+				}
+				else if (returnTypeDefinition == typeof(Task<>))
+				{
+					return typeof(AsyncTaskMethodBuilder<>).MakeGenericType(returnType.GetGenericArguments()[0]); // .Single?
+				}
+			}
+			// NOTE: `AsyncVoidMethodBuilder` is intentionally excluded here because we want to end up in a synchronous
+			// `Intercept` callback for non-awaitable methods.
+			return null;
+		}
 
-      
-    }
+
+	}
 
 	public class Builder
 	{

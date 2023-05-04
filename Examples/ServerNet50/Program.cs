@@ -64,10 +64,10 @@ namespace ServerNet60
 						kestrel.AddServerHeader = false;
 					});
 				});
-			
-		
 
-	
+
+
+
 	}
 
 }

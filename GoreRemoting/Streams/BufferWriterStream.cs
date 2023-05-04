@@ -13,7 +13,7 @@ namespace Nerdbank.Streams
 	/// <summary>
 	/// A stream that writes to a <see cref="IBufferWriter{T}"/> of <see cref="byte"/>.
 	/// </summary>
-	internal class BufferWriterStream : Stream , IDisposableObservable
+	internal class BufferWriterStream : Stream, IDisposableObservable
 	{
 		private IBufferWriter<byte> writer;
 

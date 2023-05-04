@@ -34,9 +34,9 @@ namespace GoreRemoting
 
 		ServerConfig _config;
 
-        public RemotingServer(ServerConfig config)
+		public RemotingServer(ServerConfig config)
 		{
-            _config = config;
+			_config = config;
 
 			DuplexCallDescriptor = Descriptors.GetDuplexCall("DuplexCall",
 				Marshallers.Create<GoreRequestMessage>(SerializeRequest, DeserializeRequest),
@@ -102,7 +102,7 @@ namespace GoreRemoting
 				throw new Exception("Service not registered: " + serviceName);
 
 			return _config.CreateService(serviceType, context.RequestHeaders);
-        }
+		}
 
 		private Type GetServiceType(string serviceName)
 		{
@@ -118,8 +118,8 @@ namespace GoreRemoting
 		/// <param name="arguments">Array of parameter values</param>
 		/// <param name="callDelegate"></param>
 		/// <returns>Array of arguments (includes mapped ones)</returns>
-		private object[] MapArguments(object[] arguments, 
-			Func<DelegateCallMessage, object> callDelegate, 
+		private object[] MapArguments(object[] arguments,
+			Func<DelegateCallMessage, object> callDelegate,
 			Func<DelegateCallMessage, Task<object>> callDelegateAsync,
 			ServerCallContext context)
 		{
@@ -162,19 +162,19 @@ namespace GoreRemoting
 			}
 
 			var delegateType = Type.GetType(remoteDelegateInfo.DelegateTypeName);
-            if (delegateType == null)
-                throw new Exception("Delegate type not found: " + remoteDelegateInfo.DelegateTypeName);
+			if (delegateType == null)
+				throw new Exception("Delegate type not found: " + remoteDelegateInfo.DelegateTypeName);
 
-            //if (false)//_delegateProxyCache.ContainsKey((delegateType, position)))
-            //{
-            //	mappedArgument = _delegateProxyCache[(delegateType, position)].ProxiedDelegate;
-            //	return true;
-            //}
+			//if (false)//_delegateProxyCache.ContainsKey((delegateType, position)))
+			//{
+			//	mappedArgument = _delegateProxyCache[(delegateType, position)].ProxiedDelegate;
+			//	return true;
+			//}
 
-            // Forge a delegate proxy and initiate remote delegate invocation, when it is invoked
-            var delegateProxy =
-				new DelegateProxy(delegateType, 
-				delegateArgs => 
+			// Forge a delegate proxy and initiate remote delegate invocation, when it is invoked
+			var delegateProxy =
+				new DelegateProxy(delegateType,
+				delegateArgs =>
 				{
 					var r = callDelegate(new DelegateCallMessage { Arguments = delegateArgs, Position = position, OneWay = !remoteDelegateInfo.HasResult });
 					return r;
@@ -186,27 +186,27 @@ namespace GoreRemoting
 				});
 
 			// TODO: do we need cache?
-//			_delegateProxyCache.TryAdd((delegateType, position), delegateProxy);
+			//			_delegateProxyCache.TryAdd((delegateType, position), delegateProxy);
 
 			mappedArgument = delegateProxy.ProxiedDelegate;
 			return true;
 		}
 
 		public void RegisterService<TInterface, TService>()
-        {
+		{
 			var iface = typeof(TInterface);
 
-            if (!iface.IsInterface)
+			if (!iface.IsInterface)
 				throw new Exception($"{iface.Name} is not interface");
 
-            if (!_services.TryAdd(iface.Name, typeof(TService)))
+			if (!_services.TryAdd(iface.Name, typeof(TService)))
 				throw new Exception("Service already added: " + iface.Name);
 		}
 
-        private async Task DuplexCall(
+		private async Task DuplexCall(
 			//ISerializerAdapter serializer, 
 			//ICompressionProvider compressor, 
-			GoreRequestMessage request, 
+			GoreRequestMessage request,
 			Func<Task<GoreRequestMessage>> req, Func<GoreResponseMessage, Task> reponse, ServerCallContext context)
 		{
 			var callMessage = request.MethodCallMessage;
@@ -224,7 +224,7 @@ namespace GoreRemoting
 			parameterValues = MapArguments(parameterValues,
 			delegateCallMsg =>
 			{
-				var delegateCallResponseMsg = new GoreResponseMessage(delegateCallMsg, request.Serializer, request .Compressor);
+				var delegateCallResponseMsg = new GoreResponseMessage(delegateCallMsg, request.Serializer, request.Compressor);
 
 				// send respose to client and client will call the delegate via DelegateProxy
 				// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
@@ -275,7 +275,7 @@ namespace GoreRemoting
 				{
 					responseLock.ExitReadLock();
 				}
-			}, 
+			},
 			async delegateCallMsg =>
 			{
 				var delegateCallReponseMsg = new GoreResponseMessage(delegateCallMsg, request.Serializer, request.Compressor);
@@ -441,7 +441,7 @@ namespace GoreRemoting
 		/// <param name="responseStream"></param>
 		/// <param name="context"></param>
 		/// <returns></returns>
-		public async Task DuplexCall(IAsyncStreamReader<GoreRequestMessage> requestStream, 
+		public async Task DuplexCall(IAsyncStreamReader<GoreRequestMessage> requestStream,
 			IServerStreamWriter<GoreResponseMessage> responseStream, ServerCallContext context)
 		{
 			try
@@ -492,7 +492,7 @@ namespace GoreRemoting
 		/// <returns></returns>
 		public static Method<GoreRequestMessage, GoreResponseMessage> GetDuplexCall(string name, Marshaller<GoreRequestMessage> marshallerReq,
 			Marshaller<GoreResponseMessage> marshallerRes)
-			
+
 		{
 			return new Method<GoreRequestMessage, GoreResponseMessage>(
 				type: MethodType.DuplexStreaming,

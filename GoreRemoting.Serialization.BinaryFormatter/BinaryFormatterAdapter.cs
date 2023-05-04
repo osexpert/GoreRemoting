@@ -8,30 +8,30 @@ using BF = System.Runtime.Serialization.Formatters.Binary;
 
 namespace GoreRemoting.Serialization.BinaryFormatter
 {
-    /// <summary>
-    /// Serializer adapter to allow binary serialization.
-    /// </summary>
-    public class BinaryFormatterAdapter : ISerializerAdapter
-    {
+	/// <summary>
+	/// Serializer adapter to allow binary serialization.
+	/// </summary>
+	public class BinaryFormatterAdapter : ISerializerAdapter
+	{
 
-        [ThreadStatic] 
-        private static BF.BinaryFormatter _formatter;
+		[ThreadStatic]
+		private static BF.BinaryFormatter _formatter;
 
-        public BinarySerializerOptions Options { get; }
-       
-        /// <summary>
-        /// Creates a new instance of the BinarySerializerAdapter class.
-        /// </summary>
-        /// <param name="config">Configuration settings</param>
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+		public BinarySerializerOptions Options { get; }
+
+		/// <summary>
+		/// Creates a new instance of the BinarySerializerAdapter class.
+		/// </summary>
+		/// <param name="config">Configuration settings</param>
+		[SuppressMessage("ReSharper", "UnusedMember.Global")]
 #if NETSTANDARD2_1_OR_GREATER
 		public BinaryFormatterAdapter(bool netCore = true)
 #else
-        public BinaryFormatterAdapter(bool netCore = false)
+		public BinaryFormatterAdapter(bool netCore = false)
 #endif
 		{
 			Options = GetOptions(netCore);
-        }
+		}
 
 		public ExceptionFormatStrategy ExceptionStrategy { get; set; } = ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject;
 
@@ -61,24 +61,24 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		/// </summary>
 		/// <returns>Binary formatter instance</returns>
 		private BF.BinaryFormatter GetFormatter()
-        {
-            if (_formatter == null)
-            {
-                _formatter = new BF.BinaryFormatter();
+		{
+			if (_formatter == null)
+			{
+				_formatter = new BF.BinaryFormatter();
 
-                if (Options.Config != null)
-                {
-                    _formatter.TypeFormat = Options.Config.TypeFormat;
-                    _formatter.FilterLevel = Options.Config.FilterLevel;
-                    _formatter.AssemblyFormat =
-						Options.Config.SerializeAssemblyVersions 
-                            ? System.Runtime.Serialization.Formatters.FormatterAssemblyStyle.Full 
-                            : System.Runtime.Serialization.Formatters.FormatterAssemblyStyle.Simple;
-                }
-            }
+				if (Options.Config != null)
+				{
+					_formatter.TypeFormat = Options.Config.TypeFormat;
+					_formatter.FilterLevel = Options.Config.FilterLevel;
+					_formatter.AssemblyFormat =
+						Options.Config.SerializeAssemblyVersions
+							? System.Runtime.Serialization.Formatters.FormatterAssemblyStyle.Full
+							: System.Runtime.Serialization.Formatters.FormatterAssemblyStyle.Simple;
+				}
+			}
 
-            return _formatter;
-        }
+			return _formatter;
+		}
 
 		/// <summary>
 		/// Serializes an object graph.
@@ -89,7 +89,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		public void Serialize(Stream stream, object[] graph)
 		{
 			var binaryFormatter = GetFormatter();
-            SerializeSafe(binaryFormatter, stream, graph, Options);
+			SerializeSafe(binaryFormatter, stream, graph, Options);
 		}
 
 		/// <summary>
@@ -227,16 +227,16 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		}
 	}
 
-    public class BinarySerializerOptions
-    {
+	public class BinarySerializerOptions
+	{
 		public bool NetCore { get; }
 
-        public BinarySerializerOptions(bool netCore)
-        {
+		public BinarySerializerOptions(bool netCore)
+		{
 			NetCore = netCore;
-        }
+		}
 
-        public BinarySerializerConfig Config { get; set; } = null;
+		public BinarySerializerConfig Config { get; set; } = null;
 
 		public List<ISurrogate> Surrogates { get; } = new();
 

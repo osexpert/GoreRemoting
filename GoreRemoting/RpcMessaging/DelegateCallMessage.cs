@@ -10,12 +10,12 @@ namespace GoreRemoting.RpcMessaging
 
 	public class DelegateCallMessage : IGorializer
 	{
-        public DelegateCallMessage()
-        {
-            
-        }
+		public DelegateCallMessage()
+		{
 
-        public DelegateCallMessage(GoreBinaryReader r)
+		}
+
+		public DelegateCallMessage(GoreBinaryReader r)
 		{
 			Deserialize(r);
 		}

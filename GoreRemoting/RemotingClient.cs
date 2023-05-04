@@ -17,20 +17,20 @@ using Nerdbank.Streams;
 namespace GoreRemoting
 {
 
-    public class RemotingClient
+	public class RemotingClient
 	{
-        internal ClientConfig _config;
-        CallInvoker _callInvoker;
+		internal ClientConfig _config;
+		CallInvoker _callInvoker;
 
-        public RemotingClient(CallInvoker callInvoker, ClientConfig config)
+		public RemotingClient(CallInvoker callInvoker, ClientConfig config)
 		{
 			_config = config;
-            _callInvoker = callInvoker;
+			_callInvoker = callInvoker;
 
 			DuplexCallDescriptor = Descriptors.GetDuplexCall("DuplexCall",
-		        Marshallers.Create<GoreRequestMessage>(SerializeRequest, DeserializeRequest),
-		        Marshallers.Create<GoreResponseMessage>(SerializeResponse, DeserializeResponse)
-		        );
+				Marshallers.Create<GoreRequestMessage>(SerializeRequest, DeserializeRequest),
+				Marshallers.Create<GoreResponseMessage>(SerializeResponse, DeserializeResponse)
+				);
 		}
 
 		private GoreRequestMessage DeserializeRequest(DeserializationContext arg)
@@ -89,37 +89,37 @@ namespace GoreRemoting
 
 		private static readonly Castle.DynamicProxy.ProxyGenerator ProxyGenerator = new Castle.DynamicProxy.ProxyGenerator();
 
-        public T CreateProxy<T>()
-        {
-            var serviceProxyType = typeof(ServiceProxy<>).MakeGenericType(typeof(T));
-            var serviceProxy = Activator.CreateInstance(serviceProxyType, this /* RemotingClient */);
+		public T CreateProxy<T>()
+		{
+			var serviceProxyType = typeof(ServiceProxy<>).MakeGenericType(typeof(T));
+			var serviceProxy = Activator.CreateInstance(serviceProxyType, this /* RemotingClient */);
 
-            var proxy = ProxyGenerator.CreateInterfaceProxyWithoutTarget(
-                interfaceToProxy: typeof(T),
-                interceptor: (Castle.DynamicProxy.IInterceptor)serviceProxy);
+			var proxy = ProxyGenerator.CreateInterfaceProxyWithoutTarget(
+				interfaceToProxy: typeof(T),
+				interceptor: (Castle.DynamicProxy.IInterceptor)serviceProxy);
 
-            return (T)proxy;
-        }
+			return (T)proxy;
+		}
 
 		public MethodCallMessageBuilder MethodCallMessageBuilder = new();
 
 		internal MethodResultMessage Invoke(GoreRequestMessage req, Func<GoreResponseMessage, Func<GoreRequestMessage, Task>, Task<MethodResultMessage>> reponseHandler, CallOptions callOpt)
-        {
+		{
 			using (var call = _callInvoker.AsyncDuplexStreamingCall(DuplexCallDescriptor, null, callOpt))
-            {
-                try
-                {
+			{
+				try
+				{
 					call.RequestStream.WriteAsync(req).GetAwaiter().GetResult();
 					while (call.ResponseStream.MoveNext().GetAwaiter().GetResult())
-                    {
-                        var resultMsg = reponseHandler(call.ResponseStream.Current, bytes => call.RequestStream.WriteAsync(bytes)).GetAwaiter().GetResult();
-                        if (resultMsg != null)
-                            return resultMsg;
-                    }
+					{
+						var resultMsg = reponseHandler(call.ResponseStream.Current, bytes => call.RequestStream.WriteAsync(bytes)).GetAwaiter().GetResult();
+						if (resultMsg != null)
+							return resultMsg;
+					}
 					throw new Exception("No result message");
 				}
-                finally
-                {
+				finally
+				{
 					call.RequestStream.CompleteAsync().GetAwaiter().GetResult();
 				}
 			}
@@ -129,31 +129,31 @@ namespace GoreRemoting
 		{
 			using (var call = _callInvoker.AsyncDuplexStreamingCall(DuplexCallDescriptor, null, callOpt))
 			{
-                try
-                {
+				try
+				{
 					await call.RequestStream.WriteAsync(req).ConfigureAwait(false);
 					while (await call.ResponseStream.MoveNext().ConfigureAwait(false))
-                    {
-                        var resultMsg = await reponseHandler(call.ResponseStream.Current, bytes => call.RequestStream.WriteAsync(bytes)).ConfigureAwait(false);
-                        if (resultMsg != null)
-                            return resultMsg;
-                    }
+					{
+						var resultMsg = await reponseHandler(call.ResponseStream.Current, bytes => call.RequestStream.WriteAsync(bytes)).ConfigureAwait(false);
+						if (resultMsg != null)
+							return resultMsg;
+					}
 					throw new Exception("No result message");
 				}
-                finally
-                {
+				finally
+				{
 					await call.RequestStream.CompleteAsync().ConfigureAwait(false);
 				}
 			}
 		}
 
-        public event EventHandler<Exception> OneWayException;
+		public event EventHandler<Exception> OneWayException;
 		internal void OnOneWayException(Exception ex)
 		{
-            OneWayException?.Invoke(this, ex);
+			OneWayException?.Invoke(this, ex);
 		}
 
-        
+
 	}
 
 #if false
@@ -177,5 +177,5 @@ namespace GoreRemoting
     }
 #endif
 
-  
+
 }
