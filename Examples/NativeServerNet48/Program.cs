@@ -41,7 +41,7 @@ namespace ServerNet48
                 Services =
                 {
                     ServerServiceDefinition.CreateBuilder()
-                        .AddMethod(GoreRemoting.Descriptors.DuplexCall, remServer.DuplexCall)
+                        .AddMethod(remServer.DuplexCallDescriptor, remServer.DuplexCall)
                         .Build()
                 }
             };

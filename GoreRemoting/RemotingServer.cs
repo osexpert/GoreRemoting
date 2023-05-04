@@ -19,6 +19,7 @@ using KPreisser;
 using System.IO;
 using System.Net.Mail;
 using Grpc.Net.Compression;
+using Nerdbank.Streams;
 
 namespace GoreRemoting
 {
@@ -36,7 +37,64 @@ namespace GoreRemoting
         public RemotingServer(ServerConfig config)
 		{
             _config = config;
-        }
+
+			DuplexCallDescriptor = Descriptors.GetDuplexCall("DuplexCall",
+				Marshallers.Create<GoreRequestMessage>(SerializeRequest, DeserializeRequest),
+				Marshallers.Create<GoreResponseMessage>(SerializeResponse, DeserializeResponse)
+				);
+		}
+
+		private GoreRequestMessage DeserializeRequest(DeserializationContext arg)
+		{
+			using var s = arg.PayloadAsReadOnlySequence().AsStream();
+
+			using var br = new GoreBinaryReader(s, leaveOpen: true);
+			var serializerName = br.ReadString();
+			var compressorName = br.ReadString();
+			var mType = (RequestType)br.ReadByte();
+
+			var serializer = _config.GetSerializerByName(serializerName);
+
+			ICompressionProvider compressor = null;
+			if (!string.IsNullOrEmpty(compressorName))
+			{
+				compressor = _config.GetCompressorByName(compressorName);
+			}
+
+			return GoreRequestMessage.Deserialize(s, mType, serializer, compressor);
+		}
+
+		private void SerializeRequest(GoreRequestMessage arg, SerializationContext sc)
+		{
+			throw new NotSupportedException();
+		}
+
+		private GoreResponseMessage DeserializeResponse(DeserializationContext arg)
+		{
+			throw new NotSupportedException();
+		}
+
+		private void SerializeResponse(GoreResponseMessage arg, SerializationContext sc)
+		{
+			try
+			{
+				using (var s = sc.GetBufferWriter().AsStream())
+				{
+					using (var bw = new GoreBinaryWriter(s, leaveOpen: true))
+					{
+						bw.Write(arg.Serializer.Name);
+						bw.Write(arg.Compressor?.EncodingName ?? string.Empty);
+						bw.Write((byte)arg.ResponseType);
+					}
+
+					arg.Serialize(s);
+				}
+			}
+			finally
+			{
+				sc.Complete();
+			}
+		}
 
 		private object GetService(string serviceName, ServerCallContext context)
 		{
@@ -145,9 +203,13 @@ namespace GoreRemoting
 				throw new Exception("Service already added: " + iface.Name);
 		}
 
-        private async Task DuplexCall(ISerializerAdapter serializer, ICompressionProvider compressor, byte[] request, Func<Task<byte[]>> req, Func<byte[], Task> reponse, ServerCallContext context)
+        private async Task DuplexCall(
+			//ISerializerAdapter serializer, 
+			//ICompressionProvider compressor, 
+			GoreRequestMessage request, 
+			Func<Task<GoreRequestMessage>> req, Func<GoreResponseMessage, Task> reponse, ServerCallContext context)
 		{
-			var callMessage = Gorializer.GoreDeserialize<MethodCallMessage>(request, serializer, compressor);
+			var callMessage = request.MethodCallMessage;
 
 			if (_config.RestoreCallContext)
 				CallContext.RestoreFromSnapshot(callMessage.CallContextSnapshot);
@@ -162,7 +224,7 @@ namespace GoreRemoting
 			parameterValues = MapArguments(parameterValues,
 			delegateCallMsg =>
 			{
-				var delegateResultMessage = new WireResponseMessage(delegateCallMsg);
+				var delegateCallResponseMsg = new GoreResponseMessage(delegateCallMsg, request.Serializer, request .Compressor);
 
 				// send respose to client and client will call the delegate via DelegateProxy
 				// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
@@ -180,9 +242,7 @@ namespace GoreRemoting
 					}
 					else
 					{
-						var bytes = Gorializer.GoreSerialize(delegateResultMessage, serializer, compressor);
-
-						reponse(bytes).GetAwaiter().GetResult();
+						reponse(delegateCallResponseMsg).GetAwaiter().GetResult();
 					}
 
 					if (delegateCallMsg.OneWay)
@@ -193,15 +253,15 @@ namespace GoreRemoting
 					else
 					{
 						// we want result or exception
-						byte[] data = req().GetAwaiter().GetResult();
+						var reqMsg = req().GetAwaiter().GetResult();
 
-						var msg = Gorializer.GoreDeserialize<DelegateResultMessage>(data, serializer, compressor);
+						var msg = reqMsg.DelegateResultMessage;
 
 						if (msg.Position != delegateCallMsg.Position)
 							throw new Exception("Incorrect result position");
 
 						if (msg.Exception != null)
-							throw serializer.RestoreSerializedException(msg.Exception);
+							throw request.Serializer.RestoreSerializedException(msg.Exception);
 
 						if (msg.StreamingStatus == StreamingStatus.Active)
 							activeStreamingDelegatePosition = msg.Position;
@@ -218,7 +278,7 @@ namespace GoreRemoting
 			}, 
 			async delegateCallMsg =>
 			{
-				var delegateResultMessage = new WireResponseMessage(delegateCallMsg);
+				var delegateCallReponseMsg = new GoreResponseMessage(delegateCallMsg, request.Serializer, request.Compressor);
 
 				// send respose to client and client will call the delegate via DelegateProxy
 				// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
@@ -236,9 +296,7 @@ namespace GoreRemoting
 					}
 					else
 					{
-						var bytes = Gorializer.GoreSerialize(delegateResultMessage, serializer, compressor);
-
-						await reponse(bytes).ConfigureAwait(false);
+						await reponse(delegateCallReponseMsg).ConfigureAwait(false);
 					}
 
 					// FIXME: Task, ValueTask etc? as well as void?
@@ -250,15 +308,15 @@ namespace GoreRemoting
 					else
 					{
 						// we want result or exception
-						byte[] data = await req().ConfigureAwait(false);
+						var reqMsg = await req().ConfigureAwait(false);
 
-						var msg = Gorializer.GoreDeserialize<DelegateResultMessage>(data, serializer, compressor);
+						var msg = reqMsg.DelegateResultMessage;
 
 						if (msg.Position != delegateCallMsg.Position)
 							throw new Exception("Incorrect result position");
 
 						if (msg.Exception != null)
-							throw serializer.RestoreSerializedException(msg.Exception);
+							throw request.Serializer.RestoreSerializedException(msg.Exception);
 
 						if (msg.StreamingStatus == StreamingStatus.Active)
 							activeStreamingDelegatePosition = msg.Position;
@@ -330,7 +388,7 @@ namespace GoreRemoting
 					if (ex2 is TargetInvocationException tie)
 						ex2 = tie.InnerException;
 
-					exception = serializer.GetSerializableException(ex2);
+					exception = request.Serializer.GetSerializableException(ex2);
 				}
 			}
 
@@ -353,16 +411,14 @@ namespace GoreRemoting
 				resultMessage = new MethodResultMessage { Exception = exception };
 			}
 
-			var methodResultMessage = new WireResponseMessage(resultMessage);
-
-			var bytes = Gorializer.GoreSerialize(methodResultMessage, serializer, compressor);
+			var responseMsg = new GoreResponseMessage(resultMessage, request.Serializer, request.Compressor);
 
 			// This will block new delegates and wait until existing ones have left. We then get exlusive lock and set the flag.
 			await responseLock.EnterWriteLockAsync().ConfigureAwait(false);
 			resultSent = true;
 			responseLock.ExitWriteLock();
 
-			await reponse(bytes).ConfigureAwait(false);
+			await reponse(responseMsg).ConfigureAwait(false);
 		}
 
 
@@ -372,6 +428,12 @@ namespace GoreRemoting
 			OneWayException?.Invoke(this, ex);
 		}
 
+
+		public Method<GoreRequestMessage, GoreResponseMessage> DuplexCallDescriptor { get; }
+
+
+
+
 		/// <summary>
 		/// 
 		/// </summary>
@@ -379,80 +441,18 @@ namespace GoreRemoting
 		/// <param name="responseStream"></param>
 		/// <param name="context"></param>
 		/// <returns></returns>
-		public Task DuplexCall(IAsyncStreamReader<byte[]> requestStream, IServerStreamWriter<byte[]> responseStream, ServerCallContext context)
-		{
-			var serializerName = context.RequestHeaders.GetValue(Constants.SerializerHeaderKey);
-			var compressorName = context.RequestHeaders.GetValue(Constants.CompressorHeaderKey);
-
-			var serializer = _config.GetSerializerByName(serializerName);
-
-			ICompressionProvider compressor = null;
-			if (compressorName != null)
-			{
-				//var serializer = _config.GetCompressorByName(serializerName);
-				compressor = _config.GetCompressorByName(compressorName);
-				//serializer = new SerializerAndCompressorCombined(serializer, compressor);
-			}
-
-			return DuplexCall(serializer, compressor, requestStream, responseStream, context);
-		}
-
-		//class SerializerAndCompressorCombined : ISerializerAdapter
-		//{
-
-		//	ISerializerAdapter _s;
-		//	ICompressionProvider _c;
-
-		//	public SerializerAndCompressorCombined(ISerializerAdapter serializer, ICompressionProvider compressor)
-		//	{
-		//		_s = serializer;
-		//		_c = compressor;
-		//	}
-
-		//	public string Name => _s.Name + "/" + _c.EncodingName;
-
-		//	public object[] Deserialize(Stream stream)
-		//	{
-		//		// todo: leave open??
-		//		return _s.Deserialize(_c.CreateDecompressionStream(stream));
-		//	}
-
-		//	public object GetSerializableException(Exception ex)
-		//	{
-		//		return _s.GetSerializableException(ex);
-		//	}
-
-		//	public Exception RestoreSerializedException(object ex)
-		//	{
-		//		return _s.RestoreSerializedException(ex);
-		//	}
-
-		//	public void Serialize(Stream stream, object[] graph)
-		//	{
-		//		// leave open??
-		//		_s.Serialize(_c.CreateCompressionStream(stream, null), graph);
-		//	}
-		//}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="serializer"></param>
-		/// <param name="requestStream"></param>
-		/// <param name="responseStream"></param>
-		/// <param name="context"></param>
-		/// <returns></returns>
-		private async Task DuplexCall(ISerializerAdapter serializer, ICompressionProvider compressor, IAsyncStreamReader<byte[]> requestStream, IServerStreamWriter<byte[]> responseStream, ServerCallContext context)
+		public async Task DuplexCall(IAsyncStreamReader<GoreRequestMessage> requestStream, 
+			IServerStreamWriter<GoreResponseMessage> responseStream, ServerCallContext context)
 		{
 			try
 			{
-				var responseStreamWrapped = new GoreRemoting.StreamResponseQueue<byte[]>(responseStream, _config.ResponseQueueLength);
+				var responseStreamWrapped = new GoreRemoting.StreamResponseQueue<GoreResponseMessage>(responseStream, _config.ResponseQueueLength);
 
 				bool gotNext = await requestStream.MoveNext().ConfigureAwait(false);
 				if (!gotNext)
 					throw new Exception("No method call request data");
 
-				await this.DuplexCall(serializer, compressor, requestStream.Current, async () =>
+				await this.DuplexCall(requestStream.Current, async () =>
 				{
 					var gotNext = await requestStream.MoveNext().ConfigureAwait(false);
 					if (!gotNext)
@@ -478,9 +478,9 @@ namespace GoreRemoting
 		/// <summary>
 		/// 
 		/// </summary>
-		public static Method<byte[], byte[]> DuplexCall = GetDuplexCall("DuplexCall");
+		//public static Method<GoreRequestMessage, GoreResponseMessage> DuplexCall = null;// GetDuplexCall("DuplexCall", Marshaller < DataMessage > marshaller)
 
-		private static Method<byte[], byte[]> UnaryCall = GetUnaryCall("UnaryCall");
+		//private static Method<byte[], byte[]> UnaryCall = GetUnaryCall("UnaryCall");
 
 		// TODO: if a method has no delegate arguments, we could use unary call "UnaryCall", because then there is just a singlem result.
 		// CON: DuplexCall will be less hot\tested less. PRO: can be faster?
@@ -490,34 +490,22 @@ namespace GoreRemoting
 		/// </summary>
 		/// <param name="name"></param>
 		/// <returns></returns>
-		private static Method<byte[], byte[]> GetDuplexCall(string name)
+		public static Method<GoreRequestMessage, GoreResponseMessage> GetDuplexCall(string name, Marshaller<GoreRequestMessage> marshallerReq,
+			Marshaller<GoreResponseMessage> marshallerRes)
+			
 		{
-			return new Method<byte[], byte[]>(
+			return new Method<GoreRequestMessage, GoreResponseMessage>(
 				type: MethodType.DuplexStreaming,
 				serviceName: "GoreRemoting",
 				name: name,
-				requestMarshaller: Marshallers.Create(
-					serializer: bytes => bytes,
-					deserializer: bytes => bytes),
-				responseMarshaller: Marshallers.Create(
-					serializer: bytes => bytes,
-					deserializer: bytes => bytes));
+				requestMarshaller: marshallerReq,
+				responseMarshaller: marshallerRes);
 		}
 
 
-		private static Method<byte[], byte[]> GetUnaryCall(string name)
-		{
-			return new Method<byte[], byte[]>(
-				type: MethodType.Unary,
-				serviceName: "GoreRemoting",
-				name: name,
-				requestMarshaller: Marshallers.Create(
-					serializer: bytes => bytes,
-					deserializer: bytes => bytes),
-				responseMarshaller: Marshallers.Create(
-					serializer: bytes => bytes,
-					deserializer: bytes => bytes));
-		}
 	}
+
+
+
 
 }

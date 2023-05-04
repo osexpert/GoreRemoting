@@ -12,10 +12,10 @@ namespace stakx.DynamicProxy
         private sealed class AsyncStateMachine : IAsyncStateMachine
         {
             private readonly IAsyncInvocation asyncInvocation;
-            private readonly object builder;
+            private readonly Builder builder;
             private readonly ValueTask task;
 
-            public AsyncStateMachine(IAsyncInvocation asyncInvocation, object builder, ValueTask task)
+            public AsyncStateMachine(IAsyncInvocation asyncInvocation, Builder builder, ValueTask task)
             {
                 this.asyncInvocation = asyncInvocation;
                 this.builder = builder;
@@ -31,17 +31,17 @@ namespace stakx.DynamicProxy
                     if (awaiter.IsCompleted)
                     {
                         awaiter.GetResult();
-                        // TODO: validate `asyncInvocation.Result` against `asyncInvocation.Method.ReturnType`!
-                        this.builder.SetResult(asyncInvocation.Result);
+						// TODO: validate `asyncInvocation.Result` against `asyncInvocation.Method.ReturnType`!
+						this.builder.SetResult(asyncInvocation.Result);
                     }
                     else
                     {
-                        this.builder.AwaitOnCompleted(awaiter, this);
+						this.builder.AwaitOnCompleted(awaiter, this);
                     }
                 }
                 catch (Exception exception)
                 {
-                    this.builder.SetException(exception);
+					this.builder.SetException(exception);
                 }
             }
 

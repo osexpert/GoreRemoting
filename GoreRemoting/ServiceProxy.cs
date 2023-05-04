@@ -53,9 +53,9 @@ namespace GoreRemoting
 
 			_client._config.BeforeMethodCall?.Invoke(new BeforeMethodCallParams(typeof(T), targetMethod, headers, serializer, compressor));
 
-			headers.Add(Constants.SerializerHeaderKey, serializer.Name);
-			if (compressor != null)
-				headers.Add(Constants.CompressorHeaderKey, compressor.EncodingName);
+			//headers.Add(Constants.SerializerHeaderKey, serializer.Name);
+			//if (compressor != null)
+			//	headers.Add(Constants.CompressorHeaderKey, compressor.EncodingName);
 
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
 				remoteServiceName: _serviceName,
@@ -64,7 +64,7 @@ namespace GoreRemoting
 				setCallContext: _client._config.SetCallContext
 				);
 
-			var bytes = Gorializer.GoreSerialize(callMessage, serializer, compressor);
+			var bytes = new GoreRequestMessage(callMessage, serializer, compressor);
 
 			var resultMessage = _client.Invoke(bytes, 
 				(callback, res) => HandleResponseAsync(serializer, compressor, callback, res, args, streamingDelePos), 
@@ -101,9 +101,9 @@ namespace GoreRemoting
 
 			_client._config.BeforeMethodCall?.Invoke(new BeforeMethodCallParams(typeof(T), targetMethod, headers, serializer, compressor));
 
-			headers.Add(Constants.SerializerHeaderKey, serializer.Name);
-			if (compressor != null)
-				headers.Add(Constants.CompressorHeaderKey, compressor.EncodingName);
+			//headers.Add(Constants.SerializerHeaderKey, serializer.Name);
+			//if (compressor != null)
+			//	headers.Add(Constants.CompressorHeaderKey, compressor.EncodingName);
 
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
 				remoteServiceName: _serviceName, 
@@ -112,9 +112,9 @@ namespace GoreRemoting
 				setCallContext: _client._config.SetCallContext
 				);
 
-			var bytes = Gorializer.GoreSerialize(callMessage, serializer, compressor);
+			var requestMsg = new GoreRequestMessage(callMessage, serializer, compressor);
 
-			var resultMessage =  await _client.InvokeAsync(bytes,
+			var resultMessage =  await _client.InvokeAsync(requestMsg,
 				(callback, req) => HandleResponseAsync(serializer, compressor, callback, req, args.ToArray(), streamingDelePos),
 				new CallOptions(headers: headers, cancellationToken: cancel)).ConfigureAwait(false);
 
@@ -184,19 +184,18 @@ namespace GoreRemoting
 
 
 
-		private async Task<MethodResultMessage> HandleResponseAsync(ISerializerAdapter serializer, ICompressionProvider compressor, byte[] callback, Func<byte[], Task> res, object[] args,
+		private async Task<MethodResultMessage> HandleResponseAsync(ISerializerAdapter serializer, ICompressionProvider compressor, GoreResponseMessage callbackData, 
+			Func<GoreRequestMessage, Task> res, object[] args,
 			int? streamingDelegatePosition)
 		{
-			var callbackData = Gorializer.GoreDeserialize<WireResponseMessage>(callback, serializer, compressor);
-
 			switch (callbackData.ResponseType)
 			{
-				case ResponseType.Result:
-					return callbackData.Result;
+				case ResponseType.MethodResult:
+					return callbackData.MethodResult;
 
-				case ResponseType.Delegate:
+				case ResponseType.DelegateCall:
 					{
-						var delegateMsg = callbackData.Delegate;
+						var delegateMsg = callbackData.DelegateCall;
 
 						var delegt = (Delegate)args[delegateMsg.Position];
 
@@ -251,9 +250,9 @@ namespace GoreRemoting
 						else
 							msg = new DelegateResultMessage{ Position = delegateMsg.Position, Result = result, StreamingStatus = streamingStatus };
 
-						var data = Gorializer.GoreSerialize(msg, serializer, compressor);
+						var requestMsg = new GoreRequestMessage(msg, serializer, compressor);
 
-						await res(data).ConfigureAwait(false);
+						await res(requestMsg).ConfigureAwait(false);
 
 						if (streamingStatus == StreamingStatus.Active && exception == null)
 							goto again;

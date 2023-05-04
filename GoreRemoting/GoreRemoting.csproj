@@ -42,7 +42,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Castle.Core" Version="5.1.0" />
+<!--      <PackageReference Include="Nerdbank.Streams" Version="2.9.112" /> -->
+		<PackageReference Include="Castle.Core" Version="5.1.0" />
       <PackageReference Include="Grpc.Net.Common" Version="2.52.0" /> 
       <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" Condition="'$(TargetFramework)' == 'NETSTANDARD2.0'" /> 
       <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.3.2" />

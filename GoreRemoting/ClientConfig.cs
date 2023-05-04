@@ -59,20 +59,24 @@ namespace GoreRemoting
         }
 
         private Dictionary<Type, ISerializerAdapter> _serializers = new();
+		private Dictionary<string, ISerializerAdapter> _serializerByName = new();
 
-        public void AddSerializer(params ISerializerAdapter[] adapters)
+		public void AddSerializer(params ISerializerAdapter[] serializers)
         {
-            foreach (var ada in adapters)
-				_serializers.Add(ada.GetType(), ada);
-        }
+			foreach (var serializer in serializers)
+			{
+				_serializers.Add(serializer.GetType(), serializer);
+				_serializerByName.Add(serializer.Name, serializer);
+			}
+		}
 
-        public ISerializerAdapter GetSerializerByType(Type t)
+        public ISerializerAdapter GetSerializerByType(Type serializer)
         {
-            if (!typeof(ISerializerAdapter).IsAssignableFrom(t))
+            if (!typeof(ISerializerAdapter).IsAssignableFrom(serializer))
                 throw new Exception("Not ISerializerAdapter");
 
-            if (!_serializers.TryGetValue(t, out var res))
-                throw new Exception("Serializer not found: " + t);
+            if (!_serializers.TryGetValue(serializer, out var res))
+                throw new Exception("Serializer not found: " + serializer);
 
             return res;
 		}
@@ -88,12 +92,29 @@ namespace GoreRemoting
 			return res;
 		}
 
+		internal ISerializerAdapter GetSerializerByName(string serializerName)
+		{
+			if (!_serializerByName.TryGetValue(serializerName, out var res))
+				throw new Exception("Serializer not found: " + serializerName);
+
+			return res;
+		}
+
+		internal ICompressionProvider GetCompressorByName(string compressorName)
+		{
+			if (!_compressorsByName.TryGetValue(compressorName, out var res))
+				throw new Exception("Compressor not found: " + compressorName);
+
+			return res;
+		}
+
 		public bool SetCallContext { get; set; } = true;
 
 		public bool RestoreCallContext { get; set; } = true;
 
 
 		private Dictionary<Type, ICompressionProvider> _compressors = new();
+		private Dictionary<string, ICompressionProvider> _compressorsByName = new();
 
 
 		Type _defaultCompressor;
@@ -120,10 +141,13 @@ namespace GoreRemoting
 			}
 		}
 
-		public void AddCompressor(params ICompressionProvider[] adapters)
+		public void AddCompressor(params ICompressionProvider[] compressors)
 		{
-			foreach (var ada in adapters)
-				_compressors.Add(ada.GetType(), ada);
+			foreach (var compressor in compressors)
+			{
+				_compressors.Add(compressor.GetType(), compressor);
+				_compressorsByName.Add(compressor.EncodingName, compressor);
+			}
 		}
 	}
 

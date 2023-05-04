@@ -11,6 +11,8 @@ using Grpc.Core;
 using GoreRemoting.RpcMessaging;
 using GoreRemoting.Serialization;
 using Grpc.Net.Compression;
+using stakx.DynamicProxy;
+using Nerdbank.Streams;
 
 namespace GoreRemoting
 {
@@ -24,9 +26,68 @@ namespace GoreRemoting
 		{
 			_config = config;
             _callInvoker = callInvoker;
-        }
 
-        private static readonly Castle.DynamicProxy.ProxyGenerator ProxyGenerator = new Castle.DynamicProxy.ProxyGenerator();
+			DuplexCallDescriptor = Descriptors.GetDuplexCall("DuplexCall",
+		        Marshallers.Create<GoreRequestMessage>(SerializeRequest, DeserializeRequest),
+		        Marshallers.Create<GoreResponseMessage>(SerializeResponse, DeserializeResponse)
+		        );
+		}
+
+		private GoreRequestMessage DeserializeRequest(DeserializationContext arg)
+		{
+			throw new NotSupportedException();
+		}
+
+		private void SerializeRequest(GoreRequestMessage arg, SerializationContext sc)
+		{
+			try
+			{
+				using (var s = sc.GetBufferWriter().AsStream())
+				{
+					using (var bw = new GoreBinaryWriter(s, leaveOpen: true))
+					{
+						bw.Write(arg.Serializer.Name);
+						bw.Write(arg.Compressor?.EncodingName ?? string.Empty);
+						bw.Write((byte)arg.RequestType);
+					}
+
+					arg.Serialize(s);
+				}
+			}
+			finally
+			{
+				sc.Complete();
+			}
+		}
+
+		private GoreResponseMessage DeserializeResponse(DeserializationContext arg)
+		{
+			using var s = arg.PayloadAsReadOnlySequence().AsStream();
+
+			using var br = new GoreBinaryReader(s, leaveOpen: true);
+			var serializerName = br.ReadString();
+			var compressorName = br.ReadString();
+			var mType = (ResponseType)br.ReadByte();
+
+			var serializer = _config.GetSerializerByName(serializerName);
+
+			ICompressionProvider compressor = null;
+			if (!string.IsNullOrEmpty(compressorName))
+			{
+				compressor = _config.GetCompressorByName(compressorName);
+			}
+
+			return GoreResponseMessage.Deserialize(s, mType, serializer, compressor);
+		}
+
+		private void SerializeResponse(GoreResponseMessage arg, SerializationContext sc)
+		{
+			throw new NotSupportedException();
+		}
+
+		public Method<GoreRequestMessage, GoreResponseMessage> DuplexCallDescriptor { get; }
+
+		private static readonly Castle.DynamicProxy.ProxyGenerator ProxyGenerator = new Castle.DynamicProxy.ProxyGenerator();
 
         public T CreateProxy<T>()
         {
@@ -42,9 +103,9 @@ namespace GoreRemoting
 
 		public MethodCallMessageBuilder MethodCallMessageBuilder = new();
 
-		internal MethodResultMessage Invoke(byte[] req, Func<byte[], Func<byte[], Task>, Task<MethodResultMessage>> reponseHandler, CallOptions callOpt)
+		internal MethodResultMessage Invoke(GoreRequestMessage req, Func<GoreResponseMessage, Func<GoreRequestMessage, Task>, Task<MethodResultMessage>> reponseHandler, CallOptions callOpt)
         {
-			using (var call = _callInvoker.AsyncDuplexStreamingCall(GoreRemoting.Descriptors.DuplexCall, null, callOpt))
+			using (var call = _callInvoker.AsyncDuplexStreamingCall(DuplexCallDescriptor, null, callOpt))
             {
                 try
                 {
@@ -64,9 +125,9 @@ namespace GoreRemoting
 			}
 		}
 
-		internal async Task<MethodResultMessage> InvokeAsync(byte[] req, Func<byte[], Func<byte[], Task>, Task<MethodResultMessage>> reponseHandler, CallOptions callOpt)
+		internal async Task<MethodResultMessage> InvokeAsync(GoreRequestMessage req, Func<GoreResponseMessage, Func<GoreRequestMessage, Task>, Task<MethodResultMessage>> reponseHandler, CallOptions callOpt)
 		{
-			using (var call = _callInvoker.AsyncDuplexStreamingCall(GoreRemoting.Descriptors.DuplexCall, null, callOpt))
+			using (var call = _callInvoker.AsyncDuplexStreamingCall(DuplexCallDescriptor, null, callOpt))
 			{
                 try
                 {

@@ -11,14 +11,16 @@ namespace stakx.DynamicProxy
 {
     internal static class AsyncMethodBuilder
     {
-        public static object TryCreate(Type returnType)
+     
+
+        public static Builder TryCreate(Type returnType)
         {
             var builderType = GetAsyncMethodBuilderType(returnType);
             if (builderType != null)
             {
                 var createMethod = builderType.GetMethod("Create", BindingFlags.Public | BindingFlags.Static);
                 var builder = createMethod.Invoke(null, null);
-                return builder;
+                return new Builder(builder);
             }
             else
             {
@@ -67,41 +69,53 @@ namespace stakx.DynamicProxy
             return null;
         }
 
-        public static void AwaitOnCompleted(this object builder, object awaiter, object stateMachine)
-        {
-            var awaitOnCompletedMethod = builder.GetType().GetMethod("AwaitOnCompleted", BindingFlags.Public | BindingFlags.Instance).MakeGenericMethod(awaiter.GetType(), stateMachine.GetType());
-            awaitOnCompletedMethod.Invoke(builder, new object[] { awaiter, stateMachine });
-        }
-
-        public static void SetException(this object builder, Exception exception)
-        {
-            var setExceptionMethod = builder.GetType().GetMethod("SetException", BindingFlags.Public | BindingFlags.Instance);
-            setExceptionMethod.Invoke(builder, new object[] { exception });
-        }
-
-        public static void SetResult(this object builder, object result)
-        {
-            var setResultMethod = builder.GetType().GetMethod("SetResult", BindingFlags.Public | BindingFlags.Instance);
-            if (setResultMethod.GetParameters().Length == 0)
-            {
-                setResultMethod.Invoke(builder, null);
-            }
-            else
-            {
-                setResultMethod.Invoke(builder, new object[] { result });
-            }
-        }
-
-        public static void Start(this object builder, object stateMachine)
-        {
-            var startMethod = builder.GetType().GetMethod("Start", BindingFlags.Public | BindingFlags.Instance).MakeGenericMethod(stateMachine.GetType());
-            startMethod.Invoke(builder, new object[] { stateMachine });
-        }
-
-        public static object Task(this object builder)
-        {
-            var taskProperty = builder.GetType().GetProperty("Task", BindingFlags.Public | BindingFlags.Instance);
-            return taskProperty.GetValue(builder);
-        }
+      
     }
+
+	public class Builder
+	{
+		object _builder;
+
+		public Builder(object b)
+		{
+			_builder = b;
+		}
+
+		public void AwaitOnCompleted(object awaiter, object stateMachine)
+		{
+			var awaitOnCompletedMethod = _builder.GetType().GetMethod("AwaitOnCompleted", BindingFlags.Public | BindingFlags.Instance).MakeGenericMethod(awaiter.GetType(), stateMachine.GetType());
+			awaitOnCompletedMethod.Invoke(_builder, new object[] { awaiter, stateMachine });
+		}
+
+		public void SetException(Exception exception)
+		{
+			var setExceptionMethod = _builder.GetType().GetMethod("SetException", BindingFlags.Public | BindingFlags.Instance);
+			setExceptionMethod.Invoke(_builder, new object[] { exception });
+		}
+
+		public void SetResult(object result)
+		{
+			var setResultMethod = _builder.GetType().GetMethod("SetResult", BindingFlags.Public | BindingFlags.Instance);
+			if (setResultMethod.GetParameters().Length == 0)
+			{
+				setResultMethod.Invoke(_builder, null);
+			}
+			else
+			{
+				setResultMethod.Invoke(_builder, new object[] { result });
+			}
+		}
+
+		public void Start(object stateMachine)
+		{
+			var startMethod = _builder.GetType().GetMethod("Start", BindingFlags.Public | BindingFlags.Instance).MakeGenericMethod(stateMachine.GetType());
+			startMethod.Invoke(_builder, new object[] { stateMachine });
+		}
+
+		public object Task()
+		{
+			var taskProperty = _builder.GetType().GetProperty("Task", BindingFlags.Public | BindingFlags.Instance);
+			return taskProperty.GetValue(_builder);
+		}
+	}
 }

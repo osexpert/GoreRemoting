@@ -123,7 +123,7 @@ namespace GoreRemoting
 
 		public static Exception RestoreAsUninitializedObject(ExceptionData ed)
 		{
-			var t = Type.GetType(ed.TypeName, false);
+			var t = Type.GetType(ed.TypeName);
 			if (t == null)
 			{
 				return RestoreAsRemoteInvocationException(ed);

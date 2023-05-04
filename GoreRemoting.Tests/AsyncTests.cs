@@ -303,17 +303,26 @@ namespace GoreRemoting.Tests
 			var lines = e1.ToString().Split(Environment.NewLine).Length;
 			//Assert.Equal(9, lines);
 			if (ser == enSerializer.BinaryFormatter)
-				Assert.Equal(28, lines); // a failure to deserialize?? yes
+			{
+				//	Assert.Equal(28, lines); // a failure to deserialize?? yes
+				Assert.Equal(8, lines); // task was cancelled, due too no result message
+			}
 			else
 				Assert.Equal(26, lines);
 
 			// Most will fail because SerExMistake is private
 
-			// because it can't find "Test"?
-			Assert.IsType<SerializationException>(e1);
-			//Assert.IsType<SerExMistake>(e1);
-			//Assert.Equal(1, e1.Data.Count);
-
+			if (ser == enSerializer.BinaryFormatter)
+			{
+				Assert.IsType<TaskCanceledException>(e1);
+			}
+			else
+			{
+				// because it can't find "Test"?
+				Assert.IsType<SerializationException>(e1);
+				//Assert.IsType<SerExMistake>(e1);
+				//Assert.Equal(1, e1.Data.Count);
+			}
 
 			//Assert.Equal("test", e1.Test);
 
@@ -332,17 +341,27 @@ namespace GoreRemoting.Tests
 			//Assert.Equal(9, lines2);
 
 			if (ser == enSerializer.BinaryFormatter)
-				Assert.Equal(28, lines2); // failure to desser
+			{
+				//	Assert.Equal(28, lines2); // failure to desser
+				Assert.Equal(8, lines2); // failure to desser
+			}
 			else
 				Assert.Equal(26, lines2);
 
 			// Most will fail because SerExMistake is private
 
-			// because it can't find "Test"?
-						Assert.IsType<SerializationException>(e2);
-		//	Assert.IsType<SerExMistakeNotPriv>(e2);
-		//	Assert.Equal(1, e2.Data.Count);
+			if (ser == enSerializer.BinaryFormatter)
+			{
+				Assert.IsType<TaskCanceledException>(e2);
+			}
+			else
+			{
 
+				// because it can't find "Test"?
+				Assert.IsType<SerializationException>(e2);
+				//	Assert.IsType<SerExMistakeNotPriv>(e2);
+				//	Assert.Equal(1, e2.Data.Count);
+			}
 
 			Exception e3 = null;
 			try

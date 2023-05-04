@@ -13,7 +13,7 @@ namespace GoreRemoting.Serialization.MessagePack
 	{
 		public string Name => "MessagePack";
 
-		BinaryFormatterAdapter _bf = new();
+		readonly Lazy<BinaryFormatterAdapter> _bfa = new(() => new());
 
 		public ExceptionFormatStrategy ExceptionStrategy { get; set; } = ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject;
 
@@ -55,9 +55,13 @@ namespace GoreRemoting.Serialization.MessagePack
 			if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject ||
 							ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrRemoteInvocationException)
 			{
-				// INFO: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
-				if (ex.GetType().IsSerializable)
-					return new ExceptionWrapper { Format = ExceptionFormat.BinaryFormatter, BinaryFormatterData = _bf.GetExceptionData(ex) };
+				try
+				{
+					// INFO: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
+					if (ex.GetType().IsSerializable)
+						return new ExceptionWrapper { Format = ExceptionFormat.BinaryFormatter, BinaryFormatterData = _bfa.Value.GetExceptionData(ex) };
+				}
+				catch { }
 
 				var ed = ExceptionSerializationHelpers.GetExceptionData(ex);
 				if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject)
@@ -80,7 +84,7 @@ namespace GoreRemoting.Serialization.MessagePack
 			var ew = (ExceptionWrapper)ex;
 			return ew.Format switch
 			{
-				ExceptionFormat.BinaryFormatter => _bf.RestoreException(ew.BinaryFormatterData),
+				ExceptionFormat.BinaryFormatter => _bfa.Value.RestoreException(ew.BinaryFormatterData),
 				ExceptionFormat.UninitializedObject => ExceptionSerializationHelpers.RestoreAsUninitializedObject(ToExceptionData(ew)),
 				ExceptionFormat.RemoteInvocationException => ExceptionSerializationHelpers.RestoreAsRemoteInvocationException(ToExceptionData(ew)),
 				_ => throw new NotSupportedException(ew.Format.ToString())

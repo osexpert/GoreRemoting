@@ -72,7 +72,7 @@ namespace stakx.DynamicProxy
             {
                 var asyncInvocation = new AsyncInvocation(invocation);
                 var stateMachine = new AsyncStateMachine(asyncInvocation, builder, task: _asyncc(asyncInvocation));
-                builder.Start(stateMachine);
+				builder.Start(stateMachine);
                 invocation.ReturnValue = builder.Task();
             }
             else

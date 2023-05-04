@@ -30,10 +30,10 @@ namespace GoreRemoting
             AddSerializer(serializers);
 		}
 
-		public void AddSerializer(params ISerializerAdapter[] adapters)
+		public void AddSerializer(params ISerializerAdapter[] serializers)
         {
-            foreach (var s in adapters)
-                _serializers.Add(s.Name, s);
+            foreach (var serializer in serializers)
+                _serializers.Add(serializer.Name, serializer);
         }
 
 		internal ISerializerAdapter GetSerializerByName(string serializerName)
@@ -61,10 +61,10 @@ namespace GoreRemoting
 
 		private Dictionary<string, ICompressionProvider> _compressors = new();
 
-		public void AddCompressor(params ICompressionProvider[] providers)
+		public void AddCompressor(params ICompressionProvider[] compressors)
 		{
-			foreach (var s in providers)
-				_compressors.Add(s.EncodingName, s);
+			foreach (var compressor in compressors)
+				_compressors.Add(compressor.EncodingName, compressor);
 		}
 	}
 }

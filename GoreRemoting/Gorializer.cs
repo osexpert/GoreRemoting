@@ -9,7 +9,7 @@ using System.Text;
 
 namespace GoreRemoting
 {
-	internal interface IGorializer
+	public interface IGorializer
 	{
 		void Serialize(GoreBinaryWriter w, Stack<object> st);
 		void Deserialize(GoreBinaryReader r);
@@ -25,11 +25,10 @@ namespace GoreRemoting
 
 	internal class Gorializer
 	{
-		
 
-		public static byte[] GoreSerialize(IGorializer data, ISerializerAdapter serializer, ICompressionProvider compressor)
+		public static void GoreSerialize(Stream ms, IGorializer data, ISerializerAdapter serializer, ICompressionProvider compressor)
 		{
-			using var ms = PooledMemoryStream.GetStream();
+			//using var ms = PooledMemoryStream.GetStream();
 
 			var cs = GetCompressor(compressor, ms) ?? ms;
 			try
@@ -49,10 +48,10 @@ namespace GoreRemoting
 					cs.Dispose();
 			}
 			  
-			return ms.ToArray();
+			//return ms.ToArray();
 		}
 
-		private static Stream GetCompressor(ICompressionProvider compressor, MemoryStream ms)
+		private static Stream GetCompressor(ICompressionProvider compressor, Stream ms)
 		{
 			if (compressor != null)
 				return compressor.CreateCompressionStream(ms, System.IO.Compression.CompressionLevel.Fastest);
@@ -60,9 +59,9 @@ namespace GoreRemoting
 				return null;// new NonDisposablePassthruStream(ms);
 		}
 
-		public static T GoreDeserialize<T>(byte[] data, ISerializerAdapter serializer, ICompressionProvider compressor) where T : IGorializer, new()
+		public static T GoreDeserialize<T>(Stream ms, ISerializerAdapter serializer, ICompressionProvider compressor) where T : IGorializer, new()
 		{
-			using var ms = new MemoryStream(data);
+//			using var ms = new MemoryStream(data);
 
 			var res = new T();
 
@@ -86,7 +85,7 @@ namespace GoreRemoting
 			return res;
 		}
 
-		private static Stream GetDecompressor(ICompressionProvider compressor, MemoryStream ms)
+		private static Stream GetDecompressor(ICompressionProvider compressor, Stream ms)
 		{
 			if (compressor != null)
 				return compressor.CreateDecompressionStream(ms);

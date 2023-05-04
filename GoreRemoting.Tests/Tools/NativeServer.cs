@@ -26,7 +26,7 @@ namespace GoreRemoting.Tests.Tools
                 Services =
                 {
                     ServerServiceDefinition.CreateBuilder()
-                        .AddMethod(GoreRemoting.Descriptors.DuplexCall, this.DuplexCall)
+                        .AddMethod(DuplexCallDescriptor, this.DuplexCall)
                         .Build()
                 }
             };

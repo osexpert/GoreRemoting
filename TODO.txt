@@ -1,3 +1,12 @@
+use public static Marshaller<T> Create<T>(Action<T, SerializationContext> serializer, Func<DeserializationContext, T> deserializer)
+and instead of byte[] messages, use a eg.
+IGorializer as send message (RequestMessage). rename IGorializer -> IRequestMessage? Or inherit ifaces?
+Then in the marshaller convert from object to bytes.In case it is probably important that StreamResponseQueue is sync (1 item)
+since we are queing live objects instead of byte[].
+class ResponseMessage:MethodCallMessage\DelegateResultMessage\WireResponseMessage
+maybe can have a class with an enum and these 3 (enum tell which one it is)
+
+
 lz4
 zstd
 deflate

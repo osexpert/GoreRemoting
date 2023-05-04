@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GoreRemoting.RpcMessaging;
 
 namespace ServerNet60
 {
@@ -21,10 +22,10 @@ namespace ServerNet60
 
         public void OnServiceMethodDiscovery(ServiceMethodProviderContext<GoreRemotingService> context)
         {
-            context.AddDuplexStreamingMethod(GoreRemoting.Descriptors.DuplexCall, new List<object>(), DuplexCall);
+            context.AddDuplexStreamingMethod(pServ.DuplexCallDescriptor, new List<object>(), DuplexCall);
         }
 
-        Task DuplexCall(GoreRemotingService service, IAsyncStreamReader<byte[]> input, IServerStreamWriter<byte[]> output, ServerCallContext serverCallContext)
+        Task DuplexCall(GoreRemotingService service, IAsyncStreamReader<GoreRequestMessage> input, IServerStreamWriter<GoreResponseMessage> output, ServerCallContext serverCallContext)
             => pServ.DuplexCall(input, output, serverCallContext);
     }
 }

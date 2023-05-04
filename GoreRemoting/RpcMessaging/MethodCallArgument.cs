@@ -41,7 +41,7 @@ namespace GoreRemoting.RpcMessaging
             ParameterName = r.ReadString();
             TypeName = r.ReadString();
 
-			var v = r.Read7BitEncodedInt();
+			var v = r.ReadByte();
 			_popValue = (v == 0);
 			if (!_popValue)
 			{ 
@@ -73,11 +73,11 @@ namespace GoreRemoting.RpcMessaging
             {
                 if (Value is RemoteDelegates.RemoteDelegateInfo)
                 {
-                    w.Write7BitEncodedInt(1);
+                    w.Write((byte)1);
                 }
                 else if (Value is CancellationTokenDummy)
                 {
-					w.Write7BitEncodedInt(2);
+					w.Write((byte)2);
 				}
                 else
                     throw new NotImplementedException("unk type");
@@ -86,7 +86,7 @@ namespace GoreRemoting.RpcMessaging
 			}
             else
             {
-				w.Write7BitEncodedInt(0);
+				w.Write((byte)0);
 				st.Push(Value);
             }
 		}
