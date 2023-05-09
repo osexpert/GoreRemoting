@@ -112,7 +112,7 @@ namespace GoreRemoting
 					call.RequestStream.WriteAsync(req).GetAwaiter().GetResult();
 					while (call.ResponseStream.MoveNext().GetAwaiter().GetResult())
 					{
-						var resultMsg = reponseHandler(call.ResponseStream.Current, bytes => call.RequestStream.WriteAsync(bytes)).GetAwaiter().GetResult();
+						var resultMsg = reponseHandler(call.ResponseStream.Current, requestMsg => call.RequestStream.WriteAsync(requestMsg)).GetAwaiter().GetResult();
 						if (resultMsg != null)
 							return resultMsg;
 					}
@@ -134,7 +134,7 @@ namespace GoreRemoting
 					await call.RequestStream.WriteAsync(req).ConfigureAwait(false);
 					while (await call.ResponseStream.MoveNext().ConfigureAwait(false))
 					{
-						var resultMsg = await reponseHandler(call.ResponseStream.Current, bytes => call.RequestStream.WriteAsync(bytes)).ConfigureAwait(false);
+						var resultMsg = await reponseHandler(call.ResponseStream.Current, requestMsg => call.RequestStream.WriteAsync(requestMsg)).ConfigureAwait(false);
 						if (resultMsg != null)
 							return resultMsg;
 					}

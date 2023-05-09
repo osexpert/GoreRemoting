@@ -64,9 +64,9 @@ namespace GoreRemoting
 				setCallContext: _client._config.SetCallContext
 				);
 
-			var bytes = new GoreRequestMessage(callMessage, serializer, compressor);
+			var requestMsg = new GoreRequestMessage(callMessage, serializer, compressor);
 
-			var resultMessage = _client.Invoke(bytes,
+			var resultMessage = _client.Invoke(requestMsg,
 				(callback, res) => HandleResponseAsync(serializer, compressor, callback, res, args, streamingDelePos),
 				new CallOptions(headers: headers, cancellationToken: cancel));
 
