@@ -61,28 +61,8 @@ namespace GoreRemoting.RemoteDelegates
 	}
 
 
-	public class CancellationTokenDummy : IGorializer
+	public class CancellationTokenDummy
 	{
-		public CancellationTokenDummy()
-		{
-
-		}
-		public CancellationTokenDummy(GoreBinaryReader r)
-		{
-			Deserialize(r);
-		}
-
-		public void Deserialize(GoreBinaryReader r)
-		{
-		}
-
-		public void Deserialize(Stack<object> st)
-		{
-		}
-
-		public void Serialize(GoreBinaryWriter w, Stack<object> st)
-		{
-		}
 	}
 
 }
