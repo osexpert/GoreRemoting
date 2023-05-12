@@ -131,7 +131,7 @@ namespace GoreRemoting
 
 				if (MapDelegateArgument(argument, i, out var mappedArgument, callDelegate, callDelegateAsync))
 					mappedArguments[i] = mappedArgument;
-				else if (argument is CancellationTokenDummy)
+				else if (argument is CancellationTokenPlaceholder)
 					mappedArguments[i] = context.CancellationToken;
 				else
 					mappedArguments[i] = argument;

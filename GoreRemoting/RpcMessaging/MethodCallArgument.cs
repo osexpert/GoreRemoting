@@ -51,7 +51,7 @@ namespace GoreRemoting.RpcMessaging
 				}
 				else if (v == 2)
 				{
-					Value = new CancellationTokenDummy();
+					Value = new CancellationTokenPlaceholder();
 				}
 				else
 					throw new NotImplementedException("unk type");
@@ -80,7 +80,7 @@ namespace GoreRemoting.RpcMessaging
 
 				g.Serialize(w, st);
 			}
-			else if (Value is CancellationTokenDummy)
+			else if (Value is CancellationTokenPlaceholder)
 			{
 				w.Write((byte)2);
 			}

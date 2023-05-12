@@ -318,7 +318,7 @@ namespace GoreRemoting
 					else
 						lastCancel = (CancellationToken)argument;
 
-					res[i] = new CancellationTokenDummy();
+					res[i] = new CancellationTokenPlaceholder();
 				}
 				else
 					res[i] = argument;

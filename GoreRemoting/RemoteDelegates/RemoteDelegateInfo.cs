@@ -61,7 +61,7 @@ namespace GoreRemoting.RemoteDelegates
 	}
 
 
-	public class CancellationTokenDummy
+	public class CancellationTokenPlaceholder
 	{
 	}
 

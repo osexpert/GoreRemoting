@@ -104,6 +104,8 @@ namespace GoreRemoting
 		}
 
 		public new void Write7BitEncodedInt(int i) => base.Write7BitEncodedInt(i);
+
+		public void Write(Guid g) => Write(g.ToByteArray());
 	}
 
 	public class GoreBinaryReader : BinaryReader
@@ -116,6 +118,7 @@ namespace GoreRemoting
 
 		public new int Read7BitEncodedInt() => base.Read7BitEncodedInt();
 
+		public Guid ReadGuid() => new Guid(ReadBytes(16));
 	}
 
 
