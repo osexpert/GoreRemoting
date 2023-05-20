@@ -35,10 +35,8 @@ namespace GoreRemoting
 			{
 				var stack = new Stack<object>();
 
-				using (var bw = new GoreBinaryWriter(cs, leaveOpen: true))
-				{
-					data.Serialize(bw, stack);
-				}
+				var bw = new GoreBinaryWriter(cs);
+				data.Serialize(bw, stack);
 
 				serializer.Serialize(cs, stack.ToArray());
 			}
@@ -68,10 +66,8 @@ namespace GoreRemoting
 			var ds = GetDecompressor(compressor, ms) ?? ms;
 			try
 			{
-				using (var br = new GoreBinaryReader(ds, leaveOpen: true))
-				{
-					res.Deserialize(br);
-				}
+				var br = new GoreBinaryReader(ds);
+				res.Deserialize(br);
 
 				var arr = serializer.Deserialize(ds);
 				res.Deserialize(new Stack<object>(arr));
@@ -98,12 +94,12 @@ namespace GoreRemoting
 	{
 		static Encoding _utf8NoBom = new UTF8Encoding(false);
 
-		public GoreBinaryWriter(Stream outp, bool leaveOpen = false) : base(outp, _utf8NoBom, leaveOpen)
+		public GoreBinaryWriter(Stream outp) : base(outp, _utf8NoBom, leaveOpen: true)
 		{
 
 		}
 
-		public new void Write7BitEncodedInt(int i) => base.Write7BitEncodedInt(i);
+		public void WriteVarInt(int i) => base.Write7BitEncodedInt(i);
 
 		public void Write(Guid g) => Write(g.ToByteArray());
 	}
@@ -112,11 +108,11 @@ namespace GoreRemoting
 	{
 		static Encoding _utf8NoBom = new UTF8Encoding(false);
 
-		public GoreBinaryReader(Stream inp, bool leaveOpen = false) : base(inp, _utf8NoBom, leaveOpen)
+		public GoreBinaryReader(Stream inp) : base(inp, _utf8NoBom, leaveOpen: true)
 		{
 		}
 
-		public new int Read7BitEncodedInt() => base.Read7BitEncodedInt();
+		public int ReadVarInt() => base.Read7BitEncodedInt();
 
 		public Guid ReadGuid() => new Guid(ReadBytes(16));
 	}

@@ -47,11 +47,9 @@ namespace GoreRemoting.RpcMessaging
 			w.Write(MethodName);
 			w.Write(IsGenericMethod);
 
-			w.Write7BitEncodedInt(Arguments.Length);
+			w.WriteVarInt(Arguments.Length);
 			foreach (var a in Arguments)
 				a.Serialize(w, st);
-
-
 		}
 
 		public void Deserialize(GoreBinaryReader r)
@@ -60,7 +58,7 @@ namespace GoreRemoting.RpcMessaging
 			MethodName = r.ReadString();
 			IsGenericMethod = r.ReadBoolean();
 
-			var n = r.Read7BitEncodedInt();
+			var n = r.ReadVarInt();
 			Arguments = new MethodCallArgument[n];
 			for (int i = 0; i < n; i++)
 				Arguments[i] = new MethodCallArgument(r);

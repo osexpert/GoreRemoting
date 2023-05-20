@@ -18,6 +18,7 @@ namespace GoreRemoting.RpcMessaging
 		internal ISerializerAdapter Serializer { get; }
 		internal ICompressionProvider Compressor { get; }
 
+
 		public GoreRequestMessage(DelegateResultMessage drm, ISerializerAdapter serializer, ICompressionProvider compressor)
 		{
 			DelegateResultMessage = drm;
@@ -58,8 +59,8 @@ namespace GoreRemoting.RpcMessaging
 
 	public enum RequestType
 	{
-		MethodCall,
-		DelegateResult
+		MethodCall = 1,
+		DelegateResult = 2
 	}
 
 }

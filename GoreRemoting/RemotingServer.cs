@@ -48,7 +48,7 @@ namespace GoreRemoting
 		{
 			using var s = arg.PayloadAsReadOnlySequence().AsStream();
 
-			using var br = new GoreBinaryReader(s, leaveOpen: true);
+			var br = new GoreBinaryReader(s);
 			var serializerName = br.ReadString();
 			var compressorName = br.ReadString();
 			var mType = (RequestType)br.ReadByte();
@@ -80,12 +80,10 @@ namespace GoreRemoting
 			{
 				using (var s = sc.GetBufferWriter().AsStream())
 				{
-					using (var bw = new GoreBinaryWriter(s, leaveOpen: true))
-					{
-						bw.Write(arg.Serializer.Name);
-						bw.Write(arg.Compressor?.EncodingName ?? string.Empty);
-						bw.Write((byte)arg.ResponseType);
-					}
+					var bw = new GoreBinaryWriter(s);
+					bw.Write(arg.Serializer.Name);
+					bw.Write(arg.Compressor?.EncodingName ?? string.Empty);
+					bw.Write((byte)arg.ResponseType);
 
 					arg.Serialize(s);
 				}
@@ -140,9 +138,6 @@ namespace GoreRemoting
 			return mappedArguments;
 		}
 
-
-
-
 		/// <summary>
 		/// Maps a delegate argument into a delegate proxy.
 		/// </summary>
@@ -157,7 +152,7 @@ namespace GoreRemoting
 		{
 			if (argument is not RemoteDelegateInfo remoteDelegateInfo)
 			{
-				mappedArgument = argument;
+				mappedArgument = null;
 				return false;
 			}
 
@@ -204,8 +199,6 @@ namespace GoreRemoting
 		}
 
 		private async Task DuplexCall(
-			//ISerializerAdapter serializer, 
-			//ICompressionProvider compressor, 
 			GoreRequestMessage request,
 			Func<Task<GoreRequestMessage>> req, Func<GoreResponseMessage, Task> reponse, ServerCallContext context)
 		{
@@ -475,16 +468,6 @@ namespace GoreRemoting
 	/// </summary>
 	public class Descriptors
 	{
-		/// <summary>
-		/// 
-		/// </summary>
-		//public static Method<GoreRequestMessage, GoreResponseMessage> DuplexCall = null;// GetDuplexCall("DuplexCall", Marshaller < DataMessage > marshaller)
-
-		//private static Method<byte[], byte[]> UnaryCall = GetUnaryCall("UnaryCall");
-
-		// TODO: if a method has no delegate arguments, we could use unary call "UnaryCall", because then there is just a singlem result.
-		// CON: DuplexCall will be less hot\tested less. PRO: can be faster?
-
 		/// <summary>
 		/// 
 		/// </summary>

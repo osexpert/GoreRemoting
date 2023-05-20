@@ -44,12 +44,10 @@ namespace GoreRemoting
 			{
 				using (var s = sc.GetBufferWriter().AsStream())
 				{
-					using (var bw = new GoreBinaryWriter(s, leaveOpen: true))
-					{
-						bw.Write(arg.Serializer.Name);
-						bw.Write(arg.Compressor?.EncodingName ?? string.Empty);
-						bw.Write((byte)arg.RequestType);
-					}
+					var bw = new GoreBinaryWriter(s);
+					bw.Write(arg.Serializer.Name);
+					bw.Write(arg.Compressor?.EncodingName ?? string.Empty);
+					bw.Write((byte)arg.RequestType);
 
 					arg.Serialize(s);
 				}
@@ -64,7 +62,7 @@ namespace GoreRemoting
 		{
 			using var s = arg.PayloadAsReadOnlySequence().AsStream();
 
-			using var br = new GoreBinaryReader(s, leaveOpen: true);
+			var br = new GoreBinaryReader(s);
 			var serializerName = br.ReadString();
 			var compressorName = br.ReadString();
 			var mType = (ResponseType)br.ReadByte();

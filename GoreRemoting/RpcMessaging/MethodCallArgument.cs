@@ -42,19 +42,19 @@ namespace GoreRemoting.RpcMessaging
 			TypeName = r.ReadString();
 
 			var v = r.ReadByte();
-			_popValue = (v == 0);
+			_popValue = (v == (byte)ParameterValueType.Normal);
 			if (!_popValue)
 			{
-				if (v == 1)
+				if (v == (byte)ParameterValueType.RemoteDelegateInfo)
 				{
 					Value = new RemoteDelegates.RemoteDelegateInfo(r);
 				}
-				else if (v == 2)
+				else if (v == (byte)ParameterValueType.CancellationTokenPlaceholder)
 				{
 					Value = new CancellationTokenPlaceholder();
 				}
 				else
-					throw new NotImplementedException("unk type");
+					throw new NotImplementedException("unk type " + v);
 			}
 		}
 
@@ -73,7 +73,7 @@ namespace GoreRemoting.RpcMessaging
 			{
 				if (Value is RemoteDelegates.RemoteDelegateInfo)
 				{
-					w.Write((byte)1);
+					w.Write((byte)ParameterValueType.RemoteDelegateInfo);
 				}
 				else
 					throw new NotImplementedException("unk type");
@@ -82,13 +82,20 @@ namespace GoreRemoting.RpcMessaging
 			}
 			else if (Value is CancellationTokenPlaceholder)
 			{
-				w.Write((byte)2);
+				w.Write((byte)ParameterValueType.CancellationTokenPlaceholder);
 			}
 			else
 			{
-				w.Write((byte)0);
+				w.Write((byte)ParameterValueType.Normal);
 				st.Push(Value);
 			}
+		}
+
+		enum ParameterValueType
+		{
+			Normal = 0,
+			RemoteDelegateInfo = 1,
+			CancellationTokenPlaceholder = 2
 		}
 	}
 }

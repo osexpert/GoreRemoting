@@ -12,9 +12,6 @@ namespace GoreRemoting.RpcMessaging
 		internal ISerializerAdapter Serializer { get; }
 		internal ICompressionProvider Compressor { get; }
 
-		public GoreResponseMessage()
-		{ }
-
 		public GoreResponseMessage(DelegateCallMessage callMsg, ISerializerAdapter serializer, ICompressionProvider compressor)
 		{
 			DelegateCall = callMsg;
@@ -103,11 +100,11 @@ namespace GoreRemoting.RpcMessaging
 		/// <summary>
 		/// Result
 		/// </summary>
-		MethodResult,
+		MethodResult = 1,
 		/// <summary>
 		/// Delegate
 		/// </summary>
-		DelegateCall,
+		DelegateCall = 2,
 	}
 
 }

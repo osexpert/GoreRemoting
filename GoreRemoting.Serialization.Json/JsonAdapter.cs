@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text.Json;
@@ -45,21 +46,56 @@ namespace GoreRemoting.Serialization.Json
 		/// <returns>Serialized data</returns>
 		public void Serialize(Stream stream, object[] graph)
 		{
+			Dictionary<int, byte[]> byteArrays = new();
 			ObjectOnly[] typeAndObjects = new ObjectOnly[graph.Length];
 
 			for (int i = 0; i < graph.Length; i++)
 			{
 				var obj = graph[i];
-				typeAndObjects[i] = new ObjectOnly { Data = obj };
+				if (obj is byte[] bs)
+				{
+					byteArrays.Add(i, bs);
+				}
+				else
+				{
+					typeAndObjects[i] = new ObjectOnly(obj);
+				}
+			}
+
+			var bw = new GoreBinaryWriter(stream);
+			bw.WriteVarInt(byteArrays.Count);
+			foreach (var byteArray in byteArrays)
+			{
+				bw.WriteVarInt(byteArray.Key);
+				bw.WriteVarInt(byteArray.Value.Length);
+				bw.Write(byteArray.Value);
 			}
 
 			JsonSerializer.Serialize<ObjectOnly[]>(stream, typeAndObjects, Options);
 		}
 
+		class ByteArray
+		{
+			public int Idx;
+			public byte[] Bytes;
+
+			public ByteArray(int idx, byte[] bytes)
+			{
+				Idx = idx;
+				Bytes = bytes;
+			}
+		}
+
+
 		class ObjectOnly
 		{
 			[JsonConverter(typeof(TypelessFormatter))]
 			public object Data { get; set; }
+
+			public ObjectOnly(object data)
+			{
+				Data = data;
+			}
 		}
 
 		/// <summary>
@@ -70,6 +106,18 @@ namespace GoreRemoting.Serialization.Json
 		/// <returns>Deserialized object graph</returns>
 		public object[] Deserialize(Stream stream)
 		{
+			Dictionary<int, byte[]> byteArrays = new();
+
+			var br = new GoreBinaryReader(stream);
+			var bCnt = br.ReadVarInt();
+			while (bCnt-- > 0)
+			{
+				var idx = br.ReadVarInt();
+				var byteLen = br.ReadVarInt();
+				var bytes = br.ReadBytes(byteLen);
+				byteArrays.Add(idx, bytes);
+			}
+
 			var typeAndObjects = JsonSerializer.Deserialize<ObjectOnly[]>(stream, Options)!;
 
 			object[] res = new object[typeAndObjects.Length];
@@ -77,7 +125,16 @@ namespace GoreRemoting.Serialization.Json
 			for (int i = 0; i < typeAndObjects.Length; i++)
 			{
 				var to = typeAndObjects[i];
-				res[i] = to.Data;
+				if (byteArrays.TryGetValue(i, out var bytes))
+				{
+					if (to != null)
+						throw new Exception("sanity: to should be null");
+					res[i] = bytes;
+				}
+				else
+				{
+					res[i] = to.Data;
+				}
 			}
 
 			return res;

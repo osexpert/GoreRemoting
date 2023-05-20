@@ -28,10 +28,10 @@ namespace GoreRemoting.RpcMessaging
 
 		public void Deserialize(GoreBinaryReader r)
 		{
-			Position = r.Read7BitEncodedInt();
+			Position = r.ReadVarInt();
 			OneWay = r.ReadBoolean();
 
-			var n = r.Read7BitEncodedInt();
+			var n = r.ReadVarInt();
 			Arguments = new object[n];
 		}
 
@@ -43,10 +43,10 @@ namespace GoreRemoting.RpcMessaging
 
 		public void Serialize(GoreBinaryWriter w, Stack<object> st)
 		{
-			w.Write7BitEncodedInt(Position);
+			w.WriteVarInt(Position);
 			w.Write(OneWay);
 
-			w.Write7BitEncodedInt(Arguments.Length);
+			w.WriteVarInt(Arguments.Length);
 
 			foreach (var arg in Arguments)
 				st.Push(arg);

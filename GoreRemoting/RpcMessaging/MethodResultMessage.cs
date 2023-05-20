@@ -38,12 +38,12 @@ namespace GoreRemoting.RpcMessaging
 
 		public void Deserialize(GoreBinaryReader r)
 		{
-			var n = r.Read7BitEncodedInt();
+			var n = r.ReadVarInt();
 			OutArguments = new MethodOutArgument[n];
 			for (int i = 0; i < n; i++)
 				OutArguments[i] = new MethodOutArgument(r);
 
-			var c = r.Read7BitEncodedInt();
+			var c = r.ReadVarInt();
 			CallContextSnapshot = new CallContextEntry[c];
 			for (int j = 0; j < c; j++)
 				CallContextSnapshot[j] = new CallContextEntry(r);
@@ -67,19 +67,19 @@ namespace GoreRemoting.RpcMessaging
 			st.Push(Exception);
 
 			if (OutArguments == null)
-				w.Write7BitEncodedInt(0);
+				w.WriteVarInt(0);
 			else
 			{
-				w.Write7BitEncodedInt(OutArguments.Length);
+				w.WriteVarInt(OutArguments.Length);
 				foreach (var oa in OutArguments)
 					oa.Serialize(w, st);
 			}
 
 			if (CallContextSnapshot == null)
-				w.Write7BitEncodedInt(0);
+				w.WriteVarInt(0);
 			else
 			{
-				w.Write7BitEncodedInt(CallContextSnapshot.Length);
+				w.WriteVarInt(CallContextSnapshot.Length);
 				foreach (var cc in CallContextSnapshot)
 					cc.Serialize(w, st);
 			}

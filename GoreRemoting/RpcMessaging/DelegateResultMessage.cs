@@ -17,7 +17,7 @@ namespace GoreRemoting.RpcMessaging
 
 		public void Deserialize(GoreBinaryReader r)
 		{
-			Position = r.Read7BitEncodedInt();
+			Position = r.ReadVarInt();
 			StreamingStatus = (StreamingStatus)r.ReadByte();
 		}
 		public void Deserialize(Stack<object> st)
@@ -27,7 +27,7 @@ namespace GoreRemoting.RpcMessaging
 		}
 		public void Serialize(GoreBinaryWriter w, Stack<object> st)
 		{
-			w.Write7BitEncodedInt(Position);
+			w.WriteVarInt(Position);
 			w.Write((byte)StreamingStatus);
 
 			st.Push(Result);
@@ -37,8 +37,8 @@ namespace GoreRemoting.RpcMessaging
 
 	public enum StreamingStatus
 	{
-		None,
-		Active,
-		Done
+		None = 0,
+		Active = 1,
+		Done = 2
 	}
 }
