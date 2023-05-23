@@ -253,6 +253,7 @@ namespace GoreRemoting.Tests
 
 			List<string> i2 = new();
 
+			//await proxy.Jild4(async x => { i2.Add(x); }, 42);
 			await foreach (var i in AsyncEnumerableAdapter.ClientConsume<string>(bb => proxy.Jild4(x => bb(x), 42)))
 			{
 				i2.Add(i);

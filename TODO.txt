@@ -1,3 +1,16 @@
+SessionManager? And an easyer way to send messages to clients via session manager?
+
+Cache created methods? MakeGenericType? MakeGenericMethod?
+CreateProxiedDelegate?
+_delegateProxyCache?
+
+
+OnBefore(Method)Call
+OnAfter(Method)Call
+OnOneWayException
+OnUnobservedException
+OnException
+OnClientTriggeredException
 
 
     info.AddValue("ClassName", GetClassName(), typeof(string)); // Do not rename (binary serialization)

@@ -45,6 +45,7 @@ namespace GoreRemoting
 				using (var s = sc.GetBufferWriter().AsStream())
 				{
 					var bw = new GoreBinaryWriter(s);
+					bw.WriteVarInt(1); // version
 					bw.Write(arg.Serializer.Name);
 					bw.Write(arg.Compressor?.EncodingName ?? string.Empty);
 					bw.Write((byte)arg.RequestType);
@@ -63,6 +64,9 @@ namespace GoreRemoting
 			using var s = arg.PayloadAsReadOnlySequence().AsStream();
 
 			var br = new GoreBinaryReader(s);
+			int version = br.ReadVarInt();
+			if (version != 1)
+				throw new Exception("Unsupported version " + version);
 			var serializerName = br.ReadString();
 			var compressorName = br.ReadString();
 			var mType = (ResponseType)br.ReadByte();
@@ -145,11 +149,11 @@ namespace GoreRemoting
 			}
 		}
 
-		public event EventHandler<Exception> OneWayException;
-		internal void OnOneWayException(Exception ex)
-		{
-			OneWayException?.Invoke(this, ex);
-		}
+		//public event EventHandler<Exception> OneWayException;
+		//internal void OnOneWayException(Exception ex)
+		//{
+		//	OneWayException?.Invoke(this, ex);
+		//}
 
 
 	}

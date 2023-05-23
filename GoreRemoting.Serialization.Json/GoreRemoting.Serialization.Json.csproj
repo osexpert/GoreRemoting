@@ -3,6 +3,10 @@
   <PropertyGroup>
 	   <TargetFrameworks>net6.0</TargetFrameworks>
 	  <LangVersion>9</LangVersion>
+
+	  <Authors>osexpert</Authors>
+	  <Copyright>2022 osexpert</Copyright>
+
   </PropertyGroup>
 
   <ItemGroup>

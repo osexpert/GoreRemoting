@@ -18,9 +18,7 @@ namespace GoreRemoting
 		//		internal const string NativeClientAgentStart = "grpc-csharp/";
 	}
 
-
-
-
+	[System.AttributeUsage(System.AttributeTargets.Parameter)]
 	public class StreamingFuncAttribute : Attribute
 	{
 		public StreamingFuncAttribute()

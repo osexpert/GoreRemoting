@@ -2,20 +2,14 @@
 
     <PropertyGroup>
         <LangVersion>9</LangVersion>
-        <Title>GoreRemoting</Title>
-        <Authors>osexpert, Hagen Siegel</Authors>
-        <Description>GRPC Remoting library for .NET Core and .NET Framework, to aid migration from .NET Remoting</Description>        
-        <Copyright>2022 osexpert, 2022 Hagen Siegel</Copyright>
-		<VersionPrefix>0.0.1</VersionPrefix>
-		<PackageTags>.NET c# Remoting RPC GRPC Network</PackageTags>
-        <Company>osexpert</Company>
+		<!--         <Title>GoreRemoting</Title> -->
         <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
-        <PackageProjectUrl>https://github.com/osexpert/GoreRemoting</PackageProjectUrl>
-        <PackageLicenseUrl></PackageLicenseUrl>
-        <RepositoryUrl>https://github.com/osexpert/CoreRemoting.git</RepositoryUrl>
-        <RepositoryType>git</RepositoryType>
-        <PackageReleaseNotes></PackageReleaseNotes>
-    </PropertyGroup>
+
+		<Authors>osexpert, Hagen Siegel</Authors>
+		<Copyright>2022 osexpert, 2022 Hagen Siegel</Copyright>
+
+
+	</PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
       <DocumentationFile>bin\Debug\GoreRemoting.xml</DocumentationFile>

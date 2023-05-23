@@ -117,7 +117,7 @@ namespace GoreRemoting
 		public Guid ReadGuid() => new Guid(ReadBytes(16));
 	}
 
-
+	[System.AttributeUsage(System.AttributeTargets.Interface | AttributeTargets.Method)]
 	public class SerializerAttribute : Attribute
 	{
 		public Type Serializer { get; }
@@ -131,6 +131,7 @@ namespace GoreRemoting
 		}
 	}
 
+	[System.AttributeUsage(System.AttributeTargets.Interface | AttributeTargets.Method)]
 	public class CompressorAttribute : Attribute
 	{
 		public Type Compressor { get; }

@@ -51,6 +51,7 @@ namespace GoreRemoting
 			var serializer = ChooseSerializer(typeof(T), targetMethod);
 			var compressor = ChooseCompressor(typeof(T), targetMethod);
 
+			// context? A guid?
 			_client._config.BeforeMethodCall?.Invoke(new BeforeMethodCallParams(typeof(T), targetMethod, headers, serializer, compressor));
 
 			//headers.Add(Constants.SerializerHeaderKey, serializer.Name);
@@ -77,7 +78,7 @@ namespace GoreRemoting
 
 			foreach (var outArgument in resultMessage.OutArguments)
 			{
-				var parameterInfo = parameterInfos.First(p => p.Name == outArgument.ParameterName);
+				var parameterInfo = parameterInfos.Single(p => p.Name == outArgument.ParameterName);
 				args[parameterInfo.Position] = outArgument.OutValue;
 			}
 
@@ -232,7 +233,7 @@ namespace GoreRemoting
 								if (delegateMsg.OneWay)
 								{
 									// eat...
-									_client.OnOneWayException(ex);
+//									_client.OnOneWayException(ex);
 								}
 								else
 								{

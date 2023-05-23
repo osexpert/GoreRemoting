@@ -1,0 +1,37 @@
+<Project>
+  <PropertyGroup>
+
+<!--
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)\keypair.key</AssemblyOriginatorKeyFile>
+    -->
+    <RepoRootPath>$(MSBuildThisFileDirectory)</RepoRootPath>
+    <PackageOutputPath>$(RepoRootPath)bin\Packages\$(Configuration)\NuGet\</PackageOutputPath>
+
+    <PackageProjectUrl>https://github.com/osexpert/GoreRemoting</PackageProjectUrl>
+    <PackageLicenseUrl></PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/osexpert/GoreRemoting.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Company>osexpert</Company>      
+    
+    <VersionPrefix>0.0.1</VersionPrefix>
+	<PackageTags>.NET c# Remoting RPC GRPC</PackageTags>
+    <Description>GRPC Remoting library for .NET Core and .NET Framework</Description>        
+		        
+	<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		              
+<!--
+
+
+    
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols Condition=" '$(DebugType)' != 'embedded' ">true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    
+    -->
+    
+  </PropertyGroup>
+
+</Project>
