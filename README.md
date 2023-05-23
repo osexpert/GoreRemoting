@@ -63,6 +63,12 @@ https://github.com/mehmetakbulut/SignalR.Strong
 MagicOnion RPC framework based on gRPC
 https://github.com/Cysharp/MagicOnion
 
+SharpRemote 
+https://github.com/Kittyfisto/SharpRemote
+
+ServiceWire
+https://github.com/tylerjensen/ServiceWire
+
 The examples:
 
 Client and Server in .NET Framework 4.8 using Grpc.Core native.

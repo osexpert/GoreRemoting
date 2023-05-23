@@ -1,6 +1,8 @@
 <Project>
   <PropertyGroup>
 
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    
 <!--
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)\keypair.key</AssemblyOriginatorKeyFile>
@@ -17,7 +19,7 @@
     <Company>osexpert</Company>      
     
     <VersionPrefix>0.0.1</VersionPrefix>
-	<PackageTags>.NET c# Remoting RPC GRPC</PackageTags>
+	<PackageTags>remoting rpc grpc</PackageTags>
     <Description>GRPC Remoting library for .NET Core and .NET Framework</Description>        
 		        
 	<PublishRepositoryUrl>true</PublishRepositoryUrl>
@@ -34,4 +36,11 @@
     
   </PropertyGroup>
 
+
+   <ItemGroup>
+   
+        <None Include="$(RepoRootPath)README.md" Pack="true" PackagePath="\"/>
+   
+    </ItemGroup>
+    
 </Project>
