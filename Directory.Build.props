@@ -19,7 +19,7 @@
     <Company>osexpert</Company>      
     
     <VersionPrefix>0.0.1</VersionPrefix>
-	<PackageTags>remoting rpc grpc</PackageTags>
+	<PackageTags>remoting rpc grpc dotnet-remoting</PackageTags>
     <Description>GRPC Remoting library for .NET Core and .NET Framework</Description>        
 		        
 	<PublishRepositoryUrl>true</PublishRepositoryUrl>

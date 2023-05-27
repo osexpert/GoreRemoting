@@ -1,3 +1,10 @@
+TODO:
+Maybe OneWay delegate could be an opt-in instead of the default (still only max one could be non-OneWay)
+Instead of eating exceptions from delegates, maybe could have an optino to throw them or some way to get notified about them (via subscribe to delegate)
+Update: there is an event OneWayException in RemotingClient\RemotingServer if you want to observe any eaten exceptions.
+Add session management? (not in the core, but as example)
+
+
 SessionManager? And an easyer way to send messages to clients via session manager?
 
 Cache created methods? MakeGenericType? MakeGenericMethod?
