@@ -93,36 +93,43 @@ Delegates that return void, Task, ValueTask are all threated as OneWay. Then it 
 You can have max one delegate with result (eg. int, Task\<int\>, ValueTask\<int\>) else will get runtime exception.
 If you need to force a delegate to be non-OneWay, then just make it return something (eg. a bool or Task\<bool\>). But again, max one delegate with result.
 
-### Advanced streamng
-StreamingFuncAttribute\StreamingDoneException can be used to make streaming from server to client faster (normally there will be one call from server to client for every call that pull data from client).
-Streaming from client to server is always fast.
+### Advanced streaming
+StreamingFuncAttribute\StreamingDoneException can be used to make streaming from client to server faster.
+Normally there will be one delegate call from server to client for every delegate call that pull data from client.
+With StreamingFuncAttribute\StreamingDoneException there will only be one delegate call from server to client, to start the streaming.
+Streaming from server to client is always fast (one way delegate).
 
 ## Methods
 OneWay methods not supported. Methods always wait for result\exception.
 
 ## Other Rpc framework maybe of interest
 
-StreamJsonRpc  
+StreamJsonRpc (Json or MessagePack over streams & WebSockets)
 https://github.com/microsoft/vs-streamjsonrpc  
 
-ServiceModel.Grpc   
-https://max-ieremenko.github.io/ServiceModel.Grpc/  
+ServiceModel.Grpc (code-first support, gRPC)
 https://github.com/max-ieremenko/ServiceModel.Grpc  
 
-protobuf-net.Grpc  
+protobuf-net.Grpc (code-first support, gRPC)
 https://github.com/protobuf-net/protobuf-net.Grpc  
 
-SignalR.Strong
+SignalR.Strong (strongly-typed hub methods)
 https://github.com/mehmetakbulut/SignalR.Strong  
 
-MagicOnion RPC framework based on gRPC
+MagicOnion (RPC, gRPC)
 https://github.com/Cysharp/MagicOnion
 
-SharpRemote 
+SharpRemote (RPC, TCP/IP)
 https://github.com/Kittyfisto/SharpRemote
 
-ServiceWire
+ServiceWire (RPC, Named Pipes or TCP/IP)
 https://github.com/tylerjensen/ServiceWire
+
+AdvancedRpc (TCP and Named Pipes)
+https://github.com/fsdsabel/AdvancedRpc
+
+SimpleRpc (gRPC)
+https://github.com/netcore-jroger/SimpleRpc
 
 ## Examples
 
@@ -163,7 +170,7 @@ File read from server and written by client: 23 seconds (faster before...)
 File sent to server and written by server: 15 seconds
 File read from server and written by client: 15 seconds  
 
-Conclusion: StreamingFuncAttribute\StreamingDoneException does even out the numbers from and to. grpc dotnet is still slow.
+Conclusion: StreamingFuncAttribute\StreamingDoneException does even out the numbers from and to, but Grpc dotnet is still slower.
 
 ## Grpc dotnet problems
 When calling the server too fast(?) with grpc-dotnet, I get ENHANCE_YOUR_CALM:
