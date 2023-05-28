@@ -122,7 +122,7 @@ namespace GoreRemoting.Tests
 			//	//Debug.WriteLine(i);
 			//}
 
-			// TODO: dette kan være være internt? Mao AsyncEnumerableAdapter brukes inni ReadAsyncEnumerableStream?
+			// TODO: this can be internal? IOW, AsyncEnumerableAdapter used inside ReadAsyncEnumerableStream?
 			var rs = new ReadAsyncEnumerableStream(AsyncEnumerableAdapter.ClientConsume<byte[]>(bb => proxy.ServerPushDataToClient(x => bb(x))));
 
 
@@ -135,13 +135,13 @@ namespace GoreRemoting.Tests
 
 			//			await StreamAdapter.ClientProduce(fileReadS, lol => proxy.ServerPullDataFromClient(() => lol()));
 			//var writeTo = new WriteStreaam(cprod);
-			// server kommer og gir klient data
+			// server comes and give client the data
 			//Stream readstreamm = StreamAdapter.ClientConsume(bb => proxy.ServerPushDataToClient(x => bb(x)));
 
 
 
 
-			// server kommer og spør klient om data
+			// server comes and ask client about data
 
 
 
@@ -201,8 +201,8 @@ namespace GoreRemoting.Tests
 				while ((i = await fileReadS.ReadAsync(buff, 0, buff.Length)) > 0)
 				{
 					if (buff.Length != i)
-						Array.Resize(ref buff, i); // stream via IAsyncEnumerable er lite ideellt....
-												   // DET ER BEST HVIS SERVER SPØR OM DATA OG LENGDE!
+						Array.Resize(ref buff, i); // stream via IAsyncEnumerable is not ideal....
+												   // IT IS BEST IF SERVER ASK ABOUT DATA AND LENGTH!
 					yield return buff;
 				}
 			}

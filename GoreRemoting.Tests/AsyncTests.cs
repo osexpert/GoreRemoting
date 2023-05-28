@@ -199,7 +199,7 @@ namespace GoreRemoting.Tests
 			public SerExMistake(string theMess, string t) : base(theMess)
 			{
 				Test = t;
-				Data.Add("teste", "tull");
+				Data.Add("teste", "foobar");
 			}
 
 			public SerExMistake(SerializationInfo si, StreamingContext sc) : base(si, sc)
@@ -223,7 +223,7 @@ namespace GoreRemoting.Tests
 			public SerExMistakeNotPriv(string theMess, string t) : base(theMess)
 			{
 				Test = t;
-				Data.Add("teste", "tull");
+				Data.Add("teste", "foobar");
 			}
 
 			public SerExMistakeNotPriv(SerializationInfo si, StreamingContext sc) : base(si, sc)
@@ -247,13 +247,13 @@ namespace GoreRemoting.Tests
 			public SerExOk(string theMess, string t) : base(theMess)
 			{
 				Test = t;
-				Data.Add("teste", "tull");
+				Data.Add("teste", "foobar");
 			}
 
 			public SerExOk(string theMess, string t, Exception ie) : base(theMess, ie)
 			{
 				Test = t;
-				Data.Add("teste", "tull");
+				Data.Add("teste", "foobar");
 			}
 
 

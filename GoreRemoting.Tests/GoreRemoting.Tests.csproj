@@ -32,10 +32,4 @@
       <ProjectReference Include="..\GoreRemoting\GoreRemoting.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <None Update="TestConfig.xml">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-
 </Project>

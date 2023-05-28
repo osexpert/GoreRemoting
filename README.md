@@ -1,5 +1,4 @@
 # GoreRemoting
-
 GoreRemoting is based on CoreRemoting  
 https://github.com/theRainbird/CoreRemoting  
 
@@ -13,11 +12,11 @@ No support for MarshalByRef behaviour. Everything is by value.
 GoreRemoting does not use .proto files (Protobuf).
 
 ## Callbacks from server to client
-It is not possible to callback to clients directly, callbacks must happen as part of a call from client to server.
+It is not possible to callback to clients directly, callbacks must happen during a call from client to server.
 The server can callback via a delegate argument (look in examples).
 Can have as many callback delegate arguments as you wish, but only one can return something from the client. 
 Others must be void\Task\ValueTask and will be OneWay (no result or exception from client).
-If you need to have a permanent open stream from server to client, call a method that awaits forever and keeps an open stream,
+If you need to have a permanent open stream from server to client, have the client call a method that awaits forever and keeps an open stream,
 and send callbacks via a delegate argument (look in examples).
 
 ## Cancellation
@@ -85,7 +84,7 @@ Method that return IEnumerable and yield (crashes)
 Method that return IAsyncEnumerable and yield (crashes)  
 
 ## Removed from CoreRemoting
-CoreRemoting use websockets while GoreRemoting is a rewrite (sort of) to use Grpc instead.  
+CoreRemoting use WebSockets while GoreRemoting is a rewrite (sort of) to use Grpc instead.  
 Encryption, authentication, session management, DependencyInjection, Linq expression arguments removed (maybe some can be added back if demand).
 
 ## Delegate arguments
@@ -103,7 +102,6 @@ Streaming from server to client is always fast (one way delegate).
 OneWay methods not supported. Methods always wait for result\exception.
 
 ## Other Rpc framework maybe of interest
-
 StreamJsonRpc (Json or MessagePack over streams & WebSockets)
 https://github.com/microsoft/vs-streamjsonrpc  
 
@@ -132,11 +130,10 @@ SimpleRpc (gRPC)
 https://github.com/netcore-jroger/SimpleRpc
 
 ## Examples
-
 Client and Server in .NET Framework 4.8 using Grpc.Core native.
-
 Client and Server in .NET 6.0 using Grpc.Net managed.
 
+## BinaryFormatter interop
 BinaryFormatter does not work well between .NET Framework and .NET bcause types are different,
 eg. string in .NET is "System.String,System.Private.CoreLib" while in .NET Framework "System.String,mscorlib"
 
@@ -145,6 +142,8 @@ https://programmingflow.com/2020/02/18/could-not-load-system-private-corelib.htm
 https://stackoverflow.com/questions/50190568/net-standard-4-7-1-could-not-load-system-private-corelib-during-serialization/56184385#56184385  
 
 You will need to add some hacks yourself if using BinaryFormatter across .NET Framework and .NET
+
+PS: why won't this be a problem for all serializers?
 
 ## Performance
 Performance (1MB package size):

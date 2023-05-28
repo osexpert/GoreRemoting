@@ -18,17 +18,13 @@ namespace ClientNet60
 	{
 		static void Main(string[] args)
 		{
-
-
 			var p = new Program();
 			p.Go();
-
 		}
 
 
 		public void Go()
 		{
-
 			var channel = GrpcChannel.ForAddress("http://localhost:5000");
 
 			var c = new RemotingClient(channel.CreateCallInvoker(), new ClientConfig(new BinaryFormatterAdapter())
@@ -46,48 +42,11 @@ namespace ClientNet60
 
 		public void BeforeBuildMethodCallMessage(BeforeMethodCallParams p)
 		{
-
-
 			p.Headers.Add(Constants.SessionIdHeaderKey, pSessID.ToString());
 			//CallContext.SetData("SessionId", pSessID);
 		}
 
 	}
-
-	class mempack : ISerializerAdapter
-	{
-		public string Name => throw new NotImplementedException();
-
-		public object[] Deserialize(Stream rawData)
-		{
-			throw new NotImplementedException();
-		}
-
-		public object GetSerializableException(Exception ex2)
-		{
-			throw new NotImplementedException();
-		}
-
-		public Exception RestoreSerializedException(object ex2)
-		{
-			throw new NotImplementedException();
-		}
-
-		public void Serialize(Stream s, object[] graph)
-		{
-			throw new NotImplementedException();
-		}
-	}
-
-	//public class SerializerAttribute : Attribute
-	//{
-	//	public string Name { get; private set; }
-
-	//	public SerializerAttribute(string name)
-	//	{
-	//		Name = name;
-	//	}
-	//}
 
 
 }
