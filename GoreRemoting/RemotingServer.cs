@@ -359,7 +359,7 @@ namespace GoreRemoting
 					className: callMessage.ServiceName,
 					methodName: callMessage.MethodName);
 
-			var oneWay = false;// method.GetCustomAttribute<OneWayAttribute>() != null;
+			//var oneWay = false;// method.GetCustomAttribute<OneWayAttribute>() != null;
 
 			object result = null;
 
@@ -374,12 +374,12 @@ namespace GoreRemoting
 			}
 			catch (Exception ex)
 			{
-				if (oneWay)
-				{
-					// eat...
-					//OnOneWayException(ex);
-				}
-				else
+				//if (oneWay)
+				//{
+				//	// eat...
+				//	//OnOneWayException(ex);
+				//}
+				//else
 				{
 					Exception ex2 = ex;
 					if (ex2 is TargetInvocationException tie)
@@ -389,8 +389,8 @@ namespace GoreRemoting
 				}
 			}
 
-			if (oneWay)
-				return;
+//			if (oneWay)
+//				return;
 
 			MethodResultMessage resultMessage;
 

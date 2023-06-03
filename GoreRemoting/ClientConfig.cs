@@ -20,7 +20,7 @@ namespace GoreRemoting
 		//      public ActionRef<Type, MethodInfo, Metadata, ISerializerAdapter, ICompressionProvider> BeforeMethodCall { get; set; }
 
 		//public delegate void ActionRef<T1, T2, T3, T4, T5>(T1 a, T2 b, T3 c, ref T4 d, ref T5 e);
-		public Action<BeforeMethodCallParams> BeforeMethodCall { get; set; }
+		public Action<BeforeCallArgs> BeforeCall { get; set; }
 
 		public ClientConfig()
 		{
@@ -153,7 +153,7 @@ namespace GoreRemoting
 
 
 
-	public class BeforeMethodCallParams
+	public class BeforeCallArgs
 	{
 		/// <summary>
 		/// FIXME: does ref work here?
@@ -161,7 +161,7 @@ namespace GoreRemoting
 		/// <param name="type"></param>
 		/// <param name="targetMethod"></param>
 		/// <param name="headers"></param>
-		public BeforeMethodCallParams(Type type, MethodInfo targetMethod, Metadata headers, ISerializerAdapter s, ICompressionProvider cp)
+		public BeforeCallArgs(Type type, MethodInfo targetMethod, Metadata headers, ISerializerAdapter s, ICompressionProvider cp)
 		{
 			ServiceType = type;
 			TargetMethod = targetMethod;

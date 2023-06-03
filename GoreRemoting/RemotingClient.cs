@@ -149,11 +149,12 @@ namespace GoreRemoting
 			}
 		}
 
-		//public event EventHandler<Exception> OneWayException;
-		//internal void OnOneWayException(Exception ex)
-		//{
-		//	OneWayException?.Invoke(this, ex);
-		//}
+		public event EventHandler<Exception> OneWayException;
+
+		internal void OnOneWayException(Exception ex)
+		{
+			OneWayException?.Invoke(this, ex);
+		}
 
 
 	}

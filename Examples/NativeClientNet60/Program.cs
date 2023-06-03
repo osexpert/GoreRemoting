@@ -29,7 +29,7 @@ namespace ClientNet48
 			var channel = new Channel("localhost", 5000, ChannelCredentials.Insecure);
 			var c = new RemotingClient(channel.CreateCallInvoker(), new ClientConfig(new BinaryFormatterAdapter())
 			{
-				BeforeMethodCall = BeforeBuildMethodCallMessage,
+				BeforeCall = BeforeBuildMethodCallMessage,
 			});
 			var testServ = c.CreateProxy<ITestService>();
 
@@ -39,7 +39,7 @@ namespace ClientNet48
 
 		Guid pSessID = Guid.NewGuid();
 
-		public void BeforeBuildMethodCallMessage(BeforeMethodCallParams p)
+		public void BeforeBuildMethodCallMessage(BeforeCallArgs p)
 		{
 			//CallContext.SetData("SessionId", pSessID);
 			p.Headers.Add(Constants.SessionIdHeaderKey, pSessID.ToString());

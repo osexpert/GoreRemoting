@@ -29,7 +29,7 @@ namespace ClientNet60
 
 			var c = new RemotingClient(channel.CreateCallInvoker(), new ClientConfig(new BinaryFormatterAdapter())
 			{
-				BeforeMethodCall = BeforeBuildMethodCallMessage,
+				BeforeCall = BeforeBuildMethodCallMessage,
 			});
 
 			var testServ = c.CreateProxy<ITestService>();
@@ -40,7 +40,7 @@ namespace ClientNet60
 
 		Guid pSessID = Guid.NewGuid();
 
-		public void BeforeBuildMethodCallMessage(BeforeMethodCallParams p)
+		public void BeforeBuildMethodCallMessage(BeforeCallArgs p)
 		{
 			p.Headers.Add(Constants.SessionIdHeaderKey, pSessID.ToString());
 			//CallContext.SetData("SessionId", pSessID);

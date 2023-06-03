@@ -1,7 +1,6 @@
 ﻿using GoreRemoting.RpcMessaging;
 using GoreRemoting.Serialization;
 using Grpc.Net.Compression;
-using Microsoft.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,13 +13,6 @@ namespace GoreRemoting
 		void Serialize(GoreBinaryWriter w, Stack<object> st);
 		void Deserialize(GoreBinaryReader r);
 		void Deserialize(Stack<object> st);
-	}
-
-	public static class PooledMemoryStream
-	{
-		private static readonly RecyclableMemoryStreamManager _manager = new RecyclableMemoryStreamManager();
-
-		public static MemoryStream GetStream() => _manager.GetStream();
 	}
 
 	internal class Gorializer
