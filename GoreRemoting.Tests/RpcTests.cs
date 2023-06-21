@@ -33,6 +33,44 @@ namespace GoreRemoting.Tests
 			_testOutputHelper = testOutputHelper;
 		}
 
+
+
+
+
+
+
+
+
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		[InlineData(enSerializer.MessagePack)]
+		public async Task Inherited_methods_should_be_called_correctly(enSerializer ser)
+		{
+			var serverConfig =
+				new ServerConfig(Serializers.GetSerializer(ser));
+
+			await using var server = new NativeServer(9095, serverConfig);
+			server.RegisterService<ITestService, TestService>();
+			server.Start();
+
+			await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
+
+			var proxy = client.CreateProxy<ITestService>();
+
+			var result = proxy.BaseEcho("lol");
+			var result2 = proxy.BaseEchoGen<int>(3);
+
+			Assert.Equal("lol", result);
+			Assert.Equal(3, result2);
+		}
+
+
+
+
+
+
 		[Theory]
 		[InlineData(enSerializer.BinaryFormatter, false)]
 		[InlineData(enSerializer.MemoryPack, false)]
@@ -1448,5 +1486,10 @@ namespace GoreRemoting.Tests
 		{
 			r3 = r;
 		}
+
 	}
+
+
+
+
 }

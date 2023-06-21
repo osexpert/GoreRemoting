@@ -4,7 +4,7 @@ using GoreRemoting.Tests.ExternalTypes;
 namespace GoreRemoting.Tests.Tools
 {
 	//    [ReturnAsProxy]
-	public interface ITestService
+	public interface ITestService : IBaseService
 	{
 		event Action ServiceEvent;
 
@@ -22,5 +22,11 @@ namespace GoreRemoting.Tests.Tools
 		string Echo(string text);
 
 		void MethodWithOutParameter(out int counter);
+	}
+
+	public interface IBaseService
+	{
+		string BaseEcho(string s);
+		T BaseEchoGen<T>(T s);
 	}
 }

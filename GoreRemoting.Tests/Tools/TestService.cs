@@ -50,5 +50,15 @@ namespace GoreRemoting.Tests.Tools
 			_counter++;
 			counter = _counter;
 		}
+
+		public string BaseEcho(string s)
+		{
+			return s;
+		}
+
+		public T BaseEchoGen<T>(T s)
+		{
+			return s;
+		}
 	}
 }
