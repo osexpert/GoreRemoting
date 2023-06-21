@@ -1,3 +1,21 @@
+CallContext
+ResultContext
+
+
+session:
+
+client heartbeat
+client login\Auth
+
+// ret sessionId
+Guid service.Auth()
+
+token?
+sessionid?
+
+
+
+
 TODO:
 Maybe OneWay delegate could be an opt-in instead of the default (still only max one could be non-OneWay)
 Instead of eating exceptions from delegates, maybe could have an optino to throw them or some way to get notified about them (via subscribe to delegate)

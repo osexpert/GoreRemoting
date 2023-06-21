@@ -1,12 +1,10 @@
-#if false
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Timers;
-using CoreRemoting.Channels;
 
-namespace CoreRemoting
+namespace GoreRemoting
 {
     /// <summary>
     /// Default in-memory session repository.
@@ -15,35 +13,33 @@ namespace CoreRemoting
     {
         private readonly ConcurrentDictionary<Guid, RemotingSession> _sessions;
         private Timer _inactiveSessionSweepTimer;
-        private readonly int _maximumSessionInactivityTime;
+        private readonly int _maximumSessionInactivityTimeSeconds;
 
         /// <summary>
         /// Creates a new instance of the SessionRepository class.
         /// </summary>
-        /// <param name="keySize">Key size for asymmetric encryption. Should be 3072 or better in 2021 (Please use steps of 1024).</param>
-        /// <param name="inactiveSessionSweepInterval">Sweep interval for inactive sessions in seconds (No session sweeping, if set to 0)</param>
-        /// <param name="maximumSessionInactivityTime">Maximum session inactivity time in minutes</param>
-        public SessionRepository(int keySize, int inactiveSessionSweepInterval, int maximumSessionInactivityTime)
+        /// <param name="inactiveSessionSweepIntervalSeconds">Sweep interval for inactive sessions in seconds (No session sweeping, if set to 0)</param>
+        /// <param name="maximumSessionInactivityTimeSeconds">Maximum session inactivity time in minutes</param>
+        public SessionRepository(int inactiveSessionSweepIntervalSeconds, int maximumSessionInactivityTimeSeconds)
         {
-            KeySize = keySize;
             _sessions = new ConcurrentDictionary<Guid, RemotingSession>();
 
-            _maximumSessionInactivityTime = maximumSessionInactivityTime;
+            _maximumSessionInactivityTimeSeconds = maximumSessionInactivityTimeSeconds;
 
-            StartInactiveSessionSweepTimer(inactiveSessionSweepInterval);
+            StartInactiveSessionSweepTimer(inactiveSessionSweepIntervalSeconds);
         }
 
-        /// <summary>
-        /// Starts the inactive session sweep timer.
-        /// </summary>
-        /// <param name="inactiveSessionSweepInterval">Sweep interval for inactive sessions in seconds</param>
-        private void StartInactiveSessionSweepTimer(int inactiveSessionSweepInterval)
+		/// <summary>
+		/// Starts the inactive session sweep timer.
+		/// </summary>
+		/// <param name="inactiveSessionSweepIntervalSeconds">Sweep interval for inactive sessions in seconds</param>
+		private void StartInactiveSessionSweepTimer(int inactiveSessionSweepIntervalSeconds)
         {
-            if (inactiveSessionSweepInterval <= 0)
+            if (inactiveSessionSweepIntervalSeconds <= 0)
                 return;
             
             _inactiveSessionSweepTimer =
-                new Timer(Convert.ToDouble(inactiveSessionSweepInterval * 1000));
+                new Timer(Convert.ToDouble(inactiveSessionSweepIntervalSeconds * 1000));
 
             _inactiveSessionSweepTimer.Elapsed += InactiveSessionSweepTimerOnElapsed;
             _inactiveSessionSweepTimer.Start();
@@ -65,7 +61,7 @@ namespace CoreRemoting
             var inactiveSessionIdList =
                 _sessions
                     .Where(item => 
-                        DateTime.Now.Subtract(item.Value.LastActivityTimestamp).TotalMinutes > _maximumSessionInactivityTime)
+                        DateTime.Now.Subtract(item.Value.LastActivityTimestamp).TotalSeconds > _maximumSessionInactivityTimeSeconds)
                     .Select(item => item.Key);
 
             foreach (var inactiveSessionId in inactiveSessionIdList)
@@ -75,30 +71,16 @@ namespace CoreRemoting
         }
 
         /// <summary>
-        /// Gets the key size for asymmetric encryption. Should be 3072 or better in 2021 ;)
-        /// </summary>
-        public int KeySize { get; }
-
-        /// <summary>
         /// Creates a new session.
         /// </summary>
-        /// <param name="clientPublicKey">Client's public key</param>
         /// <param name="server">Server instance</param>
-        /// <param name="rawMessageTransport">Component that does the raw message transport</param>
         /// <returns>The newly created session</returns>
-        public RemotingSession CreateSession(byte[] clientPublicKey, IRemotingServer server, IRawMessageTransport rawMessageTransport)
+        public RemotingSession CreateSession(RemotingServer server)
         {
             if (server == null)
                 throw new ArgumentException(nameof(server));
             
-            if (rawMessageTransport == null)
-                throw new ArgumentNullException(nameof(rawMessageTransport));
-            
-            var session = new RemotingSession(
-                KeySize, 
-                clientPublicKey,
-                server,
-                rawMessageTransport);
+            var session = new RemotingSession(server);
             
             _sessions.TryAdd(session.SessionId, session);
             
@@ -154,4 +136,3 @@ namespace CoreRemoting
         }
     }
 }
-#endif

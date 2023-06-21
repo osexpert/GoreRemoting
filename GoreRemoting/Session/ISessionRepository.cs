@@ -1,9 +1,7 @@
-#if false
 using System;
 using System.Collections.Generic;
-using CoreRemoting.Channels;
 
-namespace CoreRemoting
+namespace GoreRemoting
 {
     /// <summary>
     /// Interface to be implemented by CoreRemoting session repository classes.
@@ -11,21 +9,11 @@ namespace CoreRemoting
     public interface ISessionRepository : IDisposable
     {
         /// <summary>
-        /// Gets the key size for asymmetric encryption. Should be 3072 or better in 2021 ;)
-        /// </summary>
-        int KeySize { get; }
-
-        /// <summary>
         /// Creates a new session.
         /// </summary>
-        /// <param name="clientPublicKey">Client's public key</param>
         /// <param name="server">Server instance</param>
-        /// <param name="rawMessageTransport">Component that does the raw message transport</param>
         /// <returns>The newly created session</returns>
-        RemotingSession CreateSession(
-            byte[] clientPublicKey, 
-            IRemotingServer server,
-            IRawMessageTransport rawMessageTransport);
+        RemotingSession CreateSession(RemotingServer server);
         
         /// <summary>
         /// Gets a specified session by its ID.
@@ -46,4 +34,3 @@ namespace CoreRemoting
         void RemoveSession(Guid sessionId);
     }
 }
-#endif

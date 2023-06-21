@@ -66,5 +66,18 @@ namespace GoreRemoting
 			foreach (var compressor in compressors)
 				_compressors.Add(compressor.EncodingName, compressor);
 		}
+
+
+		/// <summary>
+		/// Gets or sets the sweep interval for inactive sessions in seconds (No session sweeping if set to 0).
+		/// default: 1 minute
+		/// </summary>
+		public int InactiveSessionSweepIntervalSeconds { get; set; } = 60;
+
+		/// <summary>
+		/// Gets or sets the maximum session inactivity time in minutes.
+		/// default: 5 minutes
+		/// </summary>
+		public int MaximumSessionInactivityTimeSeconds { get; set; } = 60 * 5;
 	}
 }
