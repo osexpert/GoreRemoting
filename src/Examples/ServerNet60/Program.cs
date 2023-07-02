@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using ServerShared;
 using GoreRemoting.Serialization.BinaryFormatter;
+using System.Reflection;
 
 namespace ServerNet60
 {
@@ -35,7 +36,7 @@ namespace ServerNet60
 
 			var server = new RemotingServer(new ServerConfig(new BinaryFormatterAdapter())
 			{
-				CreateService = p.CreateInstance,
+				GetService = p.CreateInstance,
 			});
 
 			server.RegisterService<ITestService, TestService>();
@@ -96,14 +97,14 @@ namespace ServerNet60
 			await Task.Delay(-1);
 		}
 
-		public object? CreateInstance(Type serviceType, Metadata headers)
+		public object? CreateInstance(GetServiceArgs a)
 		{
 			//Guid sessID = (Guid)CallContext.GetData("SessionId");
-			Guid sessID = Guid.Parse(headers.GetValue(Constants.SessionIdHeaderKey)!);
+			Guid sessID = Guid.Parse(a.Headers.GetValue(Constants.SessionIdHeaderKey)!);
 
 			Console.WriteLine("SessID: " + sessID);
 
-			return Activator.CreateInstance(serviceType, sessID);
+			return Activator.CreateInstance(a.ServiceType, sessID);
 		}
 	}
 

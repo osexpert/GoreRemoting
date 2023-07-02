@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using ServerShared;
 using GoreRemoting.Serialization.BinaryFormatter;
+using System.Reflection;
 
 namespace ServerNet48
 {
@@ -28,7 +29,7 @@ namespace ServerNet48
 		{
 			var remServer = new RemotingServer(new ServerConfig(new BinaryFormatterAdapter())
 			{
-				CreateService = CreateInstance,
+				GetService = CreateInstance,
 			});
 			remServer.RegisterService<ITestService, TestService>();
 
@@ -57,14 +58,14 @@ namespace ServerNet48
 		}
 
 
-		public object CreateInstance(Type serviceType, Metadata headers)
+		public object CreateInstance(GetServiceArgs a)
 		{
 			//Guid sessID = (Guid)CallContext.GetData("SessionId");
-			Guid sessID = Guid.Parse(headers.GetValue(Constants.SessionIdHeaderKey));
+			Guid sessID = Guid.Parse(a.Headers.GetValue(Constants.SessionIdHeaderKey));
 
 			Console.WriteLine("SessID: " + sessID);
 
-			return Activator.CreateInstance(serviceType, sessID);
+			return Activator.CreateInstance(a.ServiceType, sessID);
 		}
 	}
 

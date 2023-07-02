@@ -97,7 +97,7 @@ namespace GoreRemoting.Tests
 			var serverConfig =
 				new ServerConfig(Serializers.GetSerializer(ser))
 				{
-					CreateService = (t, c) => testService
+					GetService = (a) => testService
 				};
 			if (compress)
 				serverConfig.AddCompressor(new Lz4CompressionProvider());
@@ -196,7 +196,7 @@ namespace GoreRemoting.Tests
 			var serverConfig =
 				new ServerConfig(Serializers.GetSerializer(ser))
 				{
-					CreateService = (t, c) => testService
+					GetService = (a) => testService
 				};
 
 
@@ -320,7 +320,7 @@ namespace GoreRemoting.Tests
 			var serverConfig =
 				new ServerConfig(Serializers.GetSerializer(ser))
 				{
-					CreateService = (t, c) => testService
+					GetService = (a) => testService
 				};
 
 			bool serviceEventCalled = false;
@@ -378,7 +378,7 @@ namespace GoreRemoting.Tests
 			var serverConfig =
 				new ServerConfig(Serializers.GetSerializer(ser))
 				{
-					CreateService = (t, c) => testService
+					GetService = (a) => testService
 				};
 
 

@@ -98,12 +98,20 @@ namespace GoreRemoting
 			}
 		}
 
-		private object GetService(string serviceName, ServerCallContext context)
+		private (object service, object userData) GetService(string serviceName, MethodInfo mi, ServerCallContext context)
 		{
 			if (!_services.TryGetValue(serviceName, out var serviceType))
 				throw new Exception("Service not registered: " + serviceName);
 
-			return _config.CreateService(serviceType, context.RequestHeaders);
+			var gsa = new GetServiceArgs 
+			{ 
+				ServiceType = serviceType, 
+				Method = mi, 
+				Headers = context.RequestHeaders,
+				ServiceName = serviceName
+			};
+			var service = _config.GetService(gsa);
+			return (service, gsa.UserData);
 		}
 
 		private Type GetServiceType(string serviceName)
@@ -364,12 +372,14 @@ namespace GoreRemoting
 			object result = null;
 
 			object exception = null;
+			object service = null;
+			Exception ex2 = null;
+			object userData = null;
 
 			try
 			{
-				var service = GetService(callMessage.ServiceName, context);
+				(service, userData) = GetService(callMessage.ServiceName, method, context);
 				result = method.Invoke(service, parameterValues);
-
 				result = await TaskResultHelper.GetTaskResult(method, result);
 			}
 			catch (Exception ex)
@@ -381,12 +391,17 @@ namespace GoreRemoting
 				//}
 				//else
 				{
-					Exception ex2 = ex;
+					ex2 = ex;
 					if (ex2 is TargetInvocationException tie)
 						ex2 = tie.InnerException;
 
 					exception = request.Serializer.GetSerializableException(ex2);
 				}
+			}
+			finally
+			{
+				// TODO: send result?
+				_config.EndService(new EndServiceArgs { Service = service, UserData = userData, Exception = ex2 });
 			}
 
 //			if (oneWay)

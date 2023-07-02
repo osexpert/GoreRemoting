@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Grpc.Net.Compression;
+using System.Reflection;
 
 namespace GoreRemoting
 {
@@ -16,7 +17,9 @@ namespace GoreRemoting
 		/// <summary>
 		/// Set this to overide the default Activator.CreateInstance
 		/// </summary>
-		public Func<Type, Metadata, object> CreateService { get; set; } = (t, m) => Activator.CreateInstance(t);
+		public Func<GetServiceArgs, object> GetService { get; set; } = (a) => Activator.CreateInstance(a.ServiceType);
+
+		public Action<EndServiceArgs> EndService { get; set; } = (a) => { };
 
 		private Dictionary<string, ISerializerAdapter> _serializers = new();
 
@@ -79,5 +82,22 @@ namespace GoreRemoting
 		/// default: 5 minutes
 		/// </summary>
 		public int MaximumSessionInactivityTimeSeconds { get; set; } = 60 * 5;
+	}
+
+
+	public class GetServiceArgs
+	{
+		public Type ServiceType { get; set; }
+		public MethodInfo Method { get; set; }
+		public Metadata Headers { get; set; }
+		public object UserData { get; set; }
+		public string ServiceName { get; internal set; }
+	}
+
+	public class EndServiceArgs
+	{
+		public object UserData { get; set; }
+		public object Service { get; set; }
+		public Exception Exception { get; set; }
 	}
 }

@@ -19,10 +19,10 @@
     <Company>osexpert</Company>      
     
     <VersionPrefix>0.0.1</VersionPrefix>
-	<PackageTags>remoting rpc grpc dotnet-remoting</PackageTags>
+    <PackageTags>remoting rpc grpc dotnet-remoting</PackageTags>
     <Description>GRPC Remoting library for .NET Core and .NET Framework</Description>        
 		        
-	<PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
 		              
 <!--
 
@@ -36,11 +36,8 @@
     
   </PropertyGroup>
 
-
-   <ItemGroup>
-   
-        <None Include="$(RepoRootPath)README.md" Pack="true" PackagePath="\"/>
-   
-    </ItemGroup>
+  <ItemGroup>
+    <None Include="$(RepoRootPath)README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
     
 </Project>

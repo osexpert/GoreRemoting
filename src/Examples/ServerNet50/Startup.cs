@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using GoreRemoting.Serialization.BinaryFormatter;
+using System.Reflection;
 
 namespace ServerNet60
 {
@@ -42,7 +43,7 @@ namespace ServerNet60
 
 			services.AddSingleton<GoreRemotingService>();
 
-			var server = new RemotingServer(new ServerConfig(new BinaryFormatterAdapter()) { CreateService = CreateInstance });
+			var server = new RemotingServer(new ServerConfig(new BinaryFormatterAdapter()) { GetService = CreateInstance });
 
 			server.RegisterService<ITestService, TestService>();
 
@@ -50,14 +51,14 @@ namespace ServerNet60
 			services.TryAddEnumerable(ServiceDescriptor.Singleton(typeof(IServiceMethodProvider<GoreRemotingService>), new GoreRemotingMethodProvider(server)));
 		}
 
-		public object CreateInstance(Type serviceType, Metadata headers)
+		public object CreateInstance(GetServiceArgs a)
 		{
 			//Guid sessID = (Guid)CallContext.GetData("SessionId");
-			Guid sessID = Guid.Parse(headers.GetValue(Constants.SessionIdHeaderKey)!);
+			Guid sessID = Guid.Parse(a.Headers.GetValue(Constants.SessionIdHeaderKey)!);
 
 			Console.WriteLine("SessID: " + sessID);
 
-			return Activator.CreateInstance(serviceType, sessID);
+			return Activator.CreateInstance(a.ServiceType, sessID);
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
