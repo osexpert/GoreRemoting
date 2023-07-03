@@ -401,7 +401,7 @@ namespace GoreRemoting
 			finally
 			{
 				// TODO: send result?
-				_config.EndService(new EndServiceArgs { Service = service, UserData = userData, Exception = ex2 });
+				_config.ReleaseService(new ReleaseServiceArgs { Service = service, UserData = userData, Exception = ex2 });
 			}
 
 //			if (oneWay)

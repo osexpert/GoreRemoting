@@ -17,9 +17,13 @@ namespace GoreRemoting
 		/// <summary>
 		/// Set this to overide the default Activator.CreateInstance
 		/// </summary>
-		public Func<GetServiceArgs, object> GetService { get; set; } = (a) => Activator.CreateInstance(a.ServiceType);
+		public Func<GetServiceArgs, object> GetService { get; set; } = GetServiceDefault;
 
-		public Action<EndServiceArgs> EndService { get; set; } = (a) => { };
+		public static readonly Func<GetServiceArgs, object> GetServiceDefault = (a) => Activator.CreateInstance(a.ServiceType);
+
+		public Action<ReleaseServiceArgs> ReleaseService { get; set; } = ReleaseServiceDefault;
+
+		public static readonly Action<ReleaseServiceArgs> ReleaseServiceDefault = (a) => { };
 
 		private Dictionary<string, ISerializerAdapter> _serializers = new();
 
@@ -94,7 +98,7 @@ namespace GoreRemoting
 		public string ServiceName { get; internal set; }
 	}
 
-	public class EndServiceArgs
+	public class ReleaseServiceArgs
 	{
 		public object UserData { get; set; }
 		public object Service { get; set; }
