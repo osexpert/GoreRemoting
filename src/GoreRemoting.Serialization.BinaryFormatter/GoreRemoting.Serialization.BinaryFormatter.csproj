@@ -2,11 +2,8 @@
 
   <PropertyGroup>
 	  <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
-	  <LangVersion>9</LangVersion>
-
 	  <Authors>osexpert, Hagen Siegel</Authors>
 	  <Copyright>2022 osexpert, 2022 Hagen Siegel</Copyright>
-
   </PropertyGroup>
 
   <ItemGroup>

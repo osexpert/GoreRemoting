@@ -1,12 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	   <TargetFrameworks>net6.0</TargetFrameworks>
-	  <LangVersion>9</LangVersion>
-
+      <TargetFrameworks>net6.0</TargetFrameworks>
 	  <Authors>osexpert</Authors>
 	  <Copyright>2022 osexpert</Copyright>
-
   </PropertyGroup>
 
   <ItemGroup>

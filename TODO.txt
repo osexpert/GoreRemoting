@@ -1,5 +1,17 @@
+Security?
+During desser, somehow validate that the types sent match the signature of the method called?
+If a method take object as arg, then its pointless off course, all will pass.
+It is not easy to reach the method sig\types in the code that desser (for MessagePack nor possible at all since it happens within the library).
+But I am not sure if this is a security problem. The only bad thing you can do is to serialize things that will fail to be used as argument
+for target method, but I guess it would be better to detect this before deserialize of the type,
+but it depends on, what bad thing can really happen by deserialize random types?
+For binary formatter it is bad, but this is because the way to creates the objects, using reflection to call ctors.
+Other serializers I don't think have these problems, so the harm you can do with them...I think it theoretical.
+Anyways...this is all based on BinaryFormatter and migrating away from it, so security is not the main point here.
+When all is migrated away from BinaryFormatter to some other formatter, then you could must easier switch the transport too.
+
 CallContext
-ResultContext
+ResultContext? Maybe an idea to separate them, have a separate context that flows back to the client...
 
 
 session:
@@ -14,21 +26,17 @@ token?
 sessionid?
 
 
-
-
 TODO:
 Maybe OneWay delegate could be an opt-in instead of the default (still only max one could be non-OneWay)
 Instead of eating exceptions from delegates, maybe could have an optino to throw them or some way to get notified about them (via subscribe to delegate)
 Update: there is an event OneWayException in RemotingClient\RemotingServer if you want to observe any eaten exceptions.
 Add session management? (not in the core, but as example)
 
-
 SessionManager? And an easyer way to send messages to clients via session manager?
 
 Cache created methods? MakeGenericType? MakeGenericMethod?
 CreateProxiedDelegate?
 _delegateProxyCache?
-
 
 OnBefore(Method)Call
 OnAfter(Method)Call
