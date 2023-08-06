@@ -91,17 +91,17 @@ namespace GoreRemoting
 
 	public class GetServiceArgs
 	{
-		public Type ServiceType { get; set; }
-		public MethodInfo Method { get; set; }
-		public Metadata Headers { get; set; }
+		public Type ServiceType { get; internal set; }
+		public MethodInfo Method { get; internal set; }
+		public Metadata Headers { get; internal set; }
 		public object UserData { get; set; }
 		public string ServiceName { get; internal set; }
 	}
 
 	public class ReleaseServiceArgs
 	{
-		public object UserData { get; set; }
-		public object Service { get; set; }
-		public Exception Exception { get; set; }
+		public object UserData { get; internal set; }
+		public object Service { get; internal set; }
+		public Exception Exception { get; internal set; }
 	}
 }
