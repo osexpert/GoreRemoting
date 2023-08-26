@@ -98,7 +98,7 @@ namespace GoreRemoting
 			}
 		}
 
-		private (object service, object userData) GetService(string serviceName, MethodInfo mi, ServerCallContext context)
+		private object GetService(string serviceName, /*MethodInfo mi,*/ ServerCallContext context)
 		{
 			if (!_services.TryGetValue(serviceName, out var serviceType))
 				throw new Exception("Service not registered: " + serviceName);
@@ -106,12 +106,12 @@ namespace GoreRemoting
 			var gsa = new GetServiceArgs 
 			{ 
 				ServiceType = serviceType, 
-				Method = mi, 
-				Headers = context.RequestHeaders,
-				ServiceName = serviceName
+//				Method = mi, 
+				GrpcContext = context,
+//				ServiceName = serviceName
 			};
 			var service = _config.GetService(gsa);
-			return (service, gsa.UserData);
+			return service;
 		}
 
 		private Type GetServiceType(string serviceName)
@@ -370,17 +370,25 @@ namespace GoreRemoting
 			//var oneWay = false;// method.GetCustomAttribute<OneWayAttribute>() != null;
 
 			object result = null;
-
-			object exception = null;
 			object service = null;
 			Exception ex2 = null;
-			object userData = null;
+			ICallContext callCtx = null;
 
 			try
 			{
-				(service, userData) = GetService(callMessage.ServiceName, method, context);
+				service = GetService(callMessage.ServiceName, /*method,*/ context);
+
+				if (_config.CreateCallContext != null)
+				{
+					callCtx = _config.CreateCallContext(new() { GrpcContext = context });
+				}
+
+				callCtx?.BeforeCall(service, method, parameterValues);
+
 				result = method.Invoke(service, parameterValues);
 				result = await TaskResultHelper.GetTaskResult(method, result);
+
+				callCtx?.Success(result);
 			}
 			catch (Exception ex)
 			{
@@ -394,14 +402,14 @@ namespace GoreRemoting
 					ex2 = ex;
 					if (ex2 is TargetInvocationException tie)
 						ex2 = tie.InnerException;
-
-					exception = request.Serializer.GetSerializableException(ex2);
 				}
+
+				callCtx?.Failure(ex2);
 			}
 			finally
 			{
-				// TODO: send result?
-				_config.ReleaseService(new ReleaseServiceArgs { Service = service, UserData = userData, Exception = ex2 });
+				callCtx?.Dispose();
+				callCtx = null;
 			}
 
 //			if (oneWay)
@@ -409,7 +417,7 @@ namespace GoreRemoting
 
 			MethodResultMessage resultMessage;
 
-			if (exception == null)
+			if (ex2 == null)
 			{
 				resultMessage =
 					MethodCallMessageBuilder.BuildMethodCallResultMessage(
@@ -420,7 +428,8 @@ namespace GoreRemoting
 			}
 			else
 			{
-				resultMessage = new MethodResultMessage { Exception = exception };
+				var serEx = request.Serializer.GetSerializableException(ex2);
+				resultMessage = new MethodResultMessage { Exception = serEx };
 			}
 
 			var responseMsg = new GoreResponseMessage(resultMessage, request.Serializer, request.Compressor);

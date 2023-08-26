@@ -61,7 +61,7 @@ namespace ServerNet48
 		public object CreateInstance(GetServiceArgs a)
 		{
 			//Guid sessID = (Guid)CallContext.GetData("SessionId");
-			Guid sessID = Guid.Parse(a.Headers.GetValue(Constants.SessionIdHeaderKey));
+			Guid sessID = Guid.Parse(a.GrpcContext.RequestHeaders.GetValue(Constants.SessionIdHeaderKey));
 
 			Console.WriteLine("SessID: " + sessID);
 

@@ -21,9 +21,7 @@ namespace GoreRemoting
 
 		public static readonly Func<GetServiceArgs, object> GetServiceDefault = (a) => Activator.CreateInstance(a.ServiceType);
 
-		public Action<ReleaseServiceArgs> ReleaseService { get; set; } = ReleaseServiceDefault;
-
-		public static readonly Action<ReleaseServiceArgs> ReleaseServiceDefault = (a) => { };
+		public Func<CreateCallContextArgs, ICallContext> CreateCallContext { get; set; } = null;
 
 		private Dictionary<string, ISerializerAdapter> _serializers = new();
 
@@ -74,6 +72,8 @@ namespace GoreRemoting
 				_compressors.Add(compressor.EncodingName, compressor);
 		}
 
+		
+
 
 		/// <summary>
 		/// Gets or sets the sweep interval for inactive sessions in seconds (No session sweeping if set to 0).
@@ -92,16 +92,21 @@ namespace GoreRemoting
 	public class GetServiceArgs
 	{
 		public Type ServiceType { get; internal set; }
-		public MethodInfo Method { get; internal set; }
-		public Metadata Headers { get; internal set; }
-		public object UserData { get; set; }
-		public string ServiceName { get; internal set; }
+//		public MethodInfo Method { get; internal set; }
+		public ServerCallContext GrpcContext { get; internal set; }
+//		public string ServiceName { get; internal set; }
 	}
 
-	public class ReleaseServiceArgs
+	public interface ICallContext : IDisposable
 	{
-		public object UserData { get; internal set; }
-		public object Service { get; internal set; }
-		public Exception Exception { get; internal set; }
+		void Success(object result);
+		void Failure(Exception exception);
+		void BeforeCall(object service, MethodInfo method, object[] parameterValues);
+	}
+
+
+	public class CreateCallContextArgs
+	{
+		public ServerCallContext GrpcContext { get; internal set; }
 	}
 }
