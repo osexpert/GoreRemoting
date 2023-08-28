@@ -378,11 +378,7 @@ namespace GoreRemoting
 			{
 				service = GetService(callMessage.ServiceName, /*method,*/ context);
 
-				if (_config.CreateCallContext != null)
-				{
-					callContext = _config.CreateCallContext();
-				}
-
+				callContext = _config.CreateCallContext?.Invoke();
 				callContext?.Start(context, callMessage.ServiceName, callMessage.MethodName, service, method, parameterValues);
 
 				result = method.Invoke(service, parameterValues);
