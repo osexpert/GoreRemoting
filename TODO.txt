@@ -1,3 +1,5 @@
+Intern strings like vs-streamjsonrpc? For messagepack.
+
 Security?
 During desser, somehow validate that the types sent match the signature of the method called?
 If a method take object as arg, then its pointless off course, all will pass.
