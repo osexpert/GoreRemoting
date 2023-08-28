@@ -103,14 +103,14 @@ namespace GoreRemoting
 			if (!_services.TryGetValue(serviceName, out var serviceType))
 				throw new Exception("Service not registered: " + serviceName);
 
-			var gsa = new GetServiceArgs 
-			{ 
-				ServiceType = serviceType, 
-//				Method = mi, 
-				GrpcContext = context,
-//				ServiceName = serviceName
-			};
-			var service = _config.GetService(gsa);
+//			var gsa = new GetServiceArgs 
+//			{ 
+//				ServiceType = serviceType, 
+////				Method = mi, 
+//				GrpcContext = context,
+////				ServiceName = serviceName
+//			};
+			var service = _config.GetService(serviceType, context);
 			return service;
 		}
 
@@ -372,7 +372,7 @@ namespace GoreRemoting
 			object result = null;
 			object service = null;
 			Exception ex2 = null;
-			ICallContext callCtx = null;
+			ICallContext callContext = null;
 
 			try
 			{
@@ -380,15 +380,15 @@ namespace GoreRemoting
 
 				if (_config.CreateCallContext != null)
 				{
-					callCtx = _config.CreateCallContext(new() { GrpcContext = context });
+					callContext = _config.CreateCallContext();
 				}
 
-				callCtx?.BeforeCall(service, method, parameterValues);
+				callContext?.Start(context, callMessage.ServiceName, callMessage.MethodName, service, method, parameterValues);
 
 				result = method.Invoke(service, parameterValues);
 				result = await TaskResultHelper.GetTaskResult(method, result);
 
-				callCtx?.Success(result);
+				callContext?.Success(result);
 			}
 			catch (Exception ex)
 			{
@@ -404,12 +404,12 @@ namespace GoreRemoting
 						ex2 = tie.InnerException;
 				}
 
-				callCtx?.Failure(ex2);
+				callContext?.Failure(ex2);
 			}
 			finally
 			{
-				callCtx?.Dispose();
-				callCtx = null;
+				callContext?.Dispose();
+				callContext = null;
 			}
 
 //			if (oneWay)

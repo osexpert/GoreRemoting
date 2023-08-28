@@ -17,11 +17,11 @@ namespace GoreRemoting
 		/// <summary>
 		/// Set this to overide the default Activator.CreateInstance
 		/// </summary>
-		public Func<GetServiceArgs, object> GetService { get; set; } = GetServiceDefault;
+		public Func<Type, ServerCallContext, object> GetService { get; set; } = GetServiceDefault;
 
-		public static readonly Func<GetServiceArgs, object> GetServiceDefault = (a) => Activator.CreateInstance(a.ServiceType);
+		public static readonly Func<Type, ServerCallContext, object> GetServiceDefault = (serviceType, context) => Activator.CreateInstance(serviceType);
 
-		public Func<CreateCallContextArgs, ICallContext> CreateCallContext { get; set; } = null;
+		public Func<ICallContext> CreateCallContext { get; set; } = null;
 
 		private Dictionary<string, ISerializerAdapter> _serializers = new();
 
@@ -88,25 +88,13 @@ namespace GoreRemoting
 		public int MaximumSessionInactivityTimeSeconds { get; set; } = 60 * 5;
 	}
 
-
-	public class GetServiceArgs
-	{
-		public Type ServiceType { get; internal set; }
-//		public MethodInfo Method { get; internal set; }
-		public ServerCallContext GrpcContext { get; internal set; }
-//		public string ServiceName { get; internal set; }
-	}
-
 	public interface ICallContext : IDisposable
 	{
+		void Start(ServerCallContext context, string serviceName, string methodName, object service, MethodInfo method, object[] parameterValues);
+
 		void Success(object result);
 		void Failure(Exception exception);
-		void BeforeCall(object service, MethodInfo method, object[] parameterValues);
+	
 	}
 
-
-	public class CreateCallContextArgs
-	{
-		public ServerCallContext GrpcContext { get; internal set; }
-	}
 }

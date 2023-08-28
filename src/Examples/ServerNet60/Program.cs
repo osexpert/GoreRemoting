@@ -97,14 +97,14 @@ namespace ServerNet60
 			await Task.Delay(-1);
 		}
 
-		public object? CreateInstance(GetServiceArgs a)
+		public object CreateInstance(Type serviceType, ServerCallContext context)
 		{
 			//Guid sessID = (Guid)CallContext.GetData("SessionId");
-			Guid sessID = Guid.Parse(a.GrpcContext.RequestHeaders.GetValue(Constants.SessionIdHeaderKey)!);
+			Guid sessID = Guid.Parse(context.RequestHeaders.GetValue(Constants.SessionIdHeaderKey)!);
 
 			Console.WriteLine("SessID: " + sessID);
 
-			return Activator.CreateInstance(a.ServiceType, sessID);
+			return Activator.CreateInstance(serviceType, sessID);
 		}
 	}
 

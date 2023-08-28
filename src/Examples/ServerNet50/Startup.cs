@@ -51,14 +51,14 @@ namespace ServerNet60
 			services.TryAddEnumerable(ServiceDescriptor.Singleton(typeof(IServiceMethodProvider<GoreRemotingService>), new GoreRemotingMethodProvider(server)));
 		}
 
-		public object CreateInstance(GetServiceArgs a)
+		public object CreateInstance(Type serviceType, ServerCallContext context)
 		{
 			//Guid sessID = (Guid)CallContext.GetData("SessionId");
-			Guid sessID = Guid.Parse(a.GrpcContext.RequestHeaders.GetValue(Constants.SessionIdHeaderKey)!);
+			Guid sessID = Guid.Parse(context.RequestHeaders.GetValue(Constants.SessionIdHeaderKey)!);
 
 			Console.WriteLine("SessID: " + sessID);
 
-			return Activator.CreateInstance(a.ServiceType, sessID);
+			return Activator.CreateInstance(serviceType, sessID);
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
