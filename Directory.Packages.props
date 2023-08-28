@@ -19,10 +19,10 @@
 		<!--	    <PackageReference Include="System.Runtime.Serialization.Formatters" Version="4.3.0" /> -->
 		<PackageVersion Include="System.Threading.Channels" Version="6.0.0" />
 
-		<PackageVersion Include="Grpc.AspNetCore.Server" Version="2.51.0" />
-		<PackageVersion Include="Grpc.Core" Version="2.46.5" />
-		<PackageVersion Include="Grpc.Net.Client" Version="2.51.0" />
-		<PackageVersion Include="Grpc.Net.Common" Version="2.52.0" />
+		<PackageVersion Include="Grpc.AspNetCore.Server" Version="2.56.0" />
+		<PackageVersion Include="Grpc.Core" Version="2.46.6" />
+		<PackageVersion Include="Grpc.Net.Client" Version="2.56.0" />
+		<PackageVersion Include="Grpc.Net.Common" Version="2.56.0" />
 		
 		<PackageVersion Include="Open.ChannelExtensions" Version="6.2.2" />
 		<PackageVersion Include="System.Security.Principal.Windows" Version="5.0.0" />
@@ -31,14 +31,14 @@
 		<PackageVersion Include="System.Text.Json" Version="7.0.2" />
 		<PackageVersion Include="TupleAsJsonArray.Redux" Version="1.1.0" />
 		<PackageVersion Include="Microsoft.IO.RecyclableMemoryStream" Version="2.3.2" />
-		<PackageVersion Include="MessagePack" Version="2.5.94" />
+		<PackageVersion Include="MessagePack" Version="2.5.124" />
 		<PackageVersion Include="Microsoft.Data.SqlClient" Version="5.1.1" />
 		<PackageVersion Include="Newtonsoft.Json" Version="13.0.1" />
 		<PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.3.2" />
 		<PackageVersion Include="xunit" Version="2.4.2" />
 		<PackageVersion Include="xunit.runner.visualstudio" Version="2.4.5" />
 		<PackageVersion Include="coverlet.collector" Version="3.1.2" />
-		<PackageVersion Include="K4os.Compression.LZ4.Streams" Version="1.3.5" />
-		<PackageVersion Include="MemoryPack" Version="1.9.13" />
+		<PackageVersion Include="K4os.Compression.LZ4.Streams" Version="1.3.6" />
+		<PackageVersion Include="MemoryPack" Version="1.9.16" />
 	</ItemGroup>
 </Project>
