@@ -93,13 +93,13 @@ namespace GoreRemoting
 			}
 			else if (value is XObject)
 			{
-				throw new ArgumentException();// Res.GetString(Res.Argument_XObjectValue));
+				throw new ArgumentException("XObjectValue");// Res.GetString(Res.Argument_XObjectValue));
 			}
 			else
 			{
 				s = value.ToString();
 			}
-			if (s == null) throw new ArgumentException();// Res.GetString(Res.Argument_ConvertToString));
+			if (s == null) throw new ArgumentException("ConvertToString");// Res.GetString(Res.Argument_ConvertToString));
 			return s;
 		}
 
