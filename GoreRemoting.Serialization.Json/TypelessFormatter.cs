@@ -11,7 +11,7 @@ namespace GoreRemoting.Serialization.Json
 	public class TypelessFormatter : JsonConverter<object>
 	{
 
-		public override object Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		public override object? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 		{
 			if (reader.TokenType != JsonTokenType.StartObject)
 				throw new Exception("not StartObject");
@@ -35,9 +35,9 @@ namespace GoreRemoting.Serialization.Json
 			if (reader.TokenType != JsonTokenType.String)
 				throw new Exception("not string");
 
-			var typeName = reader.GetString();
+			var typeName = reader.GetString() ?? throw new Exception("no typeName");
 
-			var t = Type.GetType(typeName, true);
+			var t = Type.GetType(typeName, true) ?? throw new Exception("no type");
 
 			if (!reader.Read())
 				throw new Exception("not read 3");

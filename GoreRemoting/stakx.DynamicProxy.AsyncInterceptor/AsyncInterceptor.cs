@@ -13,8 +13,8 @@ namespace stakx.DynamicProxy
 	public interface ISyncInvocation
 	{
 		MethodInfo Method { get; }
-		object ReturnValue { get; set; }
-		object[] Arguments { get; }
+		object? ReturnValue { get; set; }
+		object?[] Arguments { get; }
 	}
 
 	//public class Invocation2 : IInvocation2
@@ -42,9 +42,9 @@ namespace stakx.DynamicProxy
 	public class SyncInvocation : ISyncInvocation
 	{
 		public MethodInfo Method { get; set; }
-		public object ReturnValue { get; set; }
-		public object[] Arguments { get; set; }
-		public SyncInvocation(MethodInfo met, object[] args)
+		public object? ReturnValue { get; set; }
+		public object?[] Arguments { get; set; }
+		public SyncInvocation(MethodInfo met, object?[] args)
 		{
 			Method = met;
 			Arguments = args;

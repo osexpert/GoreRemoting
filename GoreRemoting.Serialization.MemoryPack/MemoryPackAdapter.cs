@@ -18,7 +18,7 @@ namespace GoreRemoting.Serialization.MemoryPack
 	public class MemoryPackAdapter : ISerializerAdapter
 	{
 
-		public MemoryPackSerializerOptions Options { get; set; }
+		public MemoryPackSerializerOptions? Options { get; set; }
 
 		readonly Lazy<BinaryFormatterAdapter> _bfa = new(() => new());
 
@@ -28,9 +28,8 @@ namespace GoreRemoting.Serialization.MemoryPack
 		/// Serializes an object graph.
 		/// </summary>
 		/// <param name="graph">Object graph to be serialized</param>
-		/// <typeparam name="T">Object type</typeparam>
 		/// <returns>Serialized data</returns>
-		public void Serialize(Stream stream, object[] graph)
+		public void Serialize(Stream stream, object?[] graph)
 		{
 			MemoryPackSerializer.SerializeAsync<MemPackObjectArray>(stream, new MemPackObjectArray() { Datas = graph }, Options).GetAwaiter().GetResult();
 		}
@@ -38,10 +37,8 @@ namespace GoreRemoting.Serialization.MemoryPack
 		/// <summary>
 		/// Deserializes raw data back into an object graph.
 		/// </summary>
-		/// <param name="rawData">Raw data that should be deserialized</param>
-		/// <typeparam name="T">Object type</typeparam>
 		/// <returns>Deserialized object graph</returns>
-		public object[] Deserialize(Stream stream)
+		public object?[] Deserialize(Stream stream)
 		{
 			return MemoryPackSerializer.DeserializeAsync<MemPackObjectArray>(stream, Options).GetAwaiter().GetResult()!.Datas;
 		}
@@ -122,7 +119,7 @@ namespace GoreRemoting.Serialization.MemoryPack
 	partial class MemPackObjectArray
 	{
 		[UnsafeObjectArrayFormatter]
-		public object[] Datas { get; set; } = null!;
+		public object?[] Datas { get; set; } = null!;
 	}
 
 }

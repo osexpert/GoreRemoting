@@ -7,15 +7,15 @@ namespace GoreRemoting.Tests.Tools
 	{
 		private int _counter = 0;
 
-		public Func<object, object> TestMethodFake { get; set; }
+		public Func<object, object>? TestMethodFake { get; set; }
 
-		public Action OneWayMethodFake { get; set; }
+		public Action? OneWayMethodFake { get; set; }
 
-		public Action<DataClass> TestExternalTypeParameterFake { get; set; }
+		public Action<DataClass>? TestExternalTypeParameterFake { get; set; }
 
-		public event Action ServiceEvent;
+		public event Action? ServiceEvent;
 
-		public object TestMethod(object arg)
+		public object? TestMethod(object arg)
 		{
 			return TestMethodFake?.Invoke(arg);
 		}

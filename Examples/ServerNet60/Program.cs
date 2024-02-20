@@ -104,7 +104,7 @@ namespace ServerNet60
 
 			Console.WriteLine("SessID: " + sessID);
 
-			return Activator.CreateInstance(serviceType, sessID);
+			return Activator.CreateInstance(serviceType, sessID) ?? throw new Exception("Can't create instance: " + serviceType);
 		}
 	}
 

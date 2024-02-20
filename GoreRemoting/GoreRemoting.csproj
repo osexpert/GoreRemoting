@@ -6,15 +6,18 @@
 		<Authors>osexpert, Hagen Siegel</Authors>
 		<Copyright>2022 osexpert, 2022 Hagen Siegel</Copyright>
 
-
+		<Nullable>enable</Nullable>
+		
 	</PropertyGroup>
 
 
     <ItemGroup>
 <!--      <PackageReference Include="Nerdbank.Streams" Version="2.9.112" /> -->
 		<PackageReference Include="Castle.Core" />
+		<PackageReference Include="Nullable" />
       <PackageReference Include="Grpc.Net.Common" /> 
       <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Condition="'$(TargetFramework)' == 'NETSTANDARD2.0'" /> 
+
       
 <!--      <PackageReference Include="Microsoft.CSharp" Version="4.7.0" /> -->
 		<PackageReference Include="Open.ChannelExtensions" Condition="'$(TargetFramework)' == 'NETSTANDARD2.0'" />

@@ -45,7 +45,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		[SuppressMessage("ReSharper", "PossibleNullReferenceException")]
 		public void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
 		{
-			var ds = obj as DataSet;
+			var ds = (DataSet)obj;
 			ds.GetObjectData(info, context);
 		}
 

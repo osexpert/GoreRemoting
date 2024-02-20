@@ -10,9 +10,9 @@ namespace GoreRemoting.RpcMessaging
 	public class GoreResponseMessage : IGorializer
 	{
 		internal ISerializerAdapter Serializer { get; }
-		internal ICompressionProvider Compressor { get; }
+		internal ICompressionProvider? Compressor { get; }
 
-		public GoreResponseMessage(DelegateCallMessage callMsg, ISerializerAdapter serializer, ICompressionProvider compressor)
+		public GoreResponseMessage(DelegateCallMessage callMsg, ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			DelegateCall = callMsg;
 			ResponseType = ResponseType.DelegateCall;
@@ -20,7 +20,7 @@ namespace GoreRemoting.RpcMessaging
 			Compressor = compressor;
 		}
 
-		public GoreResponseMessage(MethodResultMessage resultMessage, ISerializerAdapter serializer, ICompressionProvider compressor)
+		public GoreResponseMessage(MethodResultMessage resultMessage, ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			MethodResult = resultMessage;
 			ResponseType = ResponseType.MethodResult;
@@ -49,7 +49,7 @@ namespace GoreRemoting.RpcMessaging
 				throw new NotImplementedException();
 		}
 
-		public void Deserialize(Stack<object> st)
+		public void Deserialize(Stack<object?> st)
 		{
 			if (ResponseType == ResponseType.DelegateCall)
 				DelegateCall.Deserialize(st);
@@ -59,7 +59,7 @@ namespace GoreRemoting.RpcMessaging
 				throw new NotImplementedException();
 		}
 
-		public void Serialize(GoreBinaryWriter w, Stack<object> st)
+		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
 			w.Write((byte)ResponseType);
 
@@ -71,7 +71,7 @@ namespace GoreRemoting.RpcMessaging
 				throw new NotImplementedException();
 		}
 
-		internal static GoreResponseMessage Deserialize(Stream s, ResponseType mType, ISerializerAdapter serializer, ICompressionProvider compressor)
+		internal static GoreResponseMessage Deserialize(Stream s, ResponseType mType, ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			if (mType == ResponseType.MethodResult)
 				return new GoreResponseMessage(

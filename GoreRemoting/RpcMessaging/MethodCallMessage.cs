@@ -41,7 +41,7 @@ namespace GoreRemoting.RpcMessaging
 
 		public bool IsGenericMethod { get; set; }
 
-		public void Serialize(GoreBinaryWriter w, Stack<object> st)
+		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
 			w.Write(ServiceName);
 			w.Write(MethodName);
@@ -64,7 +64,7 @@ namespace GoreRemoting.RpcMessaging
 				Arguments[i] = new MethodCallArgument(r);
 		}
 
-		public void Deserialize(Stack<object> st)
+		public void Deserialize(Stack<object?> st)
 		{
 			foreach (var a in Arguments)
 				a.Deserialize(st);

@@ -58,7 +58,7 @@ namespace KPreisser
 		/// other than -1, which represents an infinite time-out.</exception>
 		/// <exception cref="OperationCanceledException"><paramref name="cancellationToken"/> was canceled.</exception>
 		/// <exception cref="ObjectDisposedException">The current instance has already been disposed.</exception>
-		public static IDisposableLock TryGetReadLock(
+		public static IDisposableLock? TryGetReadLock(
 				this AsyncReaderWriterLockSlim lockInstance,
 				int millisecondsTimeout,
 				CancellationToken cancellationToken = default(CancellationToken))
@@ -86,7 +86,7 @@ namespace KPreisser
 		/// other than -1, which represents an infinite time-out.</exception>
 		/// <exception cref="OperationCanceledException"><paramref name="cancellationToken"/> was canceled.</exception>
 		/// <exception cref="ObjectDisposedException">The current instance has already been disposed.</exception>
-		public static async Task<IDisposableLock> TryGetReadLockAsync(
+		public static async Task<IDisposableLock?> TryGetReadLockAsync(
 				this AsyncReaderWriterLockSlim lockInstance,
 				int millisecondsTimeout,
 				CancellationToken cancellationToken = default(CancellationToken))
@@ -148,7 +148,7 @@ namespace KPreisser
 		/// other than -1, which represents an infinite time-out.</exception>
 		/// <exception cref="OperationCanceledException"><paramref name="cancellationToken"/> was canceled.</exception>
 		/// <exception cref="ObjectDisposedException">The current instance has already been disposed.</exception>
-		public static IDisposableLock TryGetWriteLock(
+		public static IDisposableLock? TryGetWriteLock(
 				this AsyncReaderWriterLockSlim lockInstance,
 				int millisecondsTimeout,
 				CancellationToken cancellationToken = default(CancellationToken))
@@ -176,7 +176,7 @@ namespace KPreisser
 		/// other than -1, which represents an infinite time-out.</exception>
 		/// <exception cref="OperationCanceledException"><paramref name="cancellationToken"/> was canceled.</exception>
 		/// <exception cref="ObjectDisposedException">The current instance has already been disposed.</exception>
-		public static async Task<IDisposableLock> TryGetWriteLockAsync(
+		public static async Task<IDisposableLock?> TryGetWriteLockAsync(
 				this AsyncReaderWriterLockSlim lockInstance,
 				int millisecondsTimeout,
 				CancellationToken cancellationToken = default(CancellationToken))

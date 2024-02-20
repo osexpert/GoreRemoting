@@ -22,7 +22,7 @@ namespace GoreRemoting.RpcMessaging
 
 		public int Position { get; set; }
 
-		public object[] Arguments { get; set; }
+		public object?[] Arguments { get; set; }
 
 		public bool OneWay { get; set; }
 
@@ -35,13 +35,13 @@ namespace GoreRemoting.RpcMessaging
 			Arguments = new object[n];
 		}
 
-		public void Deserialize(Stack<object> st)
+		public void Deserialize(Stack<object?> st)
 		{
 			for (int i = 0; i < Arguments.Length; i++)
 				Arguments[i] = st.Pop();
 		}
 
-		public void Serialize(GoreBinaryWriter w, Stack<object> st)
+		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
 			w.WriteVarInt(Position);
 			w.Write(OneWay);

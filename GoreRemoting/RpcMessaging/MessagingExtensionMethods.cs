@@ -13,11 +13,11 @@ namespace GoreRemoting.RpcMessaging
 		/// Unwraps parameter values and parameter types from a deserialized MethodCallMessage.
 		/// </summary>
 		/// <param name="callMessage">MethodCallMessage object</param>
-		public static (object[] parameterValues, Type[] parameterTypes) UnwrapParametersFromDeserializedMethodCallMessage(
+		public static (object?[] parameterValues, Type[] parameterTypes) UnwrapParametersFromDeserializedMethodCallMessage(
 			this MethodCallMessage callMessage)
 		{
 			var parameterTypes = new Type[callMessage.Arguments.Length];
-			var parameterValues = new object[callMessage.Arguments.Length];
+			var parameterValues = new object?[callMessage.Arguments.Length];
 
 			for (int i = 0; i < callMessage.Arguments.Length; i++)
 			{

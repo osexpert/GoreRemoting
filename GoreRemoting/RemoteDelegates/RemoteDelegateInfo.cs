@@ -48,12 +48,12 @@ namespace GoreRemoting.RemoteDelegates
 			_hasResult = r.ReadBoolean();
 		}
 
-		public void Deserialize(Stack<object> st)
+		public void Deserialize(Stack<object?> st)
 		{
 
 		}
 
-		public void Serialize(GoreBinaryWriter w, Stack<object> st)
+		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
 			w.Write(_delegateTypeName);
 			w.Write(_hasResult);

@@ -17,9 +17,9 @@ namespace GoreRemoting.Serialization.MessagePack
 
 		public ExceptionFormatStrategy ExceptionStrategy { get; set; } = ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject;
 
-		public MessagePackSerializerOptions Options { get; set; } = null;
+		public MessagePackSerializerOptions? Options { get; set; } = null;
 
-		public void Serialize(Stream stream, object[] graph)
+		public void Serialize(Stream stream, object?[] graph)
 		{
 			Datas[] typeAndObjects = new Datas[graph.Length];
 			for (int i = 0; i < graph.Length; i++)
@@ -30,10 +30,10 @@ namespace GoreRemoting.Serialization.MessagePack
 			MessagePackSerializer.Serialize<Datas[]>(stream, typeAndObjects, Options);
 		}
 
-		public object[] Deserialize(Stream stream)
+		public object?[] Deserialize(Stream stream)
 		{
 			var typeAndObjects = MessagePackSerializer.Deserialize<Datas[]>(stream, Options)!;
-			object[] res = new object[typeAndObjects.Length];
+			object?[] res = new object?[typeAndObjects.Length];
 			for (int i = 0; i < typeAndObjects.Length; i++)
 			{
 				var to = typeAndObjects[i];
@@ -47,7 +47,7 @@ namespace GoreRemoting.Serialization.MessagePack
 		{
 			[Key(0)]
 			[MessagePackFormatter(typeof(TypelessFormatter))]
-			public object Data { get; set; }
+			public object? Data { get; set; }
 		}
 
 		public object GetSerializableException(Exception ex)

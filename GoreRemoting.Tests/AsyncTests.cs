@@ -32,7 +32,7 @@ namespace GoreRemoting.Tests
 
 			Task NonGenericTask();
 
-			(Version, Version, Version[], Version[]) TestMisc(Version v, Version v2, Version[] versions, Version[] versions2);
+			(Version?, Version, Version[], Version[]?) TestMisc(Version? v, Version v2, Version[] versions, Version[]? versions2);
 		}
 
 		public class AsyncService : IAsyncService
@@ -55,7 +55,7 @@ namespace GoreRemoting.Tests
 				return Task.CompletedTask;
 			}
 
-			public (Version, Version, Version[], Version[]) TestMisc(Version v, Version vs, Version[] versions, Version[] versions2)
+			public (Version?, Version, Version[], Version[]?) TestMisc(Version? v, Version vs, Version[] versions, Version[]? versions2)
 			{
 				return (v, vs, versions, versions2);
 			}
@@ -161,7 +161,7 @@ namespace GoreRemoting.Tests
 
 			public void TestWithInnerException()
 			{
-				Exception ie = null;
+				Exception? ie = null;
 				try
 				{
 					var c = new SqlConnection("lolx");
@@ -173,7 +173,7 @@ namespace GoreRemoting.Tests
 					ie = e;
 				}
 
-				throw new SerExOk("The mess", "extra string", ie);
+				throw new SerExOk("The mess", "extra string", ie!);
 			}
 		}
 
@@ -205,7 +205,7 @@ namespace GoreRemoting.Tests
 			public SerExMistake(SerializationInfo si, StreamingContext sc) : base(si, sc)
 			{
 				// Mistake: should be "test"
-				Test = si.GetString("Test");
+				Test = si.GetString("Test")!;
 			}
 
 			public override void GetObjectData(SerializationInfo info, StreamingContext context)
@@ -229,7 +229,7 @@ namespace GoreRemoting.Tests
 			public SerExMistakeNotPriv(SerializationInfo si, StreamingContext sc) : base(si, sc)
 			{
 				// Mistake: should be "test"
-				Test = si.GetString("Test");
+				Test = si.GetString("Test")!;
 			}
 
 			public override void GetObjectData(SerializationInfo info, StreamingContext context)
@@ -259,7 +259,7 @@ namespace GoreRemoting.Tests
 
 			public SerExOk(SerializationInfo si, StreamingContext sc) : base(si, sc)
 			{
-				Test = si.GetString("test");
+				Test = si.GetString("test")!;
 			}
 
 			public override void GetObjectData(SerializationInfo info, StreamingContext context)
@@ -287,7 +287,7 @@ namespace GoreRemoting.Tests
 
 			var proxy = client.CreateProxy<IExceptionTest>();
 
-			Exception e1 = null;
+			Exception? e1 = null;
 			try
 			{
 				proxy.TestSerializedExMistakeAndPrivate();
@@ -300,7 +300,7 @@ namespace GoreRemoting.Tests
 			//Assert.IsType<SerEx>(e1);
 			//Assert.Equal("The mess", e1.Message);
 
-			var lines = e1.ToString().Split(Environment.NewLine).Length;
+			var lines = e1!.ToString().Split(Environment.NewLine).Length;
 			//Assert.Equal(9, lines);
 			if (ser == enSerializer.BinaryFormatter)
 			{
@@ -326,7 +326,7 @@ namespace GoreRemoting.Tests
 
 			//Assert.Equal("test", e1.Test);
 
-			Exception e2 = null;
+			Exception? e2 = null;
 			try
 			{
 				proxy.TestSerializedExMistake();
@@ -336,7 +336,7 @@ namespace GoreRemoting.Tests
 				e2 = e;
 			}
 
-			var lines2 = e2.ToString().Split(Environment.NewLine).Length;
+			var lines2 = e2!.ToString().Split(Environment.NewLine).Length;
 
 			//Assert.Equal(9, lines2);
 
@@ -363,7 +363,7 @@ namespace GoreRemoting.Tests
 				//	Assert.Equal(1, e2.Data.Count);
 			}
 
-			Exception e3 = null;
+			Exception? e3 = null;
 			try
 			{
 				proxy.TestSerializedOk();
@@ -373,7 +373,7 @@ namespace GoreRemoting.Tests
 				e3 = e;
 			}
 
-			var lines3 = e3.ToString().Split(Environment.NewLine).Length;
+			var lines3 = e3!.ToString().Split(Environment.NewLine).Length;
 			//if (ser == enSerializer.BinaryFormatter)
 			//	Assert.Equal(28, lines3);
 			//else
@@ -411,7 +411,7 @@ namespace GoreRemoting.Tests
 
 
 
-			Exception e4 = null;
+			Exception? e4 = null;
 			try
 			{
 				proxy.TestWithInnerException();
@@ -421,7 +421,7 @@ namespace GoreRemoting.Tests
 				e4 = e;
 			}
 
-			var lines4 = e4.ToString().Split(Environment.NewLine).Length;
+			var lines4 = e4!.ToString().Split(Environment.NewLine).Length;
 			//if (ser == enSerializer.BinaryFormatter)
 			//	Assert.Equal(28, lines3);
 			//else
@@ -436,7 +436,7 @@ namespace GoreRemoting.Tests
 			Assert.IsType<SerExOk>(e4);
 
 			//		Assert.Equal("tull", e4.Data["teste"]);
-			Assert.Equal(1, e4.Data.Count);
+			Assert.Single(e4.Data);
 		}
 	}
 

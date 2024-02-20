@@ -16,10 +16,10 @@ namespace GoreRemoting.RpcMessaging
 		public RequestType RequestType { get; }
 
 		internal ISerializerAdapter Serializer { get; }
-		internal ICompressionProvider Compressor { get; }
+		internal ICompressionProvider? Compressor { get; }
 
 
-		public GoreRequestMessage(DelegateResultMessage drm, ISerializerAdapter serializer, ICompressionProvider compressor)
+		public GoreRequestMessage(DelegateResultMessage drm, ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			DelegateResultMessage = drm;
 			RequestType = RequestType.DelegateResult;
@@ -27,7 +27,7 @@ namespace GoreRemoting.RpcMessaging
 			Compressor = compressor;
 		}
 
-		public GoreRequestMessage(MethodCallMessage mcm, ISerializerAdapter serializer, ICompressionProvider compressor)
+		public GoreRequestMessage(MethodCallMessage mcm, ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			MethodCallMessage = mcm;
 			RequestType = RequestType.MethodCall;
@@ -35,7 +35,7 @@ namespace GoreRemoting.RpcMessaging
 			Compressor = compressor;
 		}
 
-		public static GoreRequestMessage Deserialize(Stream s, RequestType mType, ISerializerAdapter serializer, ICompressionProvider compressor)
+		public static GoreRequestMessage Deserialize(Stream s, RequestType mType, ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			if (mType == RequestType.DelegateResult)
 				return new GoreRequestMessage(Gorializer.GoreDeserialize<DelegateResultMessage>(s, serializer, compressor), serializer, compressor);

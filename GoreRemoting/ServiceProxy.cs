@@ -16,6 +16,7 @@ using GoreRemoting.Serialization;
 using stakx.DynamicProxy;
 using System.IO;
 using Grpc.Net.Compression;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GoreRemoting
 {
@@ -141,7 +142,7 @@ namespace GoreRemoting
 			return _client._config.GetSerializerByType(st);
 		}
 
-		private Type ChooseSerializerType(Type t, MethodInfo mi)
+		private Type? ChooseSerializerType(Type t, MethodInfo mi)
 		{
 			// check method...
 			var a1 = mi.GetCustomAttribute<SerializerAttribute>();
@@ -151,13 +152,13 @@ namespace GoreRemoting
 			// ...then service itself
 			var t1 = t.GetCustomAttribute<SerializerAttribute>();
 			if (t1 != null)
-				return a1.Serializer;
+				return t1.Serializer;
 
 			// else default
 			return _client._config.DefaultSerializer;
 		}
 
-		private ICompressionProvider ChooseCompressor(Type t, MethodInfo mi)
+		private ICompressionProvider? ChooseCompressor(Type t, MethodInfo mi)
 		{
 			var ct = ChooseCompressorType(t, mi);
 
@@ -167,7 +168,7 @@ namespace GoreRemoting
 			return _client._config.GetCompressorByType(ct);
 		}
 
-		private Type ChooseCompressorType(Type t, MethodInfo mi)
+		private Type? ChooseCompressorType(Type t, MethodInfo mi)
 		{
 			// check method...
 			var a1 = mi.GetCustomAttribute<CompressorAttribute>();
@@ -177,7 +178,7 @@ namespace GoreRemoting
 			// ...then service itself
 			var t1 = t.GetCustomAttribute<CompressorAttribute>();
 			if (t1 != null)
-				return a1.Compressor;
+				return t1.Compressor;
 
 			// else check default
 			return _client._config.DefaultCompressor;
@@ -185,8 +186,8 @@ namespace GoreRemoting
 
 
 
-		private async Task<MethodResultMessage> HandleResponseAsync(ISerializerAdapter serializer, ICompressionProvider compressor, GoreResponseMessage callbackData,
-			Func<GoreRequestMessage, Task> res, object[] args,
+		private async Task<MethodResultMessage?> HandleResponseAsync(ISerializerAdapter serializer, ICompressionProvider? compressor, GoreResponseMessage callbackData,
+			Func<GoreRequestMessage, Task> res, object?[] args,
 			int? streamingDelegatePosition)
 		{
 			switch (callbackData.ResponseType)
@@ -198,15 +199,15 @@ namespace GoreRemoting
 					{
 						var delegateMsg = callbackData.DelegateCall;
 
-						var delegt = (Delegate)args[delegateMsg.Position];
+						var delegt = (Delegate)args[delegateMsg.Position]!;
 
 						StreamingStatus streamingStatus = (streamingDelegatePosition == delegateMsg.Position) ? StreamingStatus.Active : StreamingStatus.None;
 
 					again:
 
 						// not possible with async here?
-						object result = null;
-						object exception = null;
+						object? result = null;
+						object? exception = null;
 
 						try
 						{
@@ -270,7 +271,7 @@ namespace GoreRemoting
 		/// </summary>
 		/// <param name="arguments">Arguments</param>
 		/// <returns>Array of arguments (includes mapped ones)</returns>
-		private (object[] arguments, CancellationToken cancel, int? streamingDelePos) MapArguments(MethodInfo mi, object[] arguments)
+		private (object?[] arguments, CancellationToken cancel, int? streamingDelePos) MapArguments(MethodInfo mi, object?[] arguments)
 		{
 			bool delegateHasResult = false;
 
@@ -278,7 +279,7 @@ namespace GoreRemoting
 
 			int? streamingDelePos = null;
 
-			object[] res = new object[arguments.Length];
+			object?[] res = new object?[arguments.Length];
 
 			var methodParams = mi.GetParameters();
 
@@ -317,12 +318,14 @@ namespace GoreRemoting
 					if (lastCancel != null)
 						throw new Exception("More than one CancellationToken");
 					else
-						lastCancel = (CancellationToken)argument;
+						lastCancel = (CancellationToken)argument!;
 
 					res[i] = new CancellationTokenPlaceholder();
 				}
 				else
+				{
 					res[i] = argument;
+				}
 			}
 
 			return (res, lastCancel ?? default, streamingDelePos);
@@ -334,7 +337,7 @@ namespace GoreRemoting
 		/// <param name="argumentType">Type of argument to be mapped</param>
 		/// <param name="mappedArgument">Out: Mapped argument</param>
 		/// <returns>True if mapping applied, otherwise false</returns>
-		private bool MapDelegateArgument(Type argumentType, out RemoteDelegateInfo mappedArgument)
+		private bool MapDelegateArgument(Type? argumentType, [NotNullWhen(returnValue: true)] out RemoteDelegateInfo? mappedArgument)
 		{
 			if (argumentType == null || !typeof(Delegate).IsAssignableFrom(argumentType))
 			{

@@ -21,7 +21,7 @@ namespace GoreRemoting
 
 		public static readonly Func<Type, ServerCallContext, object> GetServiceDefault = (serviceType, context) => Activator.CreateInstance(serviceType);
 
-		public Func<ICallContext> CreateCallContext { get; set; } = null;
+		public Func<ICallContext>? CreateCallContext { get; set; } = null;
 
 		private Dictionary<string, ISerializerAdapter> _serializers = new();
 
@@ -90,9 +90,9 @@ namespace GoreRemoting
 
 	public interface ICallContext : IDisposable
 	{
-		void Start(ServerCallContext context, string serviceName, string methodName, object service, MethodInfo method, object[] parameterValues);
+		void Start(ServerCallContext context, string serviceName, string methodName, object service, MethodInfo method, object?[] parameterValues);
 
-		void Success(object result);
+		void Success(object? result);
 		void Failure(Exception exception);
 	
 	}

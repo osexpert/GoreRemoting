@@ -24,12 +24,12 @@ namespace GoreRemoting.RpcMessaging
 		/// 
 		/// TODO: enum with Result or Exception?
 		/// </summary>
-		public object ReturnValue { get; set; }
+		public object? ReturnValue { get; set; }
 
 		/// <summary>
 		/// Exception
 		/// </summary>
-		public object Exception { get; set; }
+		public object? Exception { get; set; }
 
 		/// <summary>
 		/// Gets or sets an array of out parameters.
@@ -49,7 +49,7 @@ namespace GoreRemoting.RpcMessaging
 				CallContextSnapshot[j] = new CallContextEntry(r);
 		}
 
-		public void Deserialize(Stack<object> st)
+		public void Deserialize(Stack<object?> st)
 		{
 			ReturnValue = st.Pop();
 			Exception = st.Pop();
@@ -61,7 +61,7 @@ namespace GoreRemoting.RpcMessaging
 				cc.Deserialize(st);
 		}
 
-		public void Serialize(GoreBinaryWriter w, Stack<object> st)
+		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
 			st.Push(ReturnValue);
 			st.Push(Exception);

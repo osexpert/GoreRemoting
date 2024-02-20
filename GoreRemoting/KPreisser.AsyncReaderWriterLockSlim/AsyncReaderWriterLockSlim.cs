@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -472,7 +473,7 @@ namespace KPreisser
 				throw new ObjectDisposedException(nameof(AsyncReaderWriterLockSlim));
 		}
 
-		private bool EnterReadLockPreface(out WriteLockState existingWriteLockState)
+		private bool EnterReadLockPreface([NotNullWhen(returnValue: false)] out WriteLockState? existingWriteLockState)
 		{
 			existingWriteLockState = null;
 

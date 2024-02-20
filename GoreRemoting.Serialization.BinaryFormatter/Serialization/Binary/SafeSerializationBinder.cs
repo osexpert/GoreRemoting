@@ -25,17 +25,17 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		/// Initializes a new instance of the <see cref="SafeSerializationBinder"/> class.
 		/// </summary>
 		/// <param name="nextBinder">Next serialization binder in chain.</param>
-		public SafeSerializationBinder(SerializationBinder nextBinder = null)
+		public SafeSerializationBinder(SerializationBinder? nextBinder = null)
 		{
 			NextBinder = nextBinder;
 
 
 		}
 
-		private SerializationBinder NextBinder { get; }
+		private SerializationBinder? NextBinder { get; }
 
 		/// <inheritdoc cref="SerializationBinder" />
-		public override Type BindToType(string assemblyName, string typeName)
+		public override Type? BindToType(string assemblyName, string typeName)
 		{
 			// on net core will get exception: "Serializing delegates is not supported on this platform."
 			// So delegates are already not supported there.

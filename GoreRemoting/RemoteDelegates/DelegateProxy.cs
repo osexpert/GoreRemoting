@@ -12,8 +12,8 @@ namespace GoreRemoting.RemoteDelegates
 	/// </summary>
 	public sealed class DelegateProxy //: IDelegateProxy
 	{
-		private Func<object[], object> _callInterceptionHandler;
-		private Func<object[], Task<object>> _callInterceptionAsyncHandler;
+		private Func<object?[], object?> _callInterceptionHandler;
+		private Func<object?[], Task<object?>> _callInterceptionAsyncHandler;
 
 		AsyncInterceptor _aInterceptor;
 
@@ -22,7 +22,7 @@ namespace GoreRemoting.RemoteDelegates
 		/// </summary>
 		/// <param name="delegateType">Delegate type to be proxied</param>
 		/// <param name="callInterceptionHandler">Function to be called when intercepting calls on the delegate</param>
-		internal DelegateProxy(Type delegateType, Func<object[], object> callInterceptionHandler, Func<object[], Task<object>> callInterceptionAsyncHandler)
+		internal DelegateProxy(Type delegateType, Func<object?[], object?> callInterceptionHandler, Func<object?[], Task<object?>> callInterceptionAsyncHandler)
 		{
 			_callInterceptionHandler =
 				callInterceptionHandler ??
@@ -71,7 +71,7 @@ namespace GoreRemoting.RemoteDelegates
 		/// </summary>
 		/// <param name="args">Arguments passed to the proxied delegate by caller</param>
 		/// <returns>Return value provided by call interception handler</returns>
-		private object Intercept(params object[] args)
+		private object? Intercept(params object?[] args)
 		{
 			var sin = new SyncInvocation(ProxiedDelegate.Method, args);
 			_aInterceptor.Intercept(sin);

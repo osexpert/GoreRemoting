@@ -203,7 +203,7 @@ namespace GoreRemoting.Tests
 
 		class NonoEx2 : Exception
 		{
-			public NonoEx2(object t, string mess) : base(mess)
+			public NonoEx2(object? t, string mess) : base(mess)
 			{
 
 			}
@@ -306,7 +306,7 @@ namespace GoreRemoting.Tests
 			Assert.True(hit1 == 3);
 			Assert.True(wasC);
 
-			Exception cee = null;
+			Exception? cee = null;
 			try
 			{
 				await proxy.TestCancel2(CancellationToken.None, CancellationToken.None);
@@ -315,7 +315,7 @@ namespace GoreRemoting.Tests
 			{
 				cee = e;
 			}
-			Assert.Equal("More than one CancellationToken", cee.Message);
+			Assert.Equal("More than one CancellationToken", cee!.Message);
 
 			List<int> l = new();
 			var p = new GoodProgress<int>();
@@ -331,7 +331,7 @@ namespace GoreRemoting.Tests
 			Assert.True(l.Count == 2);
 			Assert.True(l.Sum() == 43);
 
-			Exception _ex1 = null;
+			Exception? _ex1 = null;
 			try
 			{
 				proxy.TextNonserEx();
@@ -341,7 +341,7 @@ namespace GoreRemoting.Tests
 				_ex1 = e;
 			}
 
-			Exception _ex2 = null;
+			Exception? _ex2 = null;
 			try
 			{
 				proxy.TextNonserEx2();
@@ -351,14 +351,14 @@ namespace GoreRemoting.Tests
 				_ex2 = e;
 			}
 
-			Assert.Equal("Exception of type 'GoreRemoting.Tests.EnumerableYield+NonoEx' was thrown.", _ex1.Message);
-			Assert.Equal("mess", _ex2.Message);
+			Assert.Equal("Exception of type 'GoreRemoting.Tests.EnumerableYield+NonoEx' was thrown.", _ex1!.Message);
+			Assert.Equal("mess", _ex2!.Message);
 
 		}
 
 		class GoodProgress<T> : IProgress<T>
 		{
-			public event EventHandler<T> ProCha;
+			public event EventHandler<T>? ProCha;
 
 			public void Report(T value)
 			{

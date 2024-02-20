@@ -12,7 +12,7 @@ namespace GoreRemoting
     public class SessionRepository : ISessionRepository
     {
         private readonly ConcurrentDictionary<Guid, RemotingSession> _sessions;
-        private Timer _inactiveSessionSweepTimer;
+        private Timer? _inactiveSessionSweepTimer;
         private readonly int _maximumSessionInactivityTimeSeconds;
 
         /// <summary>

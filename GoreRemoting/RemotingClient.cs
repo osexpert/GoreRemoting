@@ -73,7 +73,7 @@ namespace GoreRemoting
 
 			var serializer = _config.GetSerializerByName(serializerName);
 
-			ICompressionProvider compressor = null;
+			ICompressionProvider? compressor = null;
 			if (!string.IsNullOrEmpty(compressorName))
 			{
 				compressor = _config.GetCompressorByName(compressorName);
@@ -105,7 +105,7 @@ namespace GoreRemoting
 
 		public MethodCallMessageBuilder MethodCallMessageBuilder = new();
 
-		internal MethodResultMessage Invoke(GoreRequestMessage req, Func<GoreResponseMessage, Func<GoreRequestMessage, Task>, Task<MethodResultMessage>> reponseHandler, CallOptions callOpt)
+		internal MethodResultMessage Invoke(GoreRequestMessage req, Func<GoreResponseMessage, Func<GoreRequestMessage, Task>, Task<MethodResultMessage?>> reponseHandler, CallOptions callOpt)
 		{
 			using (var call = _callInvoker.AsyncDuplexStreamingCall(DuplexCallDescriptor, null, callOpt))
 			{
@@ -127,7 +127,7 @@ namespace GoreRemoting
 			}
 		}
 
-		internal async Task<MethodResultMessage> InvokeAsync(GoreRequestMessage req, Func<GoreResponseMessage, Func<GoreRequestMessage, Task>, Task<MethodResultMessage>> reponseHandler, CallOptions callOpt)
+		internal async Task<MethodResultMessage> InvokeAsync(GoreRequestMessage req, Func<GoreResponseMessage, Func<GoreRequestMessage, Task>, Task<MethodResultMessage?>> reponseHandler, CallOptions callOpt)
 		{
 			using (var call = _callInvoker.AsyncDuplexStreamingCall(DuplexCallDescriptor, null, callOpt))
 			{
@@ -149,7 +149,7 @@ namespace GoreRemoting
 			}
 		}
 
-		public event EventHandler<Exception> OneWayException;
+		public event EventHandler<Exception>? OneWayException;
 
 		internal void OnOneWayException(Exception ex)
 		{

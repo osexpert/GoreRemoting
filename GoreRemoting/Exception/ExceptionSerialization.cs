@@ -195,17 +195,17 @@ namespace GoreRemoting
 		public const string InnerExceptionKey = nameof(Exception.InnerException);
 		public const string ClassNameKey = nameof(RemoteInvocationException.ClassName);
 
-		public string GetValue(string key)
+		public string? GetValue(string key)
 		{
 			if (PropertyData.TryGetValue(key, out var value))
 				return value;
 			return null;
 		}
 
-		public string ClassName => GetValue(ClassNameKey);
-		public string Message => GetValue(MessageKey);
-		public string StackTrace => GetValue(StackTraceKey);
-		public string InnerException => GetValue(InnerExceptionKey);
+		public string ClassName => GetValue(ClassNameKey) ?? string.Empty;
+		public string Message => GetValue(MessageKey) ?? string.Empty;
+		public string StackTrace => GetValue(StackTraceKey) ?? string.Empty;
+		public string InnerException => GetValue(InnerExceptionKey) ?? string.Empty;
 
 		public string FullStackTrace()
 		{

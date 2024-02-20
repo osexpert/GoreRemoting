@@ -10,22 +10,22 @@ namespace GoreRemoting
 {
 	public interface IGorializer
 	{
-		void Serialize(GoreBinaryWriter w, Stack<object> st);
+		void Serialize(GoreBinaryWriter w, Stack<object?> st);
 		void Deserialize(GoreBinaryReader r);
-		void Deserialize(Stack<object> st);
+		void Deserialize(Stack<object?> st);
 	}
 
 	internal class Gorializer
 	{
 
-		public static void GoreSerialize(Stream ms, IGorializer data, ISerializerAdapter serializer, ICompressionProvider compressor)
+		public static void GoreSerialize(Stream ms, IGorializer data, ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			//using var ms = PooledMemoryStream.GetStream();
 
 			var cs = GetCompressor(compressor, ms) ?? ms;
 			try
 			{
-				var stack = new Stack<object>();
+				var stack = new Stack<object?>();
 
 				var bw = new GoreBinaryWriter(cs);
 				data.Serialize(bw, stack);
@@ -41,7 +41,7 @@ namespace GoreRemoting
 			//return ms.ToArray();
 		}
 
-		private static Stream GetCompressor(ICompressionProvider compressor, Stream ms)
+		private static Stream? GetCompressor(ICompressionProvider? compressor, Stream ms)
 		{
 			if (compressor != null)
 				return compressor.CreateCompressionStream(ms, System.IO.Compression.CompressionLevel.Fastest);
@@ -49,7 +49,7 @@ namespace GoreRemoting
 				return null;// new NonDisposablePassthruStream(ms);
 		}
 
-		public static T GoreDeserialize<T>(Stream ms, ISerializerAdapter serializer, ICompressionProvider compressor) where T : IGorializer, new()
+		public static T GoreDeserialize<T>(Stream ms, ISerializerAdapter serializer, ICompressionProvider? compressor) where T : IGorializer, new()
 		{
 			//			using var ms = new MemoryStream(data);
 
@@ -62,7 +62,7 @@ namespace GoreRemoting
 				res.Deserialize(br);
 
 				var arr = serializer.Deserialize(ds);
-				res.Deserialize(new Stack<object>(arr));
+				res.Deserialize(new Stack<object?>(arr));
 			}
 			finally
 			{
@@ -73,7 +73,7 @@ namespace GoreRemoting
 			return res;
 		}
 
-		private static Stream GetDecompressor(ICompressionProvider compressor, Stream ms)
+		private static Stream? GetDecompressor(ICompressionProvider? compressor, Stream ms)
 		{
 			if (compressor != null)
 				return compressor.CreateDecompressionStream(ms);

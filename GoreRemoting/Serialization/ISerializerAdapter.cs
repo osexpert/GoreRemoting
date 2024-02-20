@@ -9,9 +9,9 @@ namespace GoreRemoting.Serialization
 	/// </summary>
 	public interface ISerializerAdapter
 	{
-		void Serialize(Stream stream, object[] graph);
+		void Serialize(Stream stream, object?[] graph);
 
-		object[] Deserialize(Stream stream);
+		object?[] Deserialize(Stream stream);
 
 		object GetSerializableException(Exception ex);
 

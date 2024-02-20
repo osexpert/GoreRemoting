@@ -67,10 +67,10 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		}
 
 		[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
-		ISerializationSurrogate ISurrogateSelector.GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
+		ISerializationSurrogate? ISurrogateSelector.GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector? selector)
 		{
 			// Use a simpler logic at first, until we get conflicts (if ever)
-			ISurrogate found = null;
+			ISurrogate? found = null;
 			foreach (var surr in _options.Surrogates)
 			{
 				if (surr.Handles(type, context))

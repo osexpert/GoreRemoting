@@ -27,19 +27,19 @@ namespace GoreRemoting.RpcMessaging
 		/// <summary>
 		/// Gets or sets the out value of the parameter.
 		/// </summary>
-		public object OutValue { get; set; }
+		public object? OutValue { get; set; }
 
 		public void Deserialize(GoreBinaryReader r)
 		{
 			ParameterName = r.ReadString();
 		}
 
-		public void Deserialize(Stack<object> st)
+		public void Deserialize(Stack<object?> st)
 		{
 			OutValue = st.Pop();
 		}
 
-		public void Serialize(GoreBinaryWriter w, Stack<object> st)
+		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
 			w.Write(ParameterName);
 			st.Push(OutValue);

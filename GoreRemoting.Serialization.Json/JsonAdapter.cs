@@ -42,9 +42,8 @@ namespace GoreRemoting.Serialization.Json
 		/// Serializes an object graph.
 		/// </summary>
 		/// <param name="graph">Object graph to be serialized</param>
-		/// <typeparam name="T">Object type</typeparam>
 		/// <returns>Serialized data</returns>
-		public void Serialize(Stream stream, object[] graph)
+		public void Serialize(Stream stream, object?[] graph)
 		{
 			Dictionary<int, byte[]> byteArrays = new();
 			ObjectOnly[] typeAndObjects = new ObjectOnly[graph.Length];
@@ -90,9 +89,9 @@ namespace GoreRemoting.Serialization.Json
 		class ObjectOnly
 		{
 			[JsonConverter(typeof(TypelessFormatter))]
-			public object Data { get; set; }
+			public object? Data { get; set; }
 
-			public ObjectOnly(object data)
+			public ObjectOnly(object? data)
 			{
 				Data = data;
 			}
@@ -101,10 +100,8 @@ namespace GoreRemoting.Serialization.Json
 		/// <summary>
 		/// Deserializes raw data back into an object graph.
 		/// </summary>
-		/// <param name="rawData">Raw data that should be deserialized</param>
-		/// <typeparam name="T">Object type</typeparam>
 		/// <returns>Deserialized object graph</returns>
-		public object[] Deserialize(Stream stream)
+		public object?[] Deserialize(Stream stream)
 		{
 			Dictionary<int, byte[]> byteArrays = new();
 
@@ -120,7 +117,7 @@ namespace GoreRemoting.Serialization.Json
 
 			var typeAndObjects = JsonSerializer.Deserialize<ObjectOnly[]>(stream, Options)!;
 
-			object[] res = new object[typeAndObjects.Length];
+			object?[] res = new object?[typeAndObjects.Length];
 
 			for (int i = 0; i < typeAndObjects.Length; i++)
 			{

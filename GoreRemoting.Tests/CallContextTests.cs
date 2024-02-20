@@ -20,7 +20,7 @@ namespace GoreRemoting.Tests
 					TestMethodFake = _ =>
 					{
 						CallContext.SetData("test", "Changed");
-						return CallContext.GetData("test");
+						return CallContext.GetData("test")!;
 					}
 				};
 
@@ -48,7 +48,7 @@ namespace GoreRemoting.Tests
 					var localCallContextValueBeforeRpc = CallContext.GetData("test");
 
 					var proxy = client.CreateProxy<ITestService>();
-					var result = (string)proxy.TestMethod("x");
+					var result = (string)proxy.TestMethod("x")!;
 
 					var localCallContextValueAfterRpc = CallContext.GetData("test");
 

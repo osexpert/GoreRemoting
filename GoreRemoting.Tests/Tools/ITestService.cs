@@ -8,7 +8,7 @@ namespace GoreRemoting.Tests.Tools
 	{
 		event Action ServiceEvent;
 
-		object TestMethod(object arg);
+		object? TestMethod(object arg);
 
 		void TestMethodWithDelegateArg(Action<string> callback);
 

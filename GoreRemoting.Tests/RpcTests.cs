@@ -271,7 +271,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MessagePack)]
 		public async Task Delegate_invoked_on_server_should_callback_client(enSerializer ser)
 		{
-			string argumentFromServer = null;
+			string? argumentFromServer = null;
 
 			var testService = new TestService();
 
@@ -340,7 +340,7 @@ namespace GoreRemoting.Tests
 
 			//Assert.Throws<System.Threading.Channels.ChannelClosedException>(() => proxy.FireServiceEvent());
 
-			Exception ex = null;
+			Exception? ex = null;
 			try
 			{
 				proxy.FireServiceEvent();
@@ -349,7 +349,7 @@ namespace GoreRemoting.Tests
 			{
 				ex = e;
 			}
-			Assert.Equal("Too late, result sent", ex.Message);
+			Assert.Equal("Too late, result sent", ex!.Message);
 			Assert.Equal(15, ex.ToString().Split(Environment.NewLine).Length);
 
 			Assert.False(serviceEventCalled);
@@ -363,7 +363,7 @@ namespace GoreRemoting.Tests
 		public async Task External_types_should_work_as_remote_service_parameters(enSerializer ser)
 		{
 			bool remoteServiceCalled = false;
-			DataClass parameterValue = null;
+			DataClass? parameterValue = null;
 
 			var testService =
 				new TestService()
@@ -395,7 +395,7 @@ namespace GoreRemoting.Tests
 					var proxy = client.CreateProxy<ITestService>();
 					proxy.TestExternalTypeParameter(new DataClass() { Value = 42 });
 
-					Assert.Equal(42, parameterValue.Value);
+					Assert.Equal(42, parameterValue!.Value);
 				}
 				catch (Exception e)
 				{
@@ -632,7 +632,7 @@ namespace GoreRemoting.Tests
 
 					try
 					{
-						Exception ex = null;
+						Exception? ex = null;
 
 
 						while (true)
@@ -677,7 +677,6 @@ namespace GoreRemoting.Tests
 					}
 					finally
 					{
-
 						Test_Thread_Done = true;
 					}
 				});
@@ -839,7 +838,7 @@ namespace GoreRemoting.Tests
 			bool wasHere2 = false;
 			bool wasHere3 = false;
 
-			Exception ex1 = null;
+			Exception? ex1 = null;
 			try
 			{
 				var res1 = proxy.Test((e) =>
@@ -870,7 +869,7 @@ namespace GoreRemoting.Tests
 			Assert.False(wasHere2);
 			Assert.False(wasHere3);
 
-			Assert.True(ex1.Message == "Only one delegate with result is supported");
+			Assert.True(ex1!.Message == "Only one delegate with result is supported");
 
 			wasHere = false;
 			wasHere2 = false;
@@ -1127,15 +1126,15 @@ namespace GoreRemoting.Tests
 
 		}
 
-		static Exception throw1Ex;
-		static Exception throw2Ex;
-		static Exception throw3Ex;
-		static Exception throw4Ex;
-		static Exception throw5Ex;
-		static Exception throw6Ex;
-		static Exception throw7Ex;
-		static Exception throw8Ex;
-		static Exception throw9Ex;
+		static Exception? throw1Ex;
+		static Exception? throw2Ex;
+		static Exception? throw3Ex;
+		static Exception? throw4Ex;
+		static Exception? throw5Ex;
+		static Exception? throw6Ex;
+		static Exception? throw7Ex;
+		static Exception? throw8Ex;
+		static Exception? throw9Ex;
 
 		[Theory]
 		[InlineData(enSerializer.BinaryFormatter)]
@@ -1370,12 +1369,12 @@ namespace GoreRemoting.Tests
 			Assert.Null(throw1Ex);
 			Assert.Null(throw2Ex);
 			Assert.Null(throw3Ex);
-			Assert.Equal("test", throw4Ex.Message);
-			Assert.Equal("test", throw5Ex.Message);
+			Assert.Equal("test", throw4Ex!.Message);
+			Assert.Equal("test", throw5Ex!.Message);
 			Assert.Null(throw6Ex);
-			Assert.Equal("test", throw7Ex.Message);
+			Assert.Equal("test", throw7Ex!.Message);
 			Assert.Null(throw8Ex);
-			Assert.Equal("test", throw9Ex.Message);
+			Assert.Equal("test", throw9Ex!.Message);
 		}
 	}
 

@@ -20,6 +20,7 @@ using System.IO;
 using System.Net.Mail;
 using Grpc.Net.Compression;
 using Nerdbank.Streams;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GoreRemoting
 {
@@ -58,7 +59,7 @@ namespace GoreRemoting
 
 			var serializer = _config.GetSerializerByName(serializerName);
 
-			ICompressionProvider compressor = null;
+			ICompressionProvider? compressor = null;
 			if (!string.IsNullOrEmpty(compressorName))
 			{
 				compressor = _config.GetCompressorByName(compressorName);
@@ -128,12 +129,12 @@ namespace GoreRemoting
 		/// <param name="arguments">Array of parameter values</param>
 		/// <param name="callDelegate"></param>
 		/// <returns>Array of arguments (includes mapped ones)</returns>
-		private object[] MapArguments(object[] arguments,
-			Func<DelegateCallMessage, object> callDelegate,
-			Func<DelegateCallMessage, Task<object>> callDelegateAsync,
+		private object?[] MapArguments(object?[] arguments,
+			Func<DelegateCallMessage, object?> callDelegate,
+			Func<DelegateCallMessage, Task<object?>> callDelegateAsync,
 			ServerCallContext context)
 		{
-			object[] mappedArguments = new object[arguments.Length];
+			object?[] mappedArguments = new object?[arguments.Length];
 
 			for (int i = 0; i < arguments.Length; i++)
 			{
@@ -159,8 +160,11 @@ namespace GoreRemoting
 		/// <param name="callDelegate"></param>
 		/// <returns>True if mapping applied, otherwise false</returns>
 		/// <exception cref="ArgumentNullException">Thrown if no session is provided</exception>
-		private bool MapDelegateArgument(object argument, int position, out object mappedArgument, Func<DelegateCallMessage, object> callDelegate,
-			Func<DelegateCallMessage, Task<object>> callDelegateAsync)
+		private bool MapDelegateArgument(object? argument, 
+			int position, 
+			[NotNullWhen(returnValue: true)] out object? mappedArgument, 
+			Func<DelegateCallMessage, object?> callDelegate,
+			Func<DelegateCallMessage, Task<object?>> callDelegateAsync)
 		{
 			if (argument is not RemoteDelegateInfo remoteDelegateInfo)
 			{
@@ -369,10 +373,10 @@ namespace GoreRemoting
 
 			//var oneWay = false;// method.GetCustomAttribute<OneWayAttribute>() != null;
 
-			object result = null;
-			object service = null;
-			Exception ex2 = null;
-			ICallContext callContext = null;
+			object? result = null;
+			object? service = null;
+			Exception? ex2 = null;
+			ICallContext? callContext = null;
 
 			try
 			{

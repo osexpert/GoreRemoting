@@ -9,9 +9,9 @@ namespace GoreRemoting
 {
 	internal static class TaskResultHelper
 	{
-		public static async Task<object> GetTaskResult(MethodInfo method, object resultIn)
+		public static async Task<object?> GetTaskResult(MethodInfo method, object resultIn)
 		{
-			object resultOut = resultIn;
+			object? resultOut = resultIn;
 
 			if (resultIn != null)
 			{

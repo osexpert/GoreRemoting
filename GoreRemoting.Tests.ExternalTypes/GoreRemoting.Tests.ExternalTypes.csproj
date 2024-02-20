@@ -5,6 +5,7 @@
 		<IsPackable>false</IsPackable>
     </PropertyGroup>
 
+
     <ItemGroup>
       <ProjectReference Include="..\GoreRemoting.Serialization.MemoryPack\GoreRemoting.Serialization.MemoryPack.csproj" />
     </ItemGroup>

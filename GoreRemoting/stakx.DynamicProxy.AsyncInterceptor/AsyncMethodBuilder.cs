@@ -13,7 +13,7 @@ namespace stakx.DynamicProxy
 	{
 
 
-		public static Builder TryCreate(Type returnType)
+		public static Builder? TryCreate(Type returnType)
 		{
 			var builderType = GetAsyncMethodBuilderType(returnType);
 			if (builderType != null)
@@ -28,7 +28,7 @@ namespace stakx.DynamicProxy
 			}
 		}
 
-		private static Type GetAsyncMethodBuilderType(Type returnType)
+		private static Type? GetAsyncMethodBuilderType(Type returnType)
 		{
 			var asyncMethodBuilderAttribute = (AsyncMethodBuilderAttribute)Attribute.GetCustomAttribute(returnType, typeof(AsyncMethodBuilderAttribute), inherit: false);
 			if (asyncMethodBuilderAttribute != null)
@@ -93,7 +93,7 @@ namespace stakx.DynamicProxy
 			setExceptionMethod.Invoke(_builder, new object[] { exception });
 		}
 
-		public void SetResult(object result)
+		public void SetResult(object? result)
 		{
 			var setResultMethod = _builder.GetType().GetMethod("SetResult", BindingFlags.Public | BindingFlags.Instance);
 			if (setResultMethod.GetParameters().Length == 0)
@@ -102,7 +102,7 @@ namespace stakx.DynamicProxy
 			}
 			else
 			{
-				setResultMethod.Invoke(_builder, new object[] { result });
+				setResultMethod.Invoke(_builder, new object?[] { result });
 			}
 		}
 

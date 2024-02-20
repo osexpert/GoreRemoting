@@ -32,7 +32,7 @@ namespace GoreRemoting.RpcMessaging
 		/// <summary>
 		/// Gets or sets the parameter value.
 		/// </summary>
-		public object Value { get; set; }
+		public object? Value { get; set; }
 
 		bool _popValue;
 
@@ -58,13 +58,13 @@ namespace GoreRemoting.RpcMessaging
 			}
 		}
 
-		public void Deserialize(Stack<object> st)
+		public void Deserialize(Stack<object?> st)
 		{
 			if (_popValue)
 				Value = st.Pop();
 		}
 
-		public void Serialize(GoreBinaryWriter w, Stack<object> st)
+		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
 			w.Write(ParameterName);
 			w.Write(TypeName);

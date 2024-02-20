@@ -23,13 +23,13 @@ namespace GoreRemoting.RpcMessaging
 		public MethodCallMessage BuildMethodCallMessage(
 			string remoteServiceName,
 			MethodInfo targetMethod,
-			object[] args,
+			object?[] args,
 			bool setCallContext)
 		{
 			if (targetMethod == null)
 				throw new ArgumentNullException(nameof(targetMethod));
 
-			args ??= new object[0];
+			//args ??= new object[0];
 
 			var message = new MethodCallMessage()
 			{
@@ -56,7 +56,7 @@ namespace GoreRemoting.RpcMessaging
 		/// <returns>Enumerable of method call parameter messages</returns>
 		public IEnumerable<MethodCallArgument> BuildMethodParameterInfos(
 			MethodInfo targetMethod,
-			object[] args
+			object?[] args
 			)
 		{
 			var parameterInfos = targetMethod.GetParameters();
@@ -113,8 +113,8 @@ namespace GoreRemoting.RpcMessaging
 		/// <returns>Method call result message</returns>
 		public MethodResultMessage BuildMethodCallResultMessage(
 			MethodInfo method,
-			object[] args,
-			object returnValue,
+			object?[] args,
+			object? returnValue,
 			bool setCallContext)
 		{
 

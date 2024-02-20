@@ -23,11 +23,11 @@ namespace stakx.DynamicProxy
 				//this.proceed = invocation.CaptureProceedInfo();
 			}
 
-			public IReadOnlyList<object> Arguments => invocation.Arguments;
+			public IReadOnlyList<object?> Arguments => invocation.Arguments;
 
 			public MethodInfo Method => this.invocation.Method;
 
-			public object Result { get; set; }
+			public object? Result { get; set; }
 
 			//public ValueTask ProceedAsync()
 			//{

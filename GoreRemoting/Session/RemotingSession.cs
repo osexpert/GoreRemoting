@@ -20,7 +20,7 @@ namespace GoreRemoting
         /// <summary>
         /// Event: Fired before the session is disposed to do some clean up.
         /// </summary>
-        public event Action BeforeDispose;
+        public event Action? BeforeDispose;
         
         /// <summary>
         /// Creates a new instance of the RemotingSession class.
@@ -36,7 +36,7 @@ namespace GoreRemoting
             _server = server ?? throw new ArgumentNullException(nameof(server));
         }
 
-		public T GetProperty<T>(object key)
+		public T? GetProperty<T>(object key)
 		{
 			if (_properties.TryGetValue(key, out var value))
 			{
@@ -46,7 +46,7 @@ namespace GoreRemoting
 			return default;
 		}
 
-		public void SetProperty<T>(object key, T value)
+		public void SetProperty<T>(object key, T value) where T : notnull
 		{
 			_properties[key] = value;
 		}
@@ -73,9 +73,9 @@ namespace GoreRemoting
 
 
 
-        /// <summary>
-        /// Gets the authenticated identity of this session.
-        /// </summary>
+        // <summary>
+        // Gets the authenticated identity of this session.
+        // </summary>
 //        public RemotingIdentity Identity { get; private set; }
 
 

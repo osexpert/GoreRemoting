@@ -43,12 +43,12 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 			return formatter;
 		}
 
-		/// <summary>
-		/// Serializes the specified object into a byte array.
-		/// </summary>
-		/// <param name="formatter">Binary formatter instance</param>
-		/// <param name="objectToSerialize">Object to serialize</param>
-		/// <returns>Serialized data</returns>
+		// <summary>
+		// Serializes the specified object into a byte array.
+		// </summary>
+		// <param name="formatter">Binary formatter instance</param>
+		// <param name="objectToSerialize">Object to serialize</param>
+		// <returns>Serialized data</returns>
 		//        public static byte[] SerializeByteArray(this BinaryFormatter formatter, object objectToSerialize)
 		//        {
 		//            using var stream = new MemoryStream();
@@ -71,12 +71,12 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 
 
 
-		/// <summary>
-		/// Deserializes raw data back into an object.
-		/// </summary>
-		/// <param name="formatter">Binary formatter instance</param>
-		/// <param name="rawData">Raw data that should be deserialized</param>
-		/// <returns>Deserialized object</returns>
+		// <summary>
+		// Deserializes raw data back into an object.
+		// </summary>
+		// <param name="formatter">Binary formatter instance</param>
+		// <param name="rawData">Raw data that should be deserialized</param>
+		// <returns>Deserialized object</returns>
 		//public static object DeserializeSafe(this BinaryFormatter formatter, byte[] rawData)
 		//      {
 		//          var safeBinaryFormatter = formatter.Safe();

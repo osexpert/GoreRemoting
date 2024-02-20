@@ -22,7 +22,6 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		/// <summary>
 		/// Creates a new instance of the BinarySerializerAdapter class.
 		/// </summary>
-		/// <param name="config">Configuration settings</param>
 		[SuppressMessage("ReSharper", "UnusedMember.Global")]
 #if NETSTANDARD2_1_OR_GREATER
 		public BinaryFormatterAdapter(bool netCore = true)
@@ -84,9 +83,8 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		/// Serializes an object graph.
 		/// </summary>
 		/// <param name="graph">Object graph to be serialized</param>
-		/// <typeparam name="T">Object type</typeparam>
 		/// <returns>Serialized data</returns>
-		public void Serialize(Stream stream, object[] graph)
+		public void Serialize(Stream stream, object?[] graph)
 		{
 			var binaryFormatter = GetFormatter();
 			SerializeSafe(binaryFormatter, stream, graph, Options);
@@ -118,8 +116,6 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		/// <summary>
 		/// Deserializes raw data back into an object graph.
 		/// </summary>
-		/// <param name="rawData">Raw data that should be deserialized</param>
-		/// <typeparam name="T">Object type</typeparam>
 		/// <returns>Deserialized object graph</returns>
 		public object[] Deserialize(Stream stream)
 		{
@@ -131,7 +127,6 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		/// Deserializes raw data back into an object.
 		/// </summary>
 		/// <param name="formatter">Binary formatter instance</param>
-		/// <param name="rawData">Raw data that should be deserialized</param>
 		/// <returns>Deserialized object</returns>
 		private static object DeserializeSafe(BF.BinaryFormatter formatter, Stream stream, BinarySerializerOptions options)
 		{
@@ -236,7 +231,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 			NetCore = netCore;
 		}
 
-		public BinarySerializerConfig Config { get; set; } = null;
+		public BinarySerializerConfig? Config { get; set; } = null;
 
 		public List<ISurrogate> Surrogates { get; } = new();
 

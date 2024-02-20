@@ -20,7 +20,7 @@ namespace GoreRemoting
 		//      public ActionRef<Type, MethodInfo, Metadata, ISerializerAdapter, ICompressionProvider> BeforeMethodCall { get; set; }
 
 		//public delegate void ActionRef<T1, T2, T3, T4, T5>(T1 a, T2 b, T3 c, ref T4 d, ref T5 e);
-		public Action<BeforeCallArgs> BeforeCall { get; set; }
+		public Action<BeforeCallArgs>? BeforeCall { get; set; }
 
 		public ClientConfig()
 		{
@@ -34,12 +34,12 @@ namespace GoreRemoting
 		}
 
 
-		Type _defaultSerializer;
+		Type? _defaultSerializer;
 
 		/// <summary>
 		/// If more than one serializer added, must specify here which one is default
 		/// </summary>
-		public Type DefaultSerializer
+		public Type? DefaultSerializer
 		{
 			get
 			{
@@ -117,12 +117,12 @@ namespace GoreRemoting
 		private Dictionary<string, ICompressionProvider> _compressorsByName = new();
 
 
-		Type _defaultCompressor;
+		Type? _defaultCompressor;
 
 		/// <summary>
 		/// If more than one serializer added, must specify here which one is default
 		/// </summary>
-		public Type DefaultCompressor
+		public Type? DefaultCompressor
 		{
 			get
 			{
@@ -161,7 +161,7 @@ namespace GoreRemoting
 		/// <param name="type"></param>
 		/// <param name="targetMethod"></param>
 		/// <param name="headers"></param>
-		public BeforeCallArgs(Type type, MethodInfo targetMethod, Metadata headers, ISerializerAdapter s, ICompressionProvider cp)
+		public BeforeCallArgs(Type type, MethodInfo targetMethod, Metadata headers, ISerializerAdapter s, ICompressionProvider? cp)
 		{
 			ServiceType = type;
 			TargetMethod = targetMethod;
@@ -177,6 +177,6 @@ namespace GoreRemoting
 		public MethodInfo TargetMethod { get; }
 
 		public ISerializerAdapter Serializer { get; }
-		public ICompressionProvider Compressor { get; }
+		public ICompressionProvider? Compressor { get; }
 	}
 }
