@@ -1,8 +1,7 @@
-﻿using GoreRemoting.Serialization;
-using Grpc.Net.Compression;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
+using GoreRemoting.Serialization;
+using Grpc.Net.Compression;
 
 namespace GoreRemoting.RpcMessaging
 {

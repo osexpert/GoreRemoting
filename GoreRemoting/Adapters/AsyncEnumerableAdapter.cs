@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace GoreRemoting
 {
-	
+
 
 #if NETSTANDARD2_1
 	public static class AsyncEnumerableAdapter

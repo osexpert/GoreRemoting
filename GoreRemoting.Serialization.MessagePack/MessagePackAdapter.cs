@@ -1,11 +1,9 @@
-﻿using MessagePack;
-using MessagePack.Formatters;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
-using System.Runtime.Serialization;
 using GoreRemoting.Serialization.BinaryFormatter;
+using MessagePack;
+using MessagePack.Formatters;
 
 namespace GoreRemoting.Serialization.MessagePack
 {

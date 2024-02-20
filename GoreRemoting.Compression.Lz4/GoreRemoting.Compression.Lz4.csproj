@@ -4,6 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
 	<Authors>osexpert</Authors>
 	<Copyright>2022 osexpert</Copyright>
+	<Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

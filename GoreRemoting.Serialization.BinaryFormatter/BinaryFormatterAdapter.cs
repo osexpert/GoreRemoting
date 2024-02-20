@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Reflection;
-using System.Runtime.InteropServices.ComTypes;
 using BF = System.Runtime.Serialization.Formatters.Binary;
 
 namespace GoreRemoting.Serialization.BinaryFormatter

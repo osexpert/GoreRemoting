@@ -1,9 +1,9 @@
-﻿using stakx.DynamicProxy;
-using System;
+﻿using System;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading.Tasks;
+using stakx.DynamicProxy;
 
 namespace GoreRemoting.RemoteDelegates
 {

@@ -1,8 +1,5 @@
-﻿using Microsoft.IO;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
+using Microsoft.IO;
 
 namespace GoreRemoting.Serialization.BinaryFormatter
 {

@@ -1,17 +1,8 @@
-﻿using GoreRemoting.Serialization.BinaryFormatter;
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
-using Castle.Components.DictionaryAdapter;
+using GoreRemoting.Serialization.BinaryFormatter;
 using MemoryPack;
-using MemoryPack.Formatters;
-using MemoryPack.Internal;
 
 namespace GoreRemoting.Serialization.MemoryPack
 {

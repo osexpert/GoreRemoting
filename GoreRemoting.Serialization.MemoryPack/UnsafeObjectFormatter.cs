@@ -1,5 +1,5 @@
-﻿using MemoryPack;
-using System;
+﻿using System;
+using MemoryPack;
 
 namespace GoreRemoting.Serialization.MemoryPack
 {

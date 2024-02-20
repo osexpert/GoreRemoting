@@ -1,11 +1,10 @@
-using Grpc.Core;
 using GoreRemoting.Serialization;
+using Grpc.Core;
+using Grpc.Net.Compression;
 using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
-using Grpc.Net.Compression;
+using System.Reflection;
 
 namespace GoreRemoting
 {

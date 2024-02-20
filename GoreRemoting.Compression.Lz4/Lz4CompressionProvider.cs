@@ -1,9 +1,7 @@
-﻿using Grpc.Net.Compression;
-using K4os.Compression.LZ4.Streams;
-using System;
-using System.ComponentModel;
-using System.IO;
+﻿using System.IO;
 using System.IO.Compression;
+using Grpc.Net.Compression;
+using K4os.Compression.LZ4.Streams;
 
 namespace GoreRemoting.Compression.Lz4
 {
