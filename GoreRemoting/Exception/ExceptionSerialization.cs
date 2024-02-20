@@ -202,10 +202,10 @@ namespace GoreRemoting
 			return null;
 		}
 
-		public string ClassName => GetValue(ClassNameKey) ?? string.Empty;
-		public string Message => GetValue(MessageKey) ?? string.Empty;
-		public string StackTrace => GetValue(StackTraceKey) ?? string.Empty;
-		public string InnerException => GetValue(InnerExceptionKey) ?? string.Empty;
+		public string ClassName => GetValue(ClassNameKey);
+		public string Message => GetValue(MessageKey);
+		public string StackTrace => GetValue(StackTraceKey);
+		public string InnerException => GetValue(InnerExceptionKey);
 
 		public string FullStackTrace()
 		{
