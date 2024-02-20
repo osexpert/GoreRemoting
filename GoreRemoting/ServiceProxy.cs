@@ -1,16 +1,16 @@
-﻿using Castle.DynamicProxy;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using Castle.DynamicProxy;
 using GoreRemoting.RemoteDelegates;
 using GoreRemoting.RpcMessaging;
 using GoreRemoting.Serialization;
 using Grpc.Core;
 using Grpc.Net.Compression;
 using stakx.DynamicProxy;
-using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace GoreRemoting
 {
@@ -354,5 +354,5 @@ namespace GoreRemoting
 	}
 
 
-	
+
 }

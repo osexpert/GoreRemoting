@@ -1,21 +1,16 @@
-﻿using Grpc.AspNetCore.Server.Model;
-using Grpc.Core;
+﻿using System;
 using GoreRemoting;
+using GoreRemoting.Serialization.BinaryFormatter;
+using Grpc.AspNetCore.Server.Model;
+using Grpc.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using ServerShared;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using GoreRemoting.Serialization.BinaryFormatter;
-using System.Reflection;
 
 namespace ServerNet60
 {

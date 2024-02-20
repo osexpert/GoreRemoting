@@ -1,9 +1,9 @@
-﻿using GoreRemoting.RpcMessaging;
+﻿using System;
+using System.Threading.Tasks;
+using GoreRemoting.RpcMessaging;
 using Grpc.Core;
 using Grpc.Net.Compression;
 using Nerdbank.Streams;
-using System;
-using System.Threading.Tasks;
 
 namespace GoreRemoting
 {

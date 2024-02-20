@@ -1,138 +1,136 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Timers;
+using Timer = System.Timers.Timer;
 
 namespace GoreRemoting
 {
-    /// <summary>
-    /// Default in-memory session repository.
-    /// </summary>
-    public class SessionRepository : ISessionRepository
-    {
-        private readonly ConcurrentDictionary<Guid, RemotingSession> _sessions;
-        private Timer? _inactiveSessionSweepTimer;
-        private readonly int _maximumSessionInactivityTimeSeconds;
+	/// <summary>
+	/// Default in-memory session repository.
+	/// </summary>
+	public class SessionRepository : ISessionRepository
+	{
+		private readonly ConcurrentDictionary<Guid, RemotingSession> _sessions;
+		private Timer? _inactiveSessionSweepTimer;
+		private readonly int _maximumSessionInactivityTimeSeconds;
 
-        /// <summary>
-        /// Creates a new instance of the SessionRepository class.
-        /// </summary>
-        /// <param name="inactiveSessionSweepIntervalSeconds">Sweep interval for inactive sessions in seconds (No session sweeping, if set to 0)</param>
-        /// <param name="maximumSessionInactivityTimeSeconds">Maximum session inactivity time in minutes</param>
-        public SessionRepository(int inactiveSessionSweepIntervalSeconds, int maximumSessionInactivityTimeSeconds)
-        {
-            _sessions = new ConcurrentDictionary<Guid, RemotingSession>();
+		/// <summary>
+		/// Creates a new instance of the SessionRepository class.
+		/// </summary>
+		/// <param name="inactiveSessionSweepIntervalSeconds">Sweep interval for inactive sessions in seconds (No session sweeping, if set to 0)</param>
+		/// <param name="maximumSessionInactivityTimeSeconds">Maximum session inactivity time in minutes</param>
+		public SessionRepository(int inactiveSessionSweepIntervalSeconds, int maximumSessionInactivityTimeSeconds)
+		{
+			_sessions = new ConcurrentDictionary<Guid, RemotingSession>();
 
-            _maximumSessionInactivityTimeSeconds = maximumSessionInactivityTimeSeconds;
+			_maximumSessionInactivityTimeSeconds = maximumSessionInactivityTimeSeconds;
 
-            StartInactiveSessionSweepTimer(inactiveSessionSweepIntervalSeconds);
-        }
+			StartInactiveSessionSweepTimer(inactiveSessionSweepIntervalSeconds);
+		}
 
 		/// <summary>
 		/// Starts the inactive session sweep timer.
 		/// </summary>
 		/// <param name="inactiveSessionSweepIntervalSeconds">Sweep interval for inactive sessions in seconds</param>
 		private void StartInactiveSessionSweepTimer(int inactiveSessionSweepIntervalSeconds)
-        {
-            if (inactiveSessionSweepIntervalSeconds <= 0)
-                return;
-            
-            _inactiveSessionSweepTimer =
-                new Timer(Convert.ToDouble(inactiveSessionSweepIntervalSeconds * 1000));
+		{
+			if (inactiveSessionSweepIntervalSeconds <= 0)
+				return;
 
-            _inactiveSessionSweepTimer.Elapsed += InactiveSessionSweepTimerOnElapsed;
-            _inactiveSessionSweepTimer.Start();
-        }
+			_inactiveSessionSweepTimer =
+				new Timer(Convert.ToDouble(inactiveSessionSweepIntervalSeconds * 1000));
 
-        /// <summary>
-        /// Event procedure: Called when the inactive session sweep timer elapses. 
-        /// </summary>
-        /// <param name="sender">Event sender</param>
-        /// <param name="e">Event arguments</param>
-        private void InactiveSessionSweepTimerOnElapsed(object sender, ElapsedEventArgs e)
-        {
-            if (_inactiveSessionSweepTimer == null)
-                return;
-            
-            if (!_inactiveSessionSweepTimer.Enabled)
-                return;
-            
-            var inactiveSessionIdList =
-                _sessions
-                    .Where(item => 
-                        DateTime.Now.Subtract(item.Value.LastActivityTimestamp).TotalSeconds > _maximumSessionInactivityTimeSeconds)
-                    .Select(item => item.Key);
+			_inactiveSessionSweepTimer.Elapsed += InactiveSessionSweepTimerOnElapsed;
+			_inactiveSessionSweepTimer.Start();
+		}
 
-            foreach (var inactiveSessionId in inactiveSessionIdList)
-            {
-                RemoveSession(inactiveSessionId);
-            }
-        }
+		/// <summary>
+		/// Event procedure: Called when the inactive session sweep timer elapses. 
+		/// </summary>
+		/// <param name="sender">Event sender</param>
+		/// <param name="e">Event arguments</param>
+		private void InactiveSessionSweepTimerOnElapsed(object sender, ElapsedEventArgs e)
+		{
+			if (_inactiveSessionSweepTimer == null)
+				return;
 
-        /// <summary>
-        /// Creates a new session.
-        /// </summary>
-        /// <param name="server">Server instance</param>
-        /// <returns>The newly created session</returns>
-        public RemotingSession CreateSession(RemotingServer server)
-        {
-            if (server == null)
-                throw new ArgumentException(nameof(server));
-            
-            var session = new RemotingSession(server);
-            
-            _sessions.TryAdd(session.SessionId, session);
-            
-            return session;
-        }
+			if (!_inactiveSessionSweepTimer.Enabled)
+				return;
 
-        /// <summary>
-        /// Gets a specified session by its ID.
-        /// </summary>
-        /// <param name="sessionId">Session ID</param>
-        /// <returns>The session correlating to the specified session ID</returns>
-        /// <exception cref="KeyNotFoundException">Thrown, if no session with the specified session ID is found</exception>
-        public RemotingSession GetSession(Guid sessionId)
-        {
-            if (_sessions.TryGetValue(sessionId, out var session))
-                return session;
-            
-            throw new KeyNotFoundException($"Session '{sessionId}' not found.");
-        }
+			var inactiveSessionIdList =
+				_sessions
+					.Where(item =>
+						DateTime.Now.Subtract(item.Value.LastActivityTimestamp).TotalSeconds > _maximumSessionInactivityTimeSeconds)
+					.Select(item => item.Key);
 
-        /// <summary>
-        /// Removes a specified session by its ID.
-        /// </summary>
-        /// <param name="sessionId">Session ID</param>
-        public void RemoveSession(Guid sessionId)
-        {
-            if (_sessions.TryRemove(sessionId, out var session))
-                session.Dispose();
-        }
+			foreach (var inactiveSessionId in inactiveSessionIdList)
+			{
+				RemoveSession(inactiveSessionId);
+			}
+		}
 
-        /// <summary>
-        /// Gets a list of all sessions.
-        /// </summary>
-        public IEnumerable<RemotingSession> Sessions => _sessions.Values.ToArray();
+		/// <summary>
+		/// Creates a new session.
+		/// </summary>
+		/// <param name="server">Server instance</param>
+		/// <returns>The newly created session</returns>
+		public RemotingSession CreateSession(RemotingServer server)
+		{
+			if (server == null)
+				throw new ArgumentException(nameof(server));
 
-        /// <summary>
-        /// Frees managed resources.
-        /// </summary>
-        public void Dispose()
-        {
-            if (_inactiveSessionSweepTimer != null)
-            {
-                _inactiveSessionSweepTimer.Stop();
-                _inactiveSessionSweepTimer.Dispose();
-                _inactiveSessionSweepTimer = null;
-            }
+			var session = new RemotingSession(server);
 
-            while (_sessions.Count > 0)
-            {
-                var sessionId = _sessions.First().Key;
-                RemoveSession(sessionId);
-            }
-        }
-    }
+			_sessions.TryAdd(session.SessionId, session);
+
+			return session;
+		}
+
+		/// <summary>
+		/// Gets a specified session by its ID.
+		/// </summary>
+		/// <param name="sessionId">Session ID</param>
+		/// <returns>The session correlating to the specified session ID</returns>
+		/// <exception cref="KeyNotFoundException">Thrown, if no session with the specified session ID is found</exception>
+		public RemotingSession GetSession(Guid sessionId)
+		{
+			if (_sessions.TryGetValue(sessionId, out var session))
+				return session;
+
+			throw new KeyNotFoundException($"Session '{sessionId}' not found.");
+		}
+
+		/// <summary>
+		/// Removes a specified session by its ID.
+		/// </summary>
+		/// <param name="sessionId">Session ID</param>
+		public void RemoveSession(Guid sessionId)
+		{
+			if (_sessions.TryRemove(sessionId, out var session))
+				session.Dispose();
+		}
+
+		/// <summary>
+		/// Gets a list of all sessions.
+		/// </summary>
+		public IEnumerable<RemotingSession> Sessions => _sessions.Values.ToArray();
+
+		/// <summary>
+		/// Frees managed resources.
+		/// </summary>
+		public void Dispose()
+		{
+			if (_inactiveSessionSweepTimer != null)
+			{
+				_inactiveSessionSweepTimer.Stop();
+				_inactiveSessionSweepTimer.Dispose();
+				_inactiveSessionSweepTimer = null;
+			}
+
+			while (_sessions.Count > 0)
+			{
+				var sessionId = _sessions.First().Key;
+				RemoveSession(sessionId);
+			}
+		}
+	}
 }

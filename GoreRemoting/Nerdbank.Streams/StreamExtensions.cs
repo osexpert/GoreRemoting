@@ -6,11 +6,6 @@ namespace Nerdbank.Streams
 	using System;
 	using System.Buffers;
 	using System.IO;
-	using System.Net.Security;
-	using System.Net.WebSockets;
-	using System.Threading;
-	using System.Threading.Tasks;
-	using Microsoft;
 
 	/// <summary>
 	/// Stream extension methods.

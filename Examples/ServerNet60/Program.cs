@@ -1,19 +1,15 @@
-﻿using Grpc.AspNetCore.Server.Model;
+﻿using GoreRemoting;
+using GoreRemoting.Serialization.BinaryFormatter;
+using Grpc.AspNetCore.Server.Model;
 using Grpc.Core;
-using GoreRemoting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.AspNetCore.Server.Kestrel.Core.Features;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using ServerShared;
-using GoreRemoting.Serialization.BinaryFormatter;
-using System.Reflection;
 
 namespace ServerNet60
 {

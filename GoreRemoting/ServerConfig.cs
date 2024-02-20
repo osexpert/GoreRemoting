@@ -1,9 +1,9 @@
-using GoreRemoting.Serialization;
-using Grpc.Core;
-using Grpc.Net.Compression;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using GoreRemoting.Serialization;
+using Grpc.Core;
+using Grpc.Net.Compression;
 
 namespace GoreRemoting
 {
@@ -70,7 +70,7 @@ namespace GoreRemoting
 				_compressors.Add(compressor.EncodingName, compressor);
 		}
 
-		
+
 
 
 		/// <summary>
@@ -92,7 +92,7 @@ namespace GoreRemoting
 
 		void Success(object? result);
 		void Failure(Exception exception);
-	
+
 	}
 
 }

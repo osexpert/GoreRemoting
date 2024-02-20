@@ -1,8 +1,36 @@
-using System.Reflection;
-using System.Threading.Tasks;
 using System;
-using GoreRemoting;
 using System.IO;
+
+/* Unmerged change from project 'NativeClientNet60'
+Before:
+using System;
+After:
+using System.Reflection;
+*/
+
+/* Unmerged change from project 'ClientNet60'
+Before:
+using System;
+After:
+using System.Reflection;
+*/
+using System.Threading.Tasks;
+using GoreRemoting;
+
+
+/* Unmerged change from project 'NativeClientNet60'
+Before:
+using System.IO;
+After:
+using GoreRemoting;
+*/
+
+/* Unmerged change from project 'ClientNet60'
+Before:
+using System.IO;
+After:
+using GoreRemoting;
+*/
 using GoreRemoting.Serialization.MessagePack;
 
 namespace ClientShared

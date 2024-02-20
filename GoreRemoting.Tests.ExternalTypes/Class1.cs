@@ -1,6 +1,6 @@
-﻿using MemoryPack;
-using System;
+﻿using System;
 using System.Runtime.Serialization;
+using MemoryPack;
 
 namespace GoreRemoting.Tests.ExternalTypes
 {

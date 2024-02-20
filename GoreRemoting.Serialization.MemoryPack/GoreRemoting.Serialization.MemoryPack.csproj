@@ -5,6 +5,7 @@
 	  <Authors>osexpert</Authors>
 	  <Copyright>2022 osexpert</Copyright>
 	  <Nullable>enable</Nullable>
+	  <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>

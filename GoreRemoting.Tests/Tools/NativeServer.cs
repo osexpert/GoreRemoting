@@ -1,10 +1,7 @@
-﻿using Grpc.Core;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Grpc.Core;
 
 namespace GoreRemoting.Tests.Tools
 {

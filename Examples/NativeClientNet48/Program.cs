@@ -1,17 +1,8 @@
-﻿using ClientShared;
-using Grpc.Core;
+﻿using System;
+using ClientShared;
 using GoreRemoting;
-using GoreRemoting.Serialization;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 using GoreRemoting.Serialization.BinaryFormatter;
-using Grpc.Net.Compression;
+using Grpc.Core;
 
 namespace ClientNet48
 {

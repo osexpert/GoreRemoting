@@ -7,7 +7,7 @@
 		<Copyright>2022 osexpert, 2022 Hagen Siegel</Copyright>
 
 		<Nullable>enable</Nullable>
-		
+		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 
 

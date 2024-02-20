@@ -8,7 +8,6 @@ namespace Nerdbank.Streams
 	using System.IO;
 	using System.Threading;
 	using System.Threading.Tasks;
-	using Microsoft;
 
 	/// <summary>
 	/// A stream that writes to a <see cref="IBufferWriter{T}"/> of <see cref="byte"/>.
@@ -100,28 +99,28 @@ namespace Nerdbank.Streams
 
 #if NETSTANDARD2_1_OR_GREATER // SPAN_BUILTIN
 
-        /// <inheritdoc/>
-        public override int Read(Span<byte> buffer) => throw this.ThrowDisposedOr(new NotSupportedException());
+		/// <inheritdoc/>
+		public override int Read(Span<byte> buffer) => throw this.ThrowDisposedOr(new NotSupportedException());
 
-        /// <inheritdoc/>
-        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) => throw this.ThrowDisposedOr(new NotSupportedException());
+		/// <inheritdoc/>
+		public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) => throw this.ThrowDisposedOr(new NotSupportedException());
 
-        /// <inheritdoc/>
-        public override void Write(ReadOnlySpan<byte> buffer)
-        {
-            Verify.NotDisposed(this);
-            Span<byte> span = this.writer.GetSpan(buffer.Length);
-            buffer.CopyTo(span);
-            this.writer.Advance(buffer.Length);
-        }
+		/// <inheritdoc/>
+		public override void Write(ReadOnlySpan<byte> buffer)
+		{
+			Verify.NotDisposed(this);
+			Span<byte> span = this.writer.GetSpan(buffer.Length);
+			buffer.CopyTo(span);
+			this.writer.Advance(buffer.Length);
+		}
 
-        /// <inheritdoc/>
-        public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            this.Write(buffer.Span);
-            //return default;
-        }
+		/// <inheritdoc/>
+		public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			this.Write(buffer.Span);
+			//return default;
+		}
 
 #endif
 

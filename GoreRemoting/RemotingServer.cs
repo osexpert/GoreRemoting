@@ -1,15 +1,15 @@
-﻿using GoreRemoting.RemoteDelegates;
-using GoreRemoting.RpcMessaging;
-using Grpc.Core;
-using Grpc.Net.Compression;
-using KPreisser;
-using Nerdbank.Streams;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using GoreRemoting.RemoteDelegates;
+using GoreRemoting.RpcMessaging;
+using Grpc.Core;
+using Grpc.Net.Compression;
+using KPreisser;
+using Nerdbank.Streams;
 
 namespace GoreRemoting
 {
@@ -93,13 +93,13 @@ namespace GoreRemoting
 			if (!_services.TryGetValue(serviceName, out var serviceType))
 				throw new Exception("Service not registered: " + serviceName);
 
-//			var gsa = new GetServiceArgs 
-//			{ 
-//				ServiceType = serviceType, 
-////				Method = mi, 
-//				GrpcContext = context,
-////				ServiceName = serviceName
-//			};
+			//			var gsa = new GetServiceArgs 
+			//			{ 
+			//				ServiceType = serviceType, 
+			////				Method = mi, 
+			//				GrpcContext = context,
+			////				ServiceName = serviceName
+			//			};
 			var service = _config.GetService(serviceType, context);
 			return service;
 		}
@@ -149,9 +149,9 @@ namespace GoreRemoting
 		/// <param name="callDelegate"></param>
 		/// <returns>True if mapping applied, otherwise false</returns>
 		/// <exception cref="ArgumentNullException">Thrown if no session is provided</exception>
-		private bool MapDelegateArgument(object? argument, 
-			int position, 
-			[NotNullWhen(returnValue: true)] out object? mappedArgument, 
+		private bool MapDelegateArgument(object? argument,
+			int position,
+			[NotNullWhen(returnValue: true)] out object? mappedArgument,
 			Func<DelegateCallMessage, object?> callDelegate,
 			Func<DelegateCallMessage, Task<object?>> callDelegateAsync)
 		{
@@ -401,8 +401,8 @@ namespace GoreRemoting
 				callContext = null;
 			}
 
-//			if (oneWay)
-//				return;
+			//			if (oneWay)
+			//				return;
 
 			MethodResultMessage resultMessage;
 

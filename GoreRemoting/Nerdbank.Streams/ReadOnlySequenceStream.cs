@@ -8,7 +8,6 @@ namespace Nerdbank.Streams
 	using System.IO;
 	using System.Threading;
 	using System.Threading.Tasks;
-	using Microsoft;
 
 	internal class ReadOnlySequenceStream : Stream, IDisposableObservable
 	{
@@ -194,30 +193,30 @@ namespace Nerdbank.Streams
 
 #if NETSTANDARD2_1_OR_GREATER // SPAN_BUILTIN
 
-        /// <inheritdoc/>
-        public override int Read(Span<byte> buffer)
-        {
-            ReadOnlySequence<byte> remaining = this.readOnlySequence.Slice(this.position);
-            ReadOnlySequence<byte> toCopy = remaining.Slice(0, Math.Min(buffer.Length, remaining.Length));
-            this.position = toCopy.End;
-            toCopy.CopyTo(buffer);
-            return (int)toCopy.Length;
-        }
+		/// <inheritdoc/>
+		public override int Read(Span<byte> buffer)
+		{
+			ReadOnlySequence<byte> remaining = this.readOnlySequence.Slice(this.position);
+			ReadOnlySequence<byte> toCopy = remaining.Slice(0, Math.Min(buffer.Length, remaining.Length));
+			this.position = toCopy.End;
+			toCopy.CopyTo(buffer);
+			return (int)toCopy.Length;
+		}
 
-        /// <inheritdoc/>
-        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
+		/// <inheritdoc/>
+		public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
 			//return new ValueTask<int>(this.Read(buffer.Span));
 			return this.Read(buffer.Span);
 
 		}
 
-        /// <inheritdoc/>
-        public override void Write(ReadOnlySpan<byte> buffer) => throw this.ThrowDisposedOr(new NotSupportedException());
+		/// <inheritdoc/>
+		public override void Write(ReadOnlySpan<byte> buffer) => throw this.ThrowDisposedOr(new NotSupportedException());
 
-        /// <inheritdoc/>
-        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default) 
+		/// <inheritdoc/>
+		public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
 			=> throw this.ThrowDisposedOr(new NotSupportedException());
 
 #endif

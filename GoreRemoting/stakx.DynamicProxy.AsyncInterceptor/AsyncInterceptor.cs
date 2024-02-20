@@ -2,9 +2,7 @@
 // License available at https://github.com/stakx/DynamicProxy.AsyncInterceptor/blob/master/LICENSE.md.
 
 using System;
-using System.Collections.Generic;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 

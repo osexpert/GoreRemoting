@@ -1,10 +1,4 @@
-﻿using System.IO;
-using System.Net.WebSockets;
-using System.Threading.Tasks;
-using System.Threading;
-using System;
-
-// Copyright (c) Andrew Arnott. All rights reserved.
+﻿// Copyright (c) Andrew Arnott. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma warning disable AvoidAsyncSuffix // Avoid Async suffix

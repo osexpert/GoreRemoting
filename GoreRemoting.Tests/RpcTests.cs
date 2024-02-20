@@ -1,24 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
-using Grpc.Core;
+using GoreRemoting.Compression.Lz4;
 using GoreRemoting.Tests.ExternalTypes;
 using GoreRemoting.Tests.Tools;
+using MemoryPack;
+using MessagePack;
 using Xunit;
 using Xunit.Abstractions;
-using static GoreRemoting.Tests.RpcTests;
-using GoreRemoting.Serialization.BinaryFormatter;
-using GoreRemoting.Serialization;
-using GoreRemoting.Serialization.MemoryPack;
-using MemoryPack;
-using GoreRemoting.Serialization.Json;
-using GoreRemoting.Serialization.MessagePack;
-using MessagePack;
-using GoreRemoting.Compression.Lz4;
 
 namespace GoreRemoting.Tests
 {
@@ -97,7 +88,7 @@ namespace GoreRemoting.Tests
 			var serverConfig =
 				new ServerConfig(Serializers.GetSerializer(ser))
 				{
-					GetService = (_,_) => testService
+					GetService = (_, _) => testService
 				};
 			if (compress)
 				serverConfig.AddCompressor(new Lz4CompressionProvider());
@@ -196,7 +187,7 @@ namespace GoreRemoting.Tests
 			var serverConfig =
 				new ServerConfig(Serializers.GetSerializer(ser))
 				{
-					GetService = (_,_) => testService
+					GetService = (_, _) => testService
 				};
 
 
@@ -320,7 +311,7 @@ namespace GoreRemoting.Tests
 			var serverConfig =
 				new ServerConfig(Serializers.GetSerializer(ser))
 				{
-					GetService = (_,_) => testService
+					GetService = (_, _) => testService
 				};
 
 			bool serviceEventCalled = false;
@@ -378,7 +369,7 @@ namespace GoreRemoting.Tests
 			var serverConfig =
 				new ServerConfig(Serializers.GetSerializer(ser))
 				{
-					GetService = (_,_) => testService
+					GetService = (_, _) => testService
 				};
 
 

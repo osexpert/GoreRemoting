@@ -14,7 +14,6 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 	using System.Runtime.Serialization;
 	using System.Runtime.Serialization.Formatters.Binary;
 	using System.Security.Permissions;
-	using System.Xml.Linq;
 
 	/// <summary>
 	/// Deserialization surrogate for the DataSet class.
