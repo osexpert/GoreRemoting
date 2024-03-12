@@ -22,10 +22,6 @@ namespace GoreRemoting.RpcMessaging
 		/// </summary>
 		public string ParameterName { get; set; }
 
-		/// <summary>
-		/// Gets or sets the type name of the parameter.
-		/// </summary>
-		public string TypeName { get; set; }
 
 		/// <summary>
 		/// Gets or sets the parameter value.
@@ -37,7 +33,6 @@ namespace GoreRemoting.RpcMessaging
 		public void Deserialize(GoreBinaryReader r)
 		{
 			ParameterName = r.ReadString();
-			TypeName = r.ReadString();
 
 			var v = r.ReadByte();
 			_popValue = (v == (byte)ParameterValueType.Normal);
@@ -65,7 +60,6 @@ namespace GoreRemoting.RpcMessaging
 		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
 			w.Write(ParameterName);
-			w.Write(TypeName);
 
 			if (Value is IGorializer g)
 			{

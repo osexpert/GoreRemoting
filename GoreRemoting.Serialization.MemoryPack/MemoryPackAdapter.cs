@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using GoreRemoting.Serialization.BinaryFormatter;
 using MemoryPack;
 
@@ -22,7 +23,7 @@ namespace GoreRemoting.Serialization.MemoryPack
 		/// <returns>Serialized data</returns>
 		public void Serialize(Stream stream, object?[] graph)
 		{
-			MemoryPackSerializer.SerializeAsync<MemPackObjectArray>(stream, new MemPackObjectArray() { Datas = graph }, Options).GetAwaiter().GetResult();
+			MemoryPackSerializer.SerializeAsync<MemPackObjectArray>(stream, new MemPackObjectArray { Datas = graph }, Options).GetAwaiter().GetResult();
 		}
 
 		/// <summary>
@@ -92,6 +93,11 @@ namespace GoreRemoting.Serialization.MemoryPack
 				TypeName = ew.TypeName,
 				PropertyData = ew.PropertyData
 			};
+		}
+
+		public object? Deserialize(Type type, object? value)
+		{
+			return value;
 		}
 
 		public string Name => "MemoryPack";

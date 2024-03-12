@@ -20,7 +20,8 @@ namespace GoreRemoting.Tests
 					TestMethodFake = _ =>
 					{
 						CallContext.SetData("test", "Changed");
-						return CallContext.GetData("test")!;
+						CallContext.SetData("test2", null);
+						return (string)CallContext.GetData("test")!;
 					}
 				};
 

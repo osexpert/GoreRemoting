@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reflection;
 
 namespace GoreRemoting.Serialization
 {
@@ -15,6 +16,8 @@ namespace GoreRemoting.Serialization
 		object GetSerializableException(Exception ex);
 
 		Exception RestoreSerializedException(object ex);
+
+		object? Deserialize(Type type, object? value);
 
 		string Name { get; }
 	}

@@ -7,7 +7,7 @@ namespace GoreRemoting.Tests.Tools
 	{
 		private int _counter = 0;
 
-		public Func<object, object>? TestMethodFake { get; set; }
+		public Func<string, string>? TestMethodFake { get; set; }
 
 		public Action? OneWayMethodFake { get; set; }
 
@@ -15,7 +15,7 @@ namespace GoreRemoting.Tests.Tools
 
 		public event Action? ServiceEvent;
 
-		public object? TestMethod(object arg)
+		public string? TestMethod(string arg)
 		{
 			return TestMethodFake?.Invoke(arg);
 		}
@@ -56,7 +56,7 @@ namespace GoreRemoting.Tests.Tools
 			return s;
 		}
 
-		public T BaseEchoGen<T>(T s)
+		public int BaseEchoInt(int s)
 		{
 			return s;
 		}

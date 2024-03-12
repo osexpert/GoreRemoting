@@ -25,23 +25,26 @@ namespace GoreRemoting
 		/// <summary>
 		/// Gets or sets the value of the call context entry.
 		/// </summary>
-		public object? Value { get; set; }
+		public string? Value { get; set; }
 
 		public void Deserialize(GoreBinaryReader r)
 		{
 			Name = r.ReadString();
+			Value = r.ReadBoolean() ? r.ReadString() : null;
 		}
 
 		public void Deserialize(Stack<object?> st)
 		{
-			Value = st.Pop();
 		}
 
 		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
 			w.Write(Name);
-
-			st.Push(Value);
+			w.Write(Value != null);
+			if (Value != null)
+				w.Write(Value);
 		}
 	}
+
+
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if false
+using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -86,3 +87,4 @@ namespace GoreRemoting.Serialization.Json
 		}
 	}
 }
+#endif

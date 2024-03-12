@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Castle.DynamicProxy;
 using GoreRemoting.RemoteDelegates;
 using GoreRemoting.RpcMessaging;
 using Grpc.Core;
@@ -39,8 +40,8 @@ namespace GoreRemoting
 			using var s = arg.PayloadAsReadOnlySequence().AsStream();
 
 			var br = new GoreBinaryReader(s);
-			int version = br.ReadVarInt();
-			if (version != 1)
+			byte version = br.ReadByte();
+			if (version != Constants.SerializationVersion)
 				throw new Exception("Unsupported version " + version);
 			var serializerName = br.ReadString();
 			var compressorName = br.ReadString();
@@ -74,7 +75,7 @@ namespace GoreRemoting
 				using (var s = sc.GetBufferWriter().AsStream())
 				{
 					var bw = new GoreBinaryWriter(s);
-					bw.WriteVarInt(1); // version
+					bw.Write((byte)Constants.SerializationVersion); // version
 					bw.Write(arg.Serializer.Name);
 					bw.Write(arg.Compressor?.EncodingName ?? string.Empty);
 					bw.Write((byte)arg.ResponseType);
@@ -118,9 +119,9 @@ namespace GoreRemoting
 		/// <param name="arguments">Array of parameter values</param>
 		/// <param name="callDelegate"></param>
 		/// <returns>Array of arguments (includes mapped ones)</returns>
-		private object?[] MapArguments(object?[] arguments,
-			Func<DelegateCallMessage, object?> callDelegate,
-			Func<DelegateCallMessage, Task<object?>> callDelegateAsync,
+		private object?[] MapArguments(object?[] arguments, Type[] types,
+			Func<MethodInfo, DelegateCallMessage, object?> callDelegate,
+			Func<MethodInfo, DelegateCallMessage, Task<object?>> callDelegateAsync,
 			ServerCallContext context)
 		{
 			object?[] mappedArguments = new object?[arguments.Length];
@@ -128,8 +129,9 @@ namespace GoreRemoting
 			for (int i = 0; i < arguments.Length; i++)
 			{
 				var argument = arguments[i];
+				var type = types[i];
 
-				if (MapDelegateArgument(argument, i, out var mappedArgument, callDelegate, callDelegateAsync))
+				if (MapDelegateArgument(argument, type, i, out var mappedArgument, callDelegate, callDelegateAsync))
 					mappedArguments[i] = mappedArgument;
 				else if (argument is CancellationTokenPlaceholder)
 					mappedArguments[i] = context.CancellationToken;
@@ -149,11 +151,11 @@ namespace GoreRemoting
 		/// <param name="callDelegate"></param>
 		/// <returns>True if mapping applied, otherwise false</returns>
 		/// <exception cref="ArgumentNullException">Thrown if no session is provided</exception>
-		private bool MapDelegateArgument(object? argument,
+		private bool MapDelegateArgument(object? argument, Type delegateType,
 			int position,
 			[NotNullWhen(returnValue: true)] out object? mappedArgument,
-			Func<DelegateCallMessage, object?> callDelegate,
-			Func<DelegateCallMessage, Task<object?>> callDelegateAsync)
+			Func<MethodInfo, DelegateCallMessage, object?> callDelegate,
+			Func<MethodInfo, DelegateCallMessage, Task<object?>> callDelegateAsync)
 		{
 			if (argument is not RemoteDelegateInfo remoteDelegateInfo)
 			{
@@ -161,9 +163,6 @@ namespace GoreRemoting
 				return false;
 			}
 
-			var delegateType = Type.GetType(remoteDelegateInfo.DelegateTypeName);
-			if (delegateType == null)
-				throw new Exception("Delegate type not found: " + remoteDelegateInfo.DelegateTypeName);
 
 			//if (false)//_delegateProxyCache.ContainsKey((delegateType, position)))
 			//{
@@ -174,14 +173,14 @@ namespace GoreRemoting
 			// Forge a delegate proxy and initiate remote delegate invocation, when it is invoked
 			var delegateProxy =
 				new DelegateProxy(delegateType,
-				delegateArgs =>
+				(method, delegateArgs) =>
 				{
-					var r = callDelegate(new DelegateCallMessage { Arguments = delegateArgs, Position = position, OneWay = !remoteDelegateInfo.HasResult });
+					var r = callDelegate(method, new DelegateCallMessage { Arguments = delegateArgs, Position = position, OneWay = !remoteDelegateInfo.HasResult });
 					return r;
 				},
-				delegateArgs => // async
+				(method, delegateArgs) => // async
 				{
-					var r = callDelegateAsync(new DelegateCallMessage { Arguments = delegateArgs, Position = position, OneWay = !remoteDelegateInfo.HasResult });
+					var r = callDelegateAsync(method, new DelegateCallMessage { Arguments = delegateArgs, Position = position, OneWay = !remoteDelegateInfo.HasResult });
 					return r;
 				});
 
@@ -207,20 +206,38 @@ namespace GoreRemoting
 			GoreRequestMessage request,
 			Func<Task<GoreRequestMessage>> req, Func<GoreResponseMessage, Task> reponse, ServerCallContext context)
 		{
+
 			var callMessage = request.MethodCallMessage;
+
+			var serviceInterfaceType = GetServiceType(callMessage.ServiceName);
+
+			var all_methods = serviceInterfaceType.GetMethods();
+
+			var methods = all_methods.Where(m => m.Name == callMessage.MethodName);
+
+			if (!methods.Any())
+				throw new MissingMethodException($"Method not found: {callMessage.ServiceName}.{callMessage.MethodName}");
+			else if (methods.Count() > 1)
+				throw new MissingMethodException($"More than one method: {callMessage.ServiceName}.{callMessage.MethodName}");
+			else if (methods.Single().IsGenericMethod)
+				throw new MissingMethodException($"Generic method not supported: {callMessage.ServiceName}.{callMessage.MethodName}");
+
+			var method = methods.Single();
 
 			if (_config.RestoreCallContext)
 				CallContext.RestoreFromSnapshot(callMessage.CallContextSnapshot);
 
-			(var parameterValues, var parameterTypes) = callMessage.UnwrapParametersFromDeserializedMethodCallMessage();
+			var parameterTypes = method.GetParameters().Select(p => p.ParameterType).ToArray();
+
+			var parameterValues = callMessage.UnwrapParametersFromDeserializedMethodCallMessage();
 
 			bool resultSent = false;
 			var responseLock = new AsyncReaderWriterLockSlim();
 
 			int? activeStreamingDelegatePosition = null;
 
-			parameterValues = MapArguments(parameterValues,
-			delegateCallMsg =>
+			parameterValues = MapArguments(parameterValues, parameterTypes,
+			(method, delegateCallMsg) =>
 			{
 				var delegateCallResponseMsg = new GoreResponseMessage(delegateCallMsg, request.Serializer, request.Compressor);
 
@@ -266,7 +283,7 @@ namespace GoreRemoting
 						else if (msg.StreamingStatus == StreamingStatus.Done)
 							throw new StreamingDoneException();
 
-						return msg.Result;
+						return request.Serializer.Deserialize(method.ReturnType, msg.Result);
 					}
 				}
 				finally
@@ -274,7 +291,7 @@ namespace GoreRemoting
 					responseLock.ExitReadLock();
 				}
 			},
-			async delegateCallMsg =>
+			async (method, delegateCallMsg) =>
 			{
 				var delegateCallReponseMsg = new GoreResponseMessage(delegateCallMsg, request.Serializer, request.Compressor);
 
@@ -321,7 +338,13 @@ namespace GoreRemoting
 						else if (msg.StreamingStatus == StreamingStatus.Done)
 							throw new StreamingDoneException();
 
-						return msg.Result; // Task?
+						if (method.ReturnType.IsGenericType)
+						{
+							// a Task<T>, ValueTask<T>, etc.
+							return request.Serializer.Deserialize(method.ReturnType.GetGenericArguments().Single(), msg.Result);
+						}
+						else
+							return msg.Result;
 					}
 				}
 				finally
@@ -331,34 +354,7 @@ namespace GoreRemoting
 			},
 			context);
 
-			var serviceInterfaceType = GetServiceType(callMessage.ServiceName);
-			MethodInfo method;
 
-			if (callMessage.IsGenericMethod)
-			{
-				var methods = serviceInterfaceType.GetMethods();
-
-				// only 1 method with that name is supported. no overloading support
-				method =
-					methods.SingleOrDefault(m =>
-						m.IsGenericMethod &&
-						m.Name.Equals(callMessage.MethodName, StringComparison.Ordinal));
-
-				if (method != null)
-					method = method.MakeGenericMethod(parameterTypes);
-			}
-			else
-			{
-				method =
-					serviceInterfaceType.GetMethod(
-						name: callMessage.MethodName,
-						types: parameterTypes);
-			}
-
-			if (method == null)
-				throw new MissingMethodException(
-					className: callMessage.ServiceName,
-					methodName: callMessage.MethodName);
 
 			//var oneWay = false;// method.GetCustomAttribute<OneWayAttribute>() != null;
 
@@ -373,6 +369,9 @@ namespace GoreRemoting
 
 				callContext = _config.CreateCallContext?.Invoke();
 				callContext?.Start(context, callMessage.ServiceName, callMessage.MethodName, service, method, parameterValues);
+
+				// translate from eg JsonElement to real type
+				parameterValues = Gorializer.DeserializeArguments(request.Serializer, method, parameterValues);
 
 				result = method.Invoke(service, parameterValues);
 				result = await TaskResultHelper.GetTaskResult(method, result);

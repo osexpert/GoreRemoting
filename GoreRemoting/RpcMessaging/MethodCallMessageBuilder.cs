@@ -36,7 +36,6 @@ namespace GoreRemoting.RpcMessaging
 					targetMethod,
 					 args
 					).ToArray(),
-				IsGenericMethod = targetMethod.IsGenericMethod
 			};
 
 			if (setCallContext)
@@ -57,7 +56,6 @@ namespace GoreRemoting.RpcMessaging
 			)
 		{
 			var parameterInfos = targetMethod.GetParameters();
-			var genericArgumentTypes = targetMethod.GetGenericArguments();
 
 			// TODO: throw if more args than params?
 			if (args.Length != parameterInfos.Length)
@@ -89,13 +87,10 @@ namespace GoreRemoting.RpcMessaging
 
 				//object parameterValue =	useParamArray ? paramArrayValues.ToArray() : arg;
 
-				Type paramType = targetMethod.IsGenericMethod ? genericArgumentTypes[i] : parameterInfo.ParameterType;
-
 				yield return
 					new MethodCallArgument()
 					{
 						ParameterName = parameterInfo.Name,
-						TypeName = TypeShortener.GetShortType(paramType),
 						Value = arg// parameterValue
 					};
 			}

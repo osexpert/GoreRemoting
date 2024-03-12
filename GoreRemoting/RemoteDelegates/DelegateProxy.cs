@@ -12,8 +12,8 @@ namespace GoreRemoting.RemoteDelegates
 	/// </summary>
 	public sealed class DelegateProxy //: IDelegateProxy
 	{
-		private Func<object?[], object?> _callInterceptionHandler;
-		private Func<object?[], Task<object?>> _callInterceptionAsyncHandler;
+		private Func<MethodInfo, object?[], object?> _callInterceptionHandler;
+		private Func<MethodInfo, object?[], Task<object?>> _callInterceptionAsyncHandler;
 
 		AsyncInterceptor _aInterceptor;
 
@@ -22,7 +22,9 @@ namespace GoreRemoting.RemoteDelegates
 		/// </summary>
 		/// <param name="delegateType">Delegate type to be proxied</param>
 		/// <param name="callInterceptionHandler">Function to be called when intercepting calls on the delegate</param>
-		internal DelegateProxy(Type delegateType, Func<object?[], object?> callInterceptionHandler, Func<object?[], Task<object?>> callInterceptionAsyncHandler)
+		internal DelegateProxy(Type delegateType, 
+			Func<MethodInfo, object?[], object?> callInterceptionHandler,
+			Func<MethodInfo, object?[], Task<object?>> callInterceptionAsyncHandler)
 		{
 			_callInterceptionHandler =
 				callInterceptionHandler ??
@@ -49,14 +51,14 @@ namespace GoreRemoting.RemoteDelegates
 
 		void InterceptSync(ISyncInvocation invocation)
 		{
-			var res = _callInterceptionHandler(invocation.Arguments);
+			var res = _callInterceptionHandler(invocation.Method, invocation.Arguments);
 			invocation.ReturnValue = res;
 			//CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
 		}
 
 		async ValueTask InterceptAsync(IAsyncInvocation invocation)
 		{
-			var res = await _callInterceptionAsyncHandler(invocation.Arguments.ToArray()).ConfigureAwait(false);
+			var res = await _callInterceptionAsyncHandler(invocation.Method, invocation.Arguments.ToArray()).ConfigureAwait(false);
 			invocation.Result = res;
 			//CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
 		}

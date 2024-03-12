@@ -74,15 +74,23 @@ namespace GoreRemoting
 			foreach (var outArgument in resultMessage.OutArguments)
 			{
 				var parameterInfo = parameterInfos.Single(p => p.Name == outArgument.ParameterName);
-				args[parameterInfo.Position] = outArgument.OutValue;
+				// GetElementType() https://stackoverflow.com/a/738281/2671330
+				if (!parameterInfo.ParameterType.IsByRef)
+					throw new Exception("Impossible: out arg but not IsByRef");
+				args[parameterInfo.Position] = serializer.Deserialize(parameterInfo.ParameterType.GetElementType(), outArgument.OutValue);
 			}
 
-			invocation.ReturnValue = resultMessage.ReturnValue;
+			invocation.ReturnValue = serializer.Deserialize(targetMethod.ReturnType, resultMessage.ReturnValue);
 
 			// restore context flow from server
 			if (_client._config.RestoreCallContext)
+			{
 				CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
+			}
 		}
+
+
+
 
 		async ValueTask InterceptAsync(IAsyncInvocation invocation)
 		{
@@ -119,7 +127,15 @@ namespace GoreRemoting
 
 			// out|ref not possible with async
 
-			invocation.Result = resultMessage.ReturnValue;
+			if (targetMethod.ReturnType.IsGenericType)
+			{
+				// a Task<T>, ValueTask<T>, etc.
+				invocation.Result = serializer.Deserialize(targetMethod.ReturnType.GetGenericArguments().Single(), resultMessage.ReturnValue);
+			}
+			else
+			{
+				invocation.Result = resultMessage.ReturnValue;
+			}
 
 			// restore context flow from server
 			if (_client._config.RestoreCallContext)
@@ -206,7 +222,7 @@ namespace GoreRemoting
 						try
 						{
 							// FIXME: but we need to know if the delegate has a result or not???!!!
-							result = delegt.DynamicInvoke(delegateMsg.Arguments);
+							result = delegt.DynamicInvoke(Gorializer.DeserializeArguments(serializer, delegt.Method, delegateMsg.Arguments));
 
 							result = await TaskResultHelper.GetTaskResult(delegt.Method, result);
 						}
@@ -343,7 +359,6 @@ namespace GoreRemoting
 
 			var remoteDelegateInfo =
 				new RemoteDelegateInfo(
-					delegateTypeName: TypeShortener.GetShortType(argumentType),
 					// TODO: use a OneWay attribute instead?
 					hasResult: !(delegateReturnType == typeof(void) || delegateReturnType == typeof(Task) || delegateReturnType == typeof(ValueTask))
 					);

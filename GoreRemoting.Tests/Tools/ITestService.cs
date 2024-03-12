@@ -8,7 +8,7 @@ namespace GoreRemoting.Tests.Tools
 	{
 		event Action ServiceEvent;
 
-		object? TestMethod(object arg);
+		string? TestMethod(string arg);
 
 		void TestMethodWithDelegateArg(Action<string> callback);
 
@@ -27,6 +27,6 @@ namespace GoreRemoting.Tests.Tools
 	public interface IBaseService
 	{
 		string BaseEcho(string s);
-		T BaseEchoGen<T>(T s);
+		int BaseEchoInt(int s);
 	}
 }

@@ -51,7 +51,7 @@ namespace GoreRemoting.Tests
 			var proxy = client.CreateProxy<ITestService>();
 
 			var result = proxy.BaseEcho("lol");
-			var result2 = proxy.BaseEchoGen<int>(3);
+			var result2 = proxy.BaseEchoInt(3);
 
 			Assert.Equal("lol", result);
 			Assert.Equal(3, result2);
@@ -409,9 +409,9 @@ namespace GoreRemoting.Tests
 
 		public interface IGenericEchoService
 		{
-			T Echo<T>(T value);
+			string Echo(string value);
 
-			List<T> Echo2<T>(List<T> value);
+			List<int> Echo2(List<int> value);
 
 			void a();
 
@@ -428,7 +428,7 @@ namespace GoreRemoting.Tests
 
 		public class GenericEchoService : IGenericEchoService
 		{
-			public T Echo<T>(T value)
+			public string Echo(string value)
 			{
 				return value;
 			}
@@ -438,7 +438,7 @@ namespace GoreRemoting.Tests
 				// test smallest payload
 			}
 
-			public List<T> Echo2<T>(List<T> value)
+			public List<int> Echo2(List<int> value)
 			{
 				return value;
 			}
@@ -483,8 +483,8 @@ namespace GoreRemoting.Tests
 			var result = proxy.Echo("Yay");
 			Assert.Equal("Yay", result);
 
-			var result2 = proxy.Echo(42);
-			Assert.Equal(42, result2);
+			//var result2 = proxy.Echo(42);
+			//Assert.Equal(42, result2);
 
 			var result3 = proxy.Echo2(new List<int> { 1, 2, 3 });
 			Assert.Equal(3, result3.Count);
@@ -738,7 +738,9 @@ namespace GoreRemoting.Tests
 		public interface IDelegateTest2
 		{
 			string Test(Func<S1, R1> echo, Func<S2, R2> echo2, Func<S3, R3> echo3);
-			string Test(Action<S1> echo, Func<S2, R2> echo2, Action<S3> echo3);
+			string Test2(Action<S1> echo, Func<S2, R2> echo2, Action<S3> echo3);
+
+			string Test3(Action<S1> echo, Func<S2, Task<R2>> echo2, Action<S3> echo3);
 		}
 
 
@@ -755,7 +757,7 @@ namespace GoreRemoting.Tests
 				throw new NotImplementedException();
 			}
 
-			public string Test(Action<S1> echo, Func<S2, R2> echo2, Action<S3> echo3)
+			public string Test2(Action<S1> echo, Func<S2, R2> echo2, Action<S3> echo3)
 			{
 				int i = 0, i1 = 0, i2 = 0;
 				var t1 = new Thread(() =>
@@ -774,6 +776,58 @@ namespace GoreRemoting.Tests
 					while (run)
 					{
 						var r = echo2(new S2("Yhello"));
+						Assert.Equal("Yhellohi", r.r2);
+						i1++;
+					}
+				});
+				t2.Start();
+				var t3 = new Thread(() =>
+				{
+					while (run)
+					{
+						//var r = 
+						echo3(new S3("Xhello"));
+						//Assert.Equal("Xhello", r.r3);
+						i2++;
+					}
+				});
+				t3.Start();
+
+				Thread.Sleep(1000);
+
+				Assert.True(i > 0);
+				Assert.True(i1 > 0);
+				Assert.True(i2 > 0);
+
+
+				run = false;
+
+				t1.Join();
+				t2.Join();
+				t3.Join();
+
+				return "רזו";
+			}
+
+			public string Test3(Action<S1> echo, Func<S2, Task<R2>> echo2, Action<S3> echo3)
+			{
+				int i = 0, i1 = 0, i2 = 0;
+				var t1 = new Thread(() =>
+				{
+					while (run)
+					{
+						//var r = 
+						echo(new S1("hello"));
+						//Assert.Equal("hello", r.r1);
+						i++;
+					}
+				});
+				t1.Start();
+				var t2 = new Thread(async () =>
+				{
+					while (run)
+					{
+						var r = await echo2(new S2("Yhello"));
 						Assert.Equal("Yhellohi", r.r2);
 						i1++;
 					}
@@ -866,7 +920,7 @@ namespace GoreRemoting.Tests
 			wasHere2 = false;
 			wasHere3 = false;
 
-			var res = proxy.Test((e) =>
+			var res = proxy.Test2((e) =>
 			{
 
 				wasHere = true;
@@ -888,13 +942,43 @@ namespace GoreRemoting.Tests
 			Assert.True(wasHere);
 			Assert.True(wasHere2);
 			Assert.True(wasHere3);
+
+
+			wasHere = false;
+			wasHere2 = false;
+			wasHere3 = false;
+
+			res = proxy.Test3((e) =>
+			{
+
+				wasHere = true;
+				//return new(e + "hi");
+			}, async (e2) =>
+			{
+
+				wasHere2 = true;
+				return new(e2.s2 + "hi");
+			}, (e3) =>
+			{
+
+				wasHere3 = true;
+				//return new(e3 + "hi");
+			});
+
+			Assert.Equal("רזו", res);
+
+			Assert.True(wasHere);
+			Assert.True(wasHere2);
+			Assert.True(wasHere3);
+
+
 		}
 
 		public interface IVarArgTest
 		{
-			int[] Test(int a, params int[] b);
+			int[] Test0(int a, params int[] b);
 
-			Task<int> Test(Func<int, Task<int>> lol);
+			Task<int> Test1(Func<int, Task<int>> lol);
 
 			ValueTask<int> Test2(Func<int, ValueTask<int>> lol);
 
@@ -918,7 +1002,7 @@ namespace GoreRemoting.Tests
 
 		public class VarArgTest : IVarArgTest
 		{
-			public int[] Test(int a, params int[] b)
+			public int[] Test0(int a, params int[] b)
 			{
 				var l = new List<int>();
 				l.Add(a);
@@ -926,7 +1010,7 @@ namespace GoreRemoting.Tests
 				return l.ToArray();
 			}
 
-			public async Task<int> Test(Func<int, Task<int>> lol)
+			public async Task<int> Test1(Func<int, Task<int>> lol)
 			{
 				try
 				{
@@ -1142,13 +1226,13 @@ namespace GoreRemoting.Tests
 
 			var proxy = client.CreateProxy<IVarArgTest>();
 			{
-				var r1 = proxy.Test(1);
+				var r1 = proxy.Test0(1);
 				Assert.Single(r1);
 				Assert.Equal(1, r1[0]);
 			}
 
 			{
-				var r2 = proxy.Test(1, 2, 3);
+				var r2 = proxy.Test0(1, 2, 3);
 				Assert.Equal(3, r2.Length);
 				Assert.Equal(1, r2[0]);
 				Assert.Equal(2, r2[1]);
@@ -1156,14 +1240,14 @@ namespace GoreRemoting.Tests
 			}
 
 			{
-				var r3 = proxy.Test(1, 2);
+				var r3 = proxy.Test0(1, 2);
 				Assert.Equal(2, r3.Length);
 				Assert.Equal(1, r3[0]);
 				Assert.Equal(2, r3[1]);
 			}
 
 			{
-				var v = await proxy.Test(async (a) =>
+				var v = await proxy.Test1(async (a) =>
 				{
 					Assert.Equal(42, a);
 					await Task.CompletedTask;

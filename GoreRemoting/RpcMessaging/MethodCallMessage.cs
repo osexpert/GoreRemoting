@@ -30,18 +30,11 @@ namespace GoreRemoting.RpcMessaging
 		/// </summary>
 		public CallContextEntry[] CallContextSnapshot { get; set; }
 
-		/// <summary>
-		/// Gets or sets an array of generic type parameter names.
-		/// </summary>
-		//public string[] GenericArgumentTypeNames { get; set; }
-
-		public bool IsGenericMethod { get; set; }
 
 		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
 			w.Write(ServiceName);
 			w.Write(MethodName);
-			w.Write(IsGenericMethod);
 
 			w.WriteVarInt(Arguments.Length);
 			foreach (var a in Arguments)
@@ -52,7 +45,6 @@ namespace GoreRemoting.RpcMessaging
 		{
 			ServiceName = r.ReadString();
 			MethodName = r.ReadString();
-			IsGenericMethod = r.ReadBoolean();
 
 			var n = r.ReadVarInt();
 			Arguments = new MethodCallArgument[n];

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Reflection;
 using BF = System.Runtime.Serialization.Formatters.Binary;
 
 namespace GoreRemoting.Serialization.BinaryFormatter
@@ -217,6 +218,11 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 			var e = (Exception)DeserializeSafe(binaryFormatter, ms, Options);
 			ExceptionHelper.SetRemoteStackTrace(e, e.StackTrace);
 			return e;
+		}
+
+		public object? Deserialize(Type type, object? value)
+		{
+			return value;
 		}
 	}
 

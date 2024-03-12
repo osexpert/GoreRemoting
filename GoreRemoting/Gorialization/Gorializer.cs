@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using GoreRemoting.Serialization;
 using Grpc.Net.Compression;
@@ -78,6 +79,26 @@ namespace GoreRemoting
 				return compressor.CreateDecompressionStream(ms);
 			else
 				return null;// new NonDisposablePassthruStream(ms);
+		}
+
+		public static object?[] DeserializeArguments(ISerializerAdapter ser, MethodInfo method, object?[] parameterValues)
+		{
+			object?[] res = new object[parameterValues.Length];
+
+			var prms = method.GetParameters();
+			for (int i = 0; i < prms.Length; i++)
+			{
+				var p = prms[i];
+				var v = parameterValues[i];
+				if (v != null)
+				{
+					var t = p.ParameterType;
+					if (t.IsByRef)
+						t = t.GetElementType();
+					res[i] = ser.Deserialize(t, v);
+				}
+			}
+			return res;
 		}
 	}
 

@@ -10,30 +10,30 @@ namespace GoreRemoting
 	/// </summary>
 	public static class CallContext
 	{
-		private static readonly ConcurrentDictionary<string, AsyncLocal<object?>> State =
-			new ConcurrentDictionary<string, AsyncLocal<object?>>();
+		private static readonly ConcurrentDictionary<string, AsyncLocal<string?>> State =
+			new ConcurrentDictionary<string, AsyncLocal<string?>>();
 
 		/// <summary>
 		/// Stores a given object and associates it with the specified name.
 		/// </summary>
 		/// <param name="name">The name with which to associate the new item in the call context.</param>
 		/// <param name="data">The object to store in the call context.</param>
-		public static void SetData(string name, object? data) =>
-			State.GetOrAdd(name, _ => new AsyncLocal<object?>()).Value = data;
+		public static void SetData(string name, string? data) =>
+			State.GetOrAdd(name, _ => new AsyncLocal<string?>()).Value = data;
 
 		/// <summary>
 		/// Retrieves an object with the specified name from the <see cref="CallContext"/>.
 		/// </summary>
 		/// <param name="name">The name of the item in the call context.</param>
 		/// <returns>The object in the call context associated with the specified name, or <see langword="null"/> if not found.</returns>
-		public static object? GetData(string name) =>
-			State.TryGetValue(name, out AsyncLocal<object?> data) ? data.Value : null;
+		public static string? GetData(string name) =>
+			State.TryGetValue(name, out AsyncLocal<string?> data) ? data.Value : null;
 
 		/// <summary>
 		/// Gets a serializable snapshot of the current call context.
 		/// </summary>
 		/// <returns>Array of call context entries</returns>
-		public static CallContextEntry[] GetSnapshot()
+		internal static CallContextEntry[] GetSnapshot()
 		{
 			var stateSnaphsot = State.ToArray();
 			var result = new CallContextEntry[stateSnaphsot.Length];
@@ -57,7 +57,7 @@ namespace GoreRemoting
 		/// Restore the call context from a snapshot.
 		/// </summary>
 		/// <param name="entries">Call context entries</param>
-		public static void RestoreFromSnapshot(IEnumerable<CallContextEntry> entries)
+		internal static void RestoreFromSnapshot(IEnumerable<CallContextEntry> entries)
 		{
 			if (entries == null)
 			{

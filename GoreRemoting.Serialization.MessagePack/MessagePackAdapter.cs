@@ -108,6 +108,11 @@ namespace GoreRemoting.Serialization.MessagePack
 			};
 		}
 
+		public object? Deserialize(Type type, object? value)
+		{
+			return value;
+		}
+
 		[MessagePackObject(true)]
 		public class ExceptionWrapper
 		{

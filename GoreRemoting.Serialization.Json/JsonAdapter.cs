@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using GoreRemoting.Serialization.BinaryFormatter;
@@ -43,7 +44,7 @@ namespace GoreRemoting.Serialization.Json
 		public void Serialize(Stream stream, object?[] graph)
 		{
 			Dictionary<int, byte[]> byteArrays = new();
-			ObjectOnly[] typeAndObjects = new ObjectOnly[graph.Length];
+			object?[] objects = new object[graph.Length];
 
 			for (int i = 0; i < graph.Length; i++)
 			{
@@ -54,7 +55,7 @@ namespace GoreRemoting.Serialization.Json
 				}
 				else
 				{
-					typeAndObjects[i] = new ObjectOnly(obj);
+					objects[i] = obj;
 				}
 			}
 
@@ -67,32 +68,21 @@ namespace GoreRemoting.Serialization.Json
 				bw.Write(byteArray.Value);
 			}
 
-			JsonSerializer.Serialize<ObjectOnly[]>(stream, typeAndObjects, Options);
+			JsonSerializer.Serialize<object?[]>(stream, objects, Options);
 		}
 
-		class ByteArray
-		{
-			public int Idx;
-			public byte[] Bytes;
+		//class ByteArray
+		//{
+		//	public int Idx;
+		//	public byte[] Bytes;
 
-			public ByteArray(int idx, byte[] bytes)
-			{
-				Idx = idx;
-				Bytes = bytes;
-			}
-		}
+		//	public ByteArray(int idx, byte[] bytes)
+		//	{
+		//		Idx = idx;
+		//		Bytes = bytes;
+		//	}
+		//}
 
-
-		class ObjectOnly
-		{
-			[JsonConverter(typeof(TypelessFormatter))]
-			public object? Data { get; set; }
-
-			public ObjectOnly(object? data)
-			{
-				Data = data;
-			}
-		}
 
 		/// <summary>
 		/// Deserializes raw data back into an object graph.
@@ -112,13 +102,13 @@ namespace GoreRemoting.Serialization.Json
 				byteArrays.Add(idx, bytes);
 			}
 
-			var typeAndObjects = JsonSerializer.Deserialize<ObjectOnly[]>(stream, Options)!;
+			var objects = JsonSerializer.Deserialize<object[]>(stream, Options)!;
 
-			object?[] res = new object?[typeAndObjects.Length];
+			object?[] res = new object?[objects.Length];
 
-			for (int i = 0; i < typeAndObjects.Length; i++)
+			for (int i = 0; i < objects.Length; i++)
 			{
-				var to = typeAndObjects[i];
+				var to = objects[i];
 				if (byteArrays.TryGetValue(i, out var bytes))
 				{
 					if (to != null)
@@ -127,7 +117,7 @@ namespace GoreRemoting.Serialization.Json
 				}
 				else
 				{
-					res[i] = to.Data;
+					res[i] = to;
 				}
 			}
 
@@ -179,7 +169,7 @@ namespace GoreRemoting.Serialization.Json
 
 		public Exception RestoreSerializedException(object ex)
 		{
-			var ew = (ExceptionWrapper)ex;
+			var ew = (ExceptionWrapper)Deserialize(typeof(ExceptionWrapper), ex)!;
 			return ew.Format switch
 			{
 				ExceptionFormat.BinaryFormatter => _bfa.Value.RestoreException(ew.BinaryFormatterData),
@@ -206,6 +196,16 @@ namespace GoreRemoting.Serialization.Json
 				TypeName = ew.TypeName,
 				PropertyData = ew.PropertyData
 			};
+		}
+
+		public object? Deserialize(Type type, object? value)
+		{
+			if (value == null)
+				return null;
+			else if (value is JsonElement je)
+				return je.Deserialize(type, Options);
+			else
+				return value;
 		}
 
 		public string Name => "Json";

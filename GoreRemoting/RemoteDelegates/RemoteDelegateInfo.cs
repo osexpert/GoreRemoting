@@ -8,18 +8,16 @@ namespace GoreRemoting.RemoteDelegates
 
 	public class RemoteDelegateInfo : IGorializer
 	{
-		private string _delegateTypeName;
+
 
 		private bool _hasResult;
 
 		/// <summary>
 		/// Creates a new instance of the RemoteDelegateInfo class.
 		/// </summary>
-		/// <param name="delegateTypeName">Type name of the client delegate</param>
 		/// <param name="hasResult">Has result</param>
-		public RemoteDelegateInfo(string delegateTypeName, bool hasResult)
+		public RemoteDelegateInfo(bool hasResult)
 		{
-			_delegateTypeName = delegateTypeName;
 			_hasResult = hasResult;
 		}
 
@@ -28,10 +26,7 @@ namespace GoreRemoting.RemoteDelegates
 			Deserialize(r);
 		}
 
-		/// <summary>
-		/// Gets the type name of the client delegate.
-		/// </summary>
-		public string DelegateTypeName => _delegateTypeName;
+
 
 		/// <summary>
 		/// HasResult
@@ -40,7 +35,6 @@ namespace GoreRemoting.RemoteDelegates
 
 		public void Deserialize(GoreBinaryReader r)
 		{
-			_delegateTypeName = r.ReadString();
 			_hasResult = r.ReadBoolean();
 		}
 
@@ -51,7 +45,6 @@ namespace GoreRemoting.RemoteDelegates
 
 		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
-			w.Write(_delegateTypeName);
 			w.Write(_hasResult);
 		}
 	}
