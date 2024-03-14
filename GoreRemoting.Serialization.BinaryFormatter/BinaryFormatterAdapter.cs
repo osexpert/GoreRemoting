@@ -149,7 +149,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 					return ToExceptionWrapper(ed, ExceptionFormat.RemoteInvocationException);
 				else
 					throw new NotSupportedException(ExceptionStrategy.ToString());
-			}
+			} 
 			else if (ExceptionStrategy == ExceptionFormatStrategy.UninitializedObject)
 				return ToExceptionWrapper(ExceptionSerializationHelpers.GetExceptionData(ex), ExceptionFormat.UninitializedObject);
 			else if (ExceptionStrategy == ExceptionFormatStrategy.RemoteInvocationException)
@@ -200,25 +200,25 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 
 		public string Name => "BinaryFormatter";
 
-		public byte[] GetExceptionData(Exception e)
-		{
-			if (!e.GetType().IsSerializable)
-				throw new Exception("Not Serializable");
+		//public byte[] GetExceptionData(Exception e)
+		//{
+		//	if (!e.GetType().IsSerializable)
+		//		throw new Exception("Not Serializable");
 
-			var binaryFormatter = GetFormatter();
-			using var ms = PooledMemoryStream.GetStream();
-			SerializeSafe(binaryFormatter, ms, e, Options);
-			return ms.ToArray();
-		}
+		//	var binaryFormatter = GetFormatter();
+		//	using var ms = PooledMemoryStream.GetStream();
+		//	SerializeSafe(binaryFormatter, ms, e, Options);
+		//	return ms.ToArray();
+		//}
 
-		public Exception RestoreException(byte[] data)
-		{
-			var binaryFormatter = GetFormatter();
-			using var ms = new MemoryStream(data);
-			var e = (Exception)DeserializeSafe(binaryFormatter, ms, Options);
-			ExceptionHelper.SetRemoteStackTrace(e, e.StackTrace);
-			return e;
-		}
+		//public Exception RestoreException(byte[] data)
+		//{
+		//	var binaryFormatter = GetFormatter();
+		//	using var ms = new MemoryStream(data);
+		//	var e = (Exception)DeserializeSafe(binaryFormatter, ms, Options);
+		//	ExceptionHelper.SetRemoteStackTrace(e, e.StackTrace);
+		//	return e;
+		//}
 
 		public object? Deserialize(Type type, object? value)
 		{
@@ -239,6 +239,42 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 
 		public List<ISurrogate> Surrogates { get; } = new();
 
+	}
+
+	public enum ExceptionFormatStrategy
+	{
+		/// <summary>
+		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)
+		/// </summary>
+		BinaryFormatterOrUninitializedObject = 1,
+		/// <summary>
+		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as RemoteInvocationException)
+		/// </summary>
+		BinaryFormatterOrRemoteInvocationException = 2,
+		/// <summary>
+		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
+		/// </summary>
+		UninitializedObject = 3,
+		/// <summary>
+		/// Always type RemoteInvocationException, with only Message, StackTrace, ClassName and PropertyData set
+		/// </summary>
+		RemoteInvocationException = 4
+	}
+
+	public enum ExceptionFormat
+	{
+		/// <summary>
+		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)
+		/// </summary>
+		BinaryFormatter = 1,
+		/// <summary>
+		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
+		/// </summary>
+		UninitializedObject = 2,
+		/// <summary>
+		/// Always type RemoteInvocationException, with only Message, StackTrace, ClassName and PropertyData set
+		/// </summary>
+		RemoteInvocationException = 3
 	}
 
 }

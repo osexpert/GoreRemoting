@@ -215,39 +215,7 @@ namespace GoreRemoting
 		public Dictionary<string, string> PropertyData;
 	}
 
-	public enum ExceptionFormatStrategy
-	{
-		/// <summary>
-		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)
-		/// </summary>
-		BinaryFormatterOrUninitializedObject = 1,
-		/// <summary>
-		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as RemoteInvocationException)
-		/// </summary>
-		BinaryFormatterOrRemoteInvocationException = 2,
-		/// <summary>
-		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
-		/// </summary>
-		UninitializedObject = 3,
-		/// <summary>
-		/// Always type RemoteInvocationException, with only Message, StackTrace, ClassName and PropertyData set
-		/// </summary>
-		RemoteInvocationException = 4
-	}
 
-	public enum ExceptionFormat
-	{
-		/// <summary>
-		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)
-		/// </summary>
-		BinaryFormatter = 1,
-		/// <summary>
-		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
-		/// </summary>
-		UninitializedObject = 2,
-		/// <summary>
-		/// Always type RemoteInvocationException, with only Message, StackTrace, ClassName and PropertyData set
-		/// </summary>
-		RemoteInvocationException = 3
-	}
+
+
 }

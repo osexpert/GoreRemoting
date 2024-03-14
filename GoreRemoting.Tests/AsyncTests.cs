@@ -300,7 +300,7 @@ namespace GoreRemoting.Tests
 				Assert.Equal(8, lines); // task was cancelled, due too no result message
 			}
 			else
-				Assert.Equal(26, lines);
+				Assert.Equal(9, lines);
 
 			// Most will fail because SerExMistake is private
 
@@ -311,8 +311,8 @@ namespace GoreRemoting.Tests
 			else
 			{
 				// because it can't find "Test"?
-				Assert.IsType<SerializationException>(e1);
-				//Assert.IsType<SerExMistake>(e1);
+				//Assert.IsType<SerializationException>(e1);
+				Assert.IsType<SerExMistake>(e1);
 				//Assert.Equal(1, e1.Data.Count);
 			}
 
@@ -338,7 +338,7 @@ namespace GoreRemoting.Tests
 				Assert.Equal(8, lines2); // failure to desser
 			}
 			else
-				Assert.Equal(26, lines2);
+				Assert.Equal(9, lines2);
 
 			// Most will fail because SerExMistake is private
 
@@ -350,8 +350,8 @@ namespace GoreRemoting.Tests
 			{
 
 				// because it can't find "Test"?
-				Assert.IsType<SerializationException>(e2);
-				//	Assert.IsType<SerExMistakeNotPriv>(e2);
+				//Assert.IsType<SerializationException>(e2);
+				Assert.IsType<SerExMistakeNotPriv>(e2);
 				//	Assert.Equal(1, e2.Data.Count);
 			}
 

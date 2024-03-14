@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
-using GoreRemoting.Serialization.BinaryFormatter;
 using MemoryPack;
 
 namespace GoreRemoting.Serialization.MemoryPack
@@ -12,9 +8,10 @@ namespace GoreRemoting.Serialization.MemoryPack
 
 		public MemoryPackSerializerOptions? Options { get; set; }
 
-		readonly Lazy<BinaryFormatterAdapter> _bfa = new(() => new());
+		//readonly Lazy<BinaryFormatterAdapter> _bfa = new(() => new());
 
-		public ExceptionFormatStrategy ExceptionStrategy { get; set; } = ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject;
+		public ExceptionFormatStrategy ExceptionStrategy { get; set; } = ExceptionFormatStrategy.UninitializedObject;
+			//= ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject;
 
 		/// <summary>
 		/// Serializes an object graph.
@@ -37,26 +34,27 @@ namespace GoreRemoting.Serialization.MemoryPack
 
 		public object GetSerializableException(Exception ex)
 		{
-			if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject ||
-							ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrRemoteInvocationException)
-			{
-				try
-				{
-					// INFO: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
-					if (ex.GetType().IsSerializable)
-						return new ExceptionWrapper { Format = ExceptionFormat.BinaryFormatter, BinaryFormatterData = _bfa.Value.GetExceptionData(ex) };
-				}
-				catch { }
+			//if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject ||
+			//				ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrRemoteInvocationException)
+			//{
+			//	try
+			//	{
+			//		// INFO: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
+			//		if (ex.GetType().IsSerializable)
+			//			return new ExceptionWrapper { Format = ExceptionFormat.BinaryFormatter, BinaryFormatterData = _bfa.Value.GetExceptionData(ex) };
+			//	}
+			//	catch { }
 
-				var ed = ExceptionSerializationHelpers.GetExceptionData(ex);
-				if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject)
-					return ToExceptionWrapper(ed, ExceptionFormat.UninitializedObject);
-				else if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrRemoteInvocationException)
-					return ToExceptionWrapper(ed, ExceptionFormat.RemoteInvocationException);
-				else
-					throw new NotSupportedException(ExceptionStrategy.ToString());
-			}
-			else if (ExceptionStrategy == ExceptionFormatStrategy.UninitializedObject)
+			//	var ed = ExceptionSerializationHelpers.GetExceptionData(ex);
+			//	if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject)
+			//		return ToExceptionWrapper(ed, ExceptionFormat.UninitializedObject);
+			//	else if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrRemoteInvocationException)
+			//		return ToExceptionWrapper(ed, ExceptionFormat.RemoteInvocationException);
+			//	else
+			//		throw new NotSupportedException(ExceptionStrategy.ToString());
+			//}
+			//else
+			if (ExceptionStrategy == ExceptionFormatStrategy.UninitializedObject)
 				return ToExceptionWrapper(ExceptionSerializationHelpers.GetExceptionData(ex), ExceptionFormat.UninitializedObject);
 			else if (ExceptionStrategy == ExceptionFormatStrategy.RemoteInvocationException)
 				return ToExceptionWrapper(ExceptionSerializationHelpers.GetExceptionData(ex), ExceptionFormat.RemoteInvocationException);
@@ -69,7 +67,7 @@ namespace GoreRemoting.Serialization.MemoryPack
 			var ew = (ExceptionWrapper)ex;
 			return ew.Format switch
 			{
-				ExceptionFormat.BinaryFormatter => _bfa.Value.RestoreException(ew.BinaryFormatterData),
+				//ExceptionFormat.BinaryFormatter => _bfa.Value.RestoreException(ew.BinaryFormatterData),
 				ExceptionFormat.UninitializedObject => ExceptionSerializationHelpers.RestoreAsUninitializedObject(ToExceptionData(ew)),
 				ExceptionFormat.RemoteInvocationException => ExceptionSerializationHelpers.RestoreAsRemoteInvocationException(ToExceptionData(ew)),
 				_ => throw new NotSupportedException(ew.Format.ToString())
@@ -119,4 +117,39 @@ namespace GoreRemoting.Serialization.MemoryPack
 		public object?[] Datas { get; set; } = null!;
 	}
 
+	public enum ExceptionFormatStrategy
+	{
+		//	/// <summary>
+		//	/// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)
+		//	/// </summary>
+		//	BinaryFormatterOrUninitializedObject = 1,
+		//	/// <summary>
+		//	/// BinaryFormatter used (if serializable, everything is preserved, else serialized as RemoteInvocationException)
+		//	/// </summary>
+		//	BinaryFormatterOrRemoteInvocationException = 2,
+		/// <summary>
+		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
+		/// </summary>
+		UninitializedObject = 3,
+		/// <summary>
+		/// Always type RemoteInvocationException, with only Message, StackTrace, ClassName and PropertyData set
+		/// </summary>
+		RemoteInvocationException = 4
+	}
+
+	public enum ExceptionFormat
+	{
+		/// <summary>
+		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)
+		/// </summary>
+		BinaryFormatter = 1,
+		/// <summary>
+		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
+		/// </summary>
+		UninitializedObject = 2,
+		/// <summary>
+		/// Always type RemoteInvocationException, with only Message, StackTrace, ClassName and PropertyData set
+		/// </summary>
+		RemoteInvocationException = 3
+	}
 }
