@@ -1,11 +1,11 @@
-﻿#if false
+﻿
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace GoreRemoting.Serialization.Json
 {
-	public class TypelessFormatter : JsonConverter<object>
+	public class ObjectArrayFormatter : JsonConverter<object>
 	{
 
 		public override object? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -34,7 +34,8 @@ namespace GoreRemoting.Serialization.Json
 
 			var typeName = reader.GetString() ?? throw new Exception("no typeName");
 
-			var t = Type.GetType(typeName, true) ?? throw new Exception("no type");
+			var t = typeof(void);// Type.GetType(typeName, true) ?? throw new Exception("no type");
+			throw new NotImplementedException();
 
 			if (!reader.Read())
 				throw new Exception("not read 3");
@@ -87,4 +88,3 @@ namespace GoreRemoting.Serialization.Json
 		}
 	}
 }
-#endif

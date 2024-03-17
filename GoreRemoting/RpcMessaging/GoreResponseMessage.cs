@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using GoreRemoting.Serialization;
 using Grpc.Net.Compression;
 
@@ -9,23 +10,30 @@ namespace GoreRemoting.RpcMessaging
 
 	public class GoreResponseMessage : IGorializer
 	{
+		internal string ServiceName { get; }
+		internal string MethodName { get; }
+
 		internal ISerializerAdapter Serializer { get; }
 		internal ICompressionProvider? Compressor { get; }
 
-		public GoreResponseMessage(DelegateCallMessage callMsg, ISerializerAdapter serializer, ICompressionProvider? compressor)
+		public GoreResponseMessage(DelegateCallMessage callMsg, string serviceName, string methodName, ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			DelegateCall = callMsg;
 			ResponseType = ResponseType.DelegateCall;
 			Serializer = serializer;
 			Compressor = compressor;
+			ServiceName = serviceName;
+			MethodName = methodName;
 		}
 
-		public GoreResponseMessage(MethodResultMessage resultMessage, ISerializerAdapter serializer, ICompressionProvider? compressor)
+		public GoreResponseMessage(MethodResultMessage resultMessage, string serviceName, string methodName, ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			MethodResult = resultMessage;
 			ResponseType = ResponseType.MethodResult;
 			Serializer = serializer;
 			Compressor = compressor;
+			ServiceName = serviceName;
+			MethodName = methodName;
 		}
 
 		/// <summary>
@@ -71,14 +79,16 @@ namespace GoreRemoting.RpcMessaging
 				throw new NotImplementedException();
 		}
 
-		internal static GoreResponseMessage Deserialize(Stream s, ResponseType mType, ISerializerAdapter serializer, ICompressionProvider? compressor)
+		internal static GoreResponseMessage Deserialize(Stream s, ResponseType mType,
+			string serviceName, string methodName, MethodInfo method,
+			ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			if (mType == ResponseType.MethodResult)
 				return new GoreResponseMessage(
-					Gorializer.GoreDeserialize<MethodResultMessage>(s, serializer, compressor), serializer, compressor);
+					Gorializer.GoreDeserialize<MethodResultMessage>(s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
 			else if (mType == ResponseType.DelegateCall)
 				return new GoreResponseMessage(
-					Gorializer.GoreDeserialize<DelegateCallMessage>(s, serializer, compressor), serializer, compressor);
+					Gorializer.GoreDeserialize<DelegateCallMessage>(s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
 			else
 				throw new Exception();
 		}
@@ -97,14 +107,17 @@ namespace GoreRemoting.RpcMessaging
 
 	public enum ResponseType
 	{
+		//MethodCall = 1,
+		//DelegateResult = 2
+
 		/// <summary>
 		/// Result
 		/// </summary>
-		MethodResult = 1,
+		MethodResult = 3,
 		/// <summary>
 		/// Delegate
 		/// </summary>
-		DelegateCall = 2,
+		DelegateCall = 4,
 	}
 
 }

@@ -21,6 +21,10 @@ namespace GoreRemoting.RpcMessaging
 		/// </summary>
 		public string ParameterName { get; set; }
 
+
+		public int Position { get; set; }
+
+
 		/// <summary>
 		/// Gets or sets the out value of the parameter.
 		/// </summary>
@@ -29,6 +33,8 @@ namespace GoreRemoting.RpcMessaging
 		public void Deserialize(GoreBinaryReader r)
 		{
 			ParameterName = r.ReadString();
+			Position = r.ReadVarInt();
+			
 		}
 
 		public void Deserialize(Stack<object?> st)
@@ -39,6 +45,9 @@ namespace GoreRemoting.RpcMessaging
 		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
 			w.Write(ParameterName);
+			w.WriteVarInt(Position);
+			
+
 			st.Push(OutValue);
 		}
 	}

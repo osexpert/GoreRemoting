@@ -40,8 +40,10 @@ namespace GoreRemoting
 		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
 			w.Write(Name);
-			w.Write(Value != null);
-			if (Value != null)
+
+			var hasValue = Value != null;
+			w.Write(hasValue);
+			if (hasValue)
 				w.Write(Value);
 		}
 	}

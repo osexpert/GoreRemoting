@@ -19,6 +19,7 @@ namespace GoreRemoting.Tests
 				{
 					TestMethodFake = _ =>
 					{
+						// I don't think it is possible to test this in same process...
 						CallContext.SetData("test", "Changed");
 						CallContext.SetData("test2", null);
 						return (string)CallContext.GetData("test")!;
@@ -43,6 +44,7 @@ namespace GoreRemoting.Tests
 				new Thread(async () =>
 				{
 					CallContext.SetData("test", "CallContext");
+					Assert.Equal("CallContext", CallContext.GetData("test"));
 
 					await using var client = new NativeClient(9093, new ClientConfig(Serializers.GetSerializer(ser)));
 
@@ -55,6 +57,7 @@ namespace GoreRemoting.Tests
 
 					Assert.NotEqual(localCallContextValueBeforeRpc, result);
 					Assert.Equal("Changed", result);
+					Assert.Equal("Changed", CallContext.GetData("test"));
 					Assert.Equal("Changed", localCallContextValueAfterRpc);
 				});
 

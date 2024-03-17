@@ -11,14 +11,14 @@ namespace GoreRemoting.Serialization
 	{
 		void Serialize(Stream stream, object?[] graph);
 
-		object?[] Deserialize(Stream stream);
+		object?[] Deserialize(Stream stream, Type[] types);
 
 		object GetSerializableException(Exception ex);
 
 		Exception RestoreSerializedException(object ex);
 
-		object? Deserialize(Type type, object? value);
-
 		string Name { get; }
+
+		Type ExceptionType { get; }
 	}
 }

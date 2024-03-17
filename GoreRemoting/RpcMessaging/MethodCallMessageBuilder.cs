@@ -13,12 +13,10 @@ namespace GoreRemoting.RpcMessaging
 		/// <summary>
 		/// Builds a new method call message.
 		/// </summary>
-		/// <param name="remoteServiceName">Unique name of the remote service that should be called</param>
 		/// <param name="targetMethod">Target method information</param>
 		/// <param name="args">Array of arguments, which should passed a parameters</param>
 		/// <returns>The created method call message</returns>
 		public MethodCallMessage BuildMethodCallMessage(
-			string remoteServiceName,
 			MethodInfo targetMethod,
 			object?[] args,
 			bool setCallContext)
@@ -30,8 +28,6 @@ namespace GoreRemoting.RpcMessaging
 
 			var message = new MethodCallMessage()
 			{
-				ServiceName = remoteServiceName,
-				MethodName = targetMethod.Name,
 				Arguments = BuildMethodParameterInfos(
 					targetMethod,
 					 args
@@ -39,7 +35,7 @@ namespace GoreRemoting.RpcMessaging
 			};
 
 			if (setCallContext)
-				message.CallContextSnapshot = CallContext.GetSnapshot();
+				message.CallContextSnapshot = CallContext.GetChangedSnapshot();
 
 			return message;
 		}
@@ -90,8 +86,10 @@ namespace GoreRemoting.RpcMessaging
 				yield return
 					new MethodCallArgument()
 					{
+						Position = i,
 						ParameterName = parameterInfo.Name,
-						Value = arg// parameterValue
+						Value = arg,// parameterValue
+						IsOut = parameterInfo.IsOutParameterForReal()
 					};
 			}
 		}
@@ -112,9 +110,16 @@ namespace GoreRemoting.RpcMessaging
 
 			var parameterInfos = method.GetParameters();
 
+			bool voidReturn = 
+				method.ReturnType == typeof(void)
+				|| method.ReturnType == typeof(Task) 
+				|| method.ReturnType == typeof(ValueTask);
+
 			var message = new MethodResultMessage()
 			{
-				ReturnValue = returnValue
+				// fixme: ctor
+				Value = returnValue,
+				ResultType = voidReturn ? ResultKind.ResultVoid : ResultKind.ResultValue
 			};
 
 			var outArguments = new List<MethodOutArgument>();
@@ -130,6 +135,7 @@ namespace GoreRemoting.RpcMessaging
 						new MethodOutArgument()
 						{
 							ParameterName = parameterInfo.Name,
+							Position = i,
 							OutValue = arg // NOT
 						});
 				}
@@ -138,7 +144,7 @@ namespace GoreRemoting.RpcMessaging
 			message.OutArguments = outArguments.ToArray();
 
 			if (setCallContext)
-				message.CallContextSnapshot = CallContext.GetSnapshot();
+				message.CallContextSnapshot = CallContext.GetChangedSnapshot();
 
 			return message;
 		}

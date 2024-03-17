@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Net.Mail;
 using System.Reflection;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
@@ -45,6 +46,8 @@ namespace GoreRemoting
 				throw new Exception("Unsupported version " + version);
 			var serializerName = br.ReadString();
 			var compressorName = br.ReadString();
+			var serviceName = br.ReadString();
+			var methodName = br.ReadString();
 			var mType = (RequestType)br.ReadByte();
 
 			var serializer = _config.GetSerializerByName(serializerName);
@@ -55,8 +58,36 @@ namespace GoreRemoting
 				compressor = _config.GetCompressorByName(compressorName);
 			}
 
-			return GoreRequestMessage.Deserialize(s, mType, serializer, compressor);
+			MethodInfo method = GetServiceMethod(serviceName, methodName);
+
+			return GoreRequestMessage.Deserialize(s, mType, serviceName, methodName, method, serializer, compressor);
 		}
+
+		private MethodInfo GetServiceMethod(string serviceName, string methodName)
+		{
+			if (_serviceMethodCache.TryGetValue((serviceName, methodName), out var mi))
+				return mi;
+
+			var serviceInterfaceType = GetServiceType(serviceName);
+
+			var all_methods = serviceInterfaceType.GetMethods();
+
+			var methods = all_methods.Where(m => m.Name == methodName);
+
+			if (!methods.Any())
+				throw new MissingMethodException($"Method not found: {serviceName}.{methodName}");
+			else if (methods.Count() > 1)
+				throw new MissingMethodException($"More than one method: {serviceName}.{methodName}");
+			else if (methods.Single().IsGenericMethod)
+				throw new MissingMethodException($"Generic method not supported: {serviceName}.{methodName}");
+			var method = methods.Single();
+
+			_serviceMethodCache.TryAdd((serviceName, methodName), method);
+
+			return method;
+		}
+
+		ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodCache = new ConcurrentDictionary<(string, string), MethodInfo>();
 
 		private void SerializeRequest(GoreRequestMessage arg, SerializationContext sc)
 		{
@@ -78,6 +109,8 @@ namespace GoreRemoting
 					bw.Write((byte)Constants.SerializationVersion); // version
 					bw.Write(arg.Serializer.Name);
 					bw.Write(arg.Compressor?.EncodingName ?? string.Empty);
+					bw.Write(arg.ServiceName);
+					bw.Write(arg.MethodName);
 					bw.Write((byte)arg.ResponseType);
 
 					arg.Serialize(s);
@@ -175,12 +208,16 @@ namespace GoreRemoting
 				new DelegateProxy(delegateType,
 				(method, delegateArgs) =>
 				{
-					var r = callDelegate(method, new DelegateCallMessage { Arguments = delegateArgs, Position = position, OneWay = !remoteDelegateInfo.HasResult });
+					var r = callDelegate(method, new DelegateCallMessage { Arguments = delegateArgs, Position = position,
+						ParameterName = method.Name,
+						OneWay = !remoteDelegateInfo.HasResult });
 					return r;
 				},
 				(method, delegateArgs) => // async
 				{
-					var r = callDelegateAsync(method, new DelegateCallMessage { Arguments = delegateArgs, Position = position, OneWay = !remoteDelegateInfo.HasResult });
+					var r = callDelegateAsync(method, new DelegateCallMessage { Arguments = delegateArgs,
+						ParameterName = method.Name,
+						Position = position, OneWay = !remoteDelegateInfo.HasResult });
 					return r;
 				});
 
@@ -206,28 +243,12 @@ namespace GoreRemoting
 			GoreRequestMessage request,
 			Func<Task<GoreRequestMessage>> req, Func<GoreResponseMessage, Task> reponse, ServerCallContext context)
 		{
-
 			var callMessage = request.MethodCallMessage;
-
-			var serviceInterfaceType = GetServiceType(callMessage.ServiceName);
-
-			var all_methods = serviceInterfaceType.GetMethods();
-
-			var methods = all_methods.Where(m => m.Name == callMessage.MethodName);
-
-			if (!methods.Any())
-				throw new MissingMethodException($"Method not found: {callMessage.ServiceName}.{callMessage.MethodName}");
-			else if (methods.Count() > 1)
-				throw new MissingMethodException($"More than one method: {callMessage.ServiceName}.{callMessage.MethodName}");
-			else if (methods.Single().IsGenericMethod)
-				throw new MissingMethodException($"Generic method not supported: {callMessage.ServiceName}.{callMessage.MethodName}");
-
-			var method = methods.Single();
 
 			if (_config.RestoreCallContext)
 				CallContext.RestoreFromSnapshot(callMessage.CallContextSnapshot);
 
-			var parameterTypes = method.GetParameters().Select(p => p.ParameterType).ToArray();
+			var parameterTypes = request.Method.GetParameters().Select(p => p.ParameterType).ToArray();
 
 			var parameterValues = callMessage.UnwrapParametersFromDeserializedMethodCallMessage();
 
@@ -239,7 +260,7 @@ namespace GoreRemoting
 			parameterValues = MapArguments(parameterValues, parameterTypes,
 			(method, delegateCallMsg) =>
 			{
-				var delegateCallResponseMsg = new GoreResponseMessage(delegateCallMsg, request.Serializer, request.Compressor);
+				var delegateCallResponseMsg = new GoreResponseMessage(delegateCallMsg, request.ServiceName, request.MethodName, request.Serializer, request.Compressor);
 
 				// send respose to client and client will call the delegate via DelegateProxy
 				// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
@@ -275,15 +296,15 @@ namespace GoreRemoting
 						if (msg.Position != delegateCallMsg.Position)
 							throw new Exception("Incorrect result position");
 
-						if (msg.Exception != null)
-							throw request.Serializer.RestoreSerializedException(msg.Exception);
+						if (msg.ReturnKind == DelegateResultType.Exception)// msg.Exception != null)
+							throw request.Serializer.RestoreSerializedException(msg.Value!);
 
 						if (msg.StreamingStatus == StreamingStatus.Active)
 							activeStreamingDelegatePosition = msg.Position;
 						else if (msg.StreamingStatus == StreamingStatus.Done)
 							throw new StreamingDoneException();
 
-						return request.Serializer.Deserialize(method.ReturnType, msg.Result);
+						return msg.Value;// request.Serializer.Deserialize(method.ReturnType, msg.Result);
 					}
 				}
 				finally
@@ -293,7 +314,7 @@ namespace GoreRemoting
 			},
 			async (method, delegateCallMsg) =>
 			{
-				var delegateCallReponseMsg = new GoreResponseMessage(delegateCallMsg, request.Serializer, request.Compressor);
+				var delegateCallReponseMsg = new GoreResponseMessage(delegateCallMsg, request.ServiceName, request.MethodName, request.Serializer, request.Compressor);
 
 				// send respose to client and client will call the delegate via DelegateProxy
 				// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
@@ -330,8 +351,8 @@ namespace GoreRemoting
 						if (msg.Position != delegateCallMsg.Position)
 							throw new Exception("Incorrect result position");
 
-						if (msg.Exception != null)
-							throw request.Serializer.RestoreSerializedException(msg.Exception);
+						if (msg.ReturnKind == DelegateResultType.Exception)// msg.Exception != null)
+							throw request.Serializer.RestoreSerializedException(msg.Value!);
 
 						if (msg.StreamingStatus == StreamingStatus.Active)
 							activeStreamingDelegatePosition = msg.Position;
@@ -340,11 +361,11 @@ namespace GoreRemoting
 
 						if (method.ReturnType.IsGenericType)
 						{
-							// a Task<T>, ValueTask<T>, etc.
-							return request.Serializer.Deserialize(method.ReturnType.GetGenericArguments().Single(), msg.Result);
+							// a Task<T>, ValueTask<T>, etc. since we are async
+							return msg.Value;//  request.Serializer.Deserialize(method.ReturnType.GetGenericArguments().Single(), msg.Result);
 						}
 						else
-							return msg.Result;
+							return msg.Value;
 					}
 				}
 				finally
@@ -365,16 +386,16 @@ namespace GoreRemoting
 
 			try
 			{
-				service = GetService(callMessage.ServiceName, /*method,*/ context);
+				service = GetService(request.ServiceName, /*method,*/ context);
 
 				callContext = _config.CreateCallContext?.Invoke();
-				callContext?.Start(context, callMessage.ServiceName, callMessage.MethodName, service, method, parameterValues);
+				callContext?.Start(context, request.ServiceName, request.MethodName, service, request.Method, parameterValues);
 
 				// translate from eg JsonElement to real type
-				parameterValues = Gorializer.DeserializeArguments(request.Serializer, method, parameterValues);
+				//parameterValues = Gorializer.DeserializeArguments(request.Serializer, request.Method, parameterValues);
 
-				result = method.Invoke(service, parameterValues);
-				result = await TaskResultHelper.GetTaskResult(method, result);
+				result = request.Method.Invoke(service, parameterValues);
+				result = await TaskResultHelper.GetTaskResult(request.Method, result);
 
 				callContext?.Success(result);
 			}
@@ -409,7 +430,7 @@ namespace GoreRemoting
 			{
 				resultMessage =
 					MethodCallMessageBuilder.BuildMethodCallResultMessage(
-							method: method,
+							method: request.Method,
 							args: parameterValues,
 							returnValue: result,
 							setCallContext: _config.SetCallContext);
@@ -417,10 +438,10 @@ namespace GoreRemoting
 			else
 			{
 				var serEx = request.Serializer.GetSerializableException(ex2);
-				resultMessage = new MethodResultMessage { Exception = serEx };
+				resultMessage = new MethodResultMessage { Value = serEx, ResultType = ResultKind.Exception };
 			}
 
-			var responseMsg = new GoreResponseMessage(resultMessage, request.Serializer, request.Compressor);
+			var responseMsg = new GoreResponseMessage(resultMessage, request.ServiceName, request.MethodName, request.Serializer, request.Compressor);
 
 			// This will block new delegates and wait until existing ones have left. We then get exlusive lock and set the flag.
 			await responseLock.EnterWriteLockAsync().ConfigureAwait(false);

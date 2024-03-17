@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Reflection;
 using System.Threading.Tasks;
 using GoreRemoting.RpcMessaging;
 using Grpc.Core;
@@ -39,6 +41,8 @@ namespace GoreRemoting
 					bw.Write((byte)Constants.SerializationVersion); // version
 					bw.Write(arg.Serializer.Name);
 					bw.Write(arg.Compressor?.EncodingName ?? string.Empty);
+					bw.Write(arg.ServiceName);
+					bw.Write(arg.MethodName);
 					bw.Write((byte)arg.RequestType);
 
 					arg.Serialize(s);
@@ -60,6 +64,8 @@ namespace GoreRemoting
 				throw new Exception("Unsupported version " + version);
 			var serializerName = br.ReadString();
 			var compressorName = br.ReadString();
+			var serviceName = br.ReadString();
+			var methodName = br.ReadString();
 			var mType = (ResponseType)br.ReadByte();
 
 			var serializer = _config.GetSerializerByName(serializerName);
@@ -70,7 +76,17 @@ namespace GoreRemoting
 				compressor = _config.GetCompressorByName(compressorName);
 			}
 
-			return GoreResponseMessage.Deserialize(s, mType, serializer, compressor);
+			MethodInfo method = GetServiceMethod(serviceName, methodName);
+
+			return GoreResponseMessage.Deserialize(s, mType, serviceName, methodName, method,
+				serializer, compressor);
+		}
+
+		internal ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodLookup = new ConcurrentDictionary<(string, string), MethodInfo>();
+
+		private MethodInfo GetServiceMethod(string serviceName, string methodName)
+		{
+			return _serviceMethodLookup[(serviceName, methodName)];
 		}
 
 		private void SerializeResponse(GoreResponseMessage arg, SerializationContext sc)
@@ -105,7 +121,7 @@ namespace GoreRemoting
 					call.RequestStream.WriteAsync(req).GetAwaiter().GetResult();
 					while (call.ResponseStream.MoveNext().GetAwaiter().GetResult())
 					{
-						var resultMsg = reponseHandler(call.ResponseStream.Current, requestMsg => call.RequestStream.WriteAsync(requestMsg)).GetAwaiter().GetResult();
+						var resultMsg = reponseHandler(call.ResponseStream.Current, call.RequestStream.WriteAsync).GetAwaiter().GetResult();
 						if (resultMsg != null)
 							return resultMsg;
 					}
@@ -127,7 +143,7 @@ namespace GoreRemoting
 					await call.RequestStream.WriteAsync(req).ConfigureAwait(false);
 					while (await call.ResponseStream.MoveNext().ConfigureAwait(false))
 					{
-						var resultMsg = await reponseHandler(call.ResponseStream.Current, requestMsg => call.RequestStream.WriteAsync(requestMsg)).ConfigureAwait(false);
+						var resultMsg = await reponseHandler(call.ResponseStream.Current, call.RequestStream.WriteAsync).ConfigureAwait(false);
 						if (resultMsg != null)
 							return resultMsg;
 					}

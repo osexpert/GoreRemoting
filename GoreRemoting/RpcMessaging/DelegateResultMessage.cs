@@ -2,35 +2,55 @@
 
 namespace GoreRemoting.RpcMessaging
 {
-	public class DelegateResultMessage : IGorializer
+	public class DelegateResultMessage : IGorializer//, IServiceMethod
 	{
+		public string ParameterName { get; set; }
 		public int Position { get; set; }
 
 		// TODO: could have enum with Result or Exception?
-		public object? Result { get; set; }
+		public object? Value { get; set; }
+
+		public DelegateResultType ReturnKind;
 
 		public StreamingStatus StreamingStatus { get; set; }
 
-		public object? Exception { get; set; }
 
 		public void Deserialize(GoreBinaryReader r)
 		{
+			ParameterName = r.ReadString();
 			Position = r.ReadVarInt();
+
+			ReturnKind = (DelegateResultType)r.ReadByte();
 			StreamingStatus = (StreamingStatus)r.ReadByte();
 		}
 		public void Deserialize(Stack<object?> st)
 		{
-			Result = st.Pop();
-			Exception = st.Pop();
+//			if (ReturnKind != ResultKind.ResultVoid)
+			Value = st.Pop();
+	//		else
+		//		Value = null;
+			//Exception = st.Pop();
 		}
 		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
+			w.Write(ParameterName);
 			w.WriteVarInt(Position);
+
+			w.Write((byte)ReturnKind);
 			w.Write((byte)StreamingStatus);
 
-			st.Push(Result);
-			st.Push(Exception);
+//			if (ReturnKind != ResultKind.ResultVoid)
+			st.Push(Value);
+
+			//st.Push(Exception);
 		}
+	}
+
+	public enum DelegateResultType
+	{
+		ReturnValue = 1,
+//		ReturnVoid = 2,
+		Exception = 3
 	}
 
 	public enum StreamingStatus

@@ -57,11 +57,13 @@ namespace stakx.DynamicProxy
 				var returnTypeDefinition = returnType.GetGenericTypeDefinition();
 				if (returnTypeDefinition == typeof(ValueTask<>))
 				{
-					return typeof(AsyncValueTaskMethodBuilder<>).MakeGenericType(returnType.GetGenericArguments()[0]); // .Single?
+					//return typeof(AsyncValueTaskMethodBuilder<>).MakeGenericType(returnType.GetGenericArguments()[0]); // .Single?
+					return typeof(AsyncValueTaskMethodBuilder<>).MakeGenericType(returnType.GenericTypeArguments.Single()); // .Single?
 				}
 				else if (returnTypeDefinition == typeof(Task<>))
 				{
-					return typeof(AsyncTaskMethodBuilder<>).MakeGenericType(returnType.GetGenericArguments()[0]); // .Single?
+					//return typeof(AsyncTaskMethodBuilder<>).MakeGenericType(returnType.GetGenericArguments()[0]); // .Single?
+					return typeof(AsyncTaskMethodBuilder<>).MakeGenericType(returnType.GenericTypeArguments.Single()); // .Single?
 				}
 			}
 			// NOTE: `AsyncVoidMethodBuilder` is intentionally excluded here because we want to end up in a synchronous

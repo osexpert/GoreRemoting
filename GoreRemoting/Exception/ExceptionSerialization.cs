@@ -36,6 +36,8 @@ namespace GoreRemoting
 				}
 			}
 
+			// Same logic as in dotnet:
+			// Will include namespace but not full instantiation and assembly name.
 			propertyData.Add(ExceptionData.ClassNameKey, ex.GetType().ToString());
 
 			return new ExceptionData
@@ -116,9 +118,10 @@ namespace GoreRemoting
 			return res;
 		}
 
-		public static Exception RestoreAsUninitializedObject(ExceptionData ed)
+		public static Exception RestoreAsUninitializedObject(ExceptionData ed, Type? t)
 		{
-			var t = Type.GetType(ed.TypeName);
+			// TODO: use AllowList and eg.ClassName (Type.ToString())
+
 			if (t == null)
 			{
 				return RestoreAsRemoteInvocationException(ed);

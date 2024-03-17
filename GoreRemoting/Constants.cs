@@ -11,9 +11,11 @@
 		/// v2: 
 		/// - removed type name infos (security, now uses target method types)
 		/// - changed call context to string values
-		/// 
+		/// v3:
+		/// - changed a lot...not pushing all args. Adding ParameterName\Position?
+		/// - Add result types (kind).
 		/// </summary>
-		internal static readonly byte SerializationVersion = 2;
+		internal static readonly byte SerializationVersion = 3;
 
 
 		//	public const string SerializerHeaderKey = "gore-serializer";

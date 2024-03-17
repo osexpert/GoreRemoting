@@ -8,63 +8,66 @@ namespace GoreRemoting.Serialization.MessagePack
 		public string Name => "MessagePack";
 
 		public ExceptionFormatStrategy ExceptionStrategy { get; set; } = ExceptionFormatStrategy.UninitializedObject;
-			//= ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject;
 
 		public MessagePackSerializerOptions? Options { get; set; } = null;
 
 		public void Serialize(Stream stream, object?[] graph)
 		{
-			Datas[] typeAndObjects = new Datas[graph.Length];
-			for (int i = 0; i < graph.Length; i++)
-			{
-				var obj = graph[i];
-				typeAndObjects[i] = new Datas { Data = obj };
-			}
-			MessagePackSerializer.Serialize<Datas[]>(stream, typeAndObjects, Options);
+			//Datas[] typeAndObjects = new Datas[graph.Length];
+			//for (int i = 0; i < graph.Length; i++)
+			//{
+			//	var obj = graph[i];
+			//	typeAndObjects[i] = new Datas { Data = obj };
+			//}
+			MessagePackSerializer.Serialize(stream, graph, Options);
 		}
 
-		public object?[] Deserialize(Stream stream)
+		public object?[] Deserialize(Stream stream, Type[] types)
 		{
-			var typeAndObjects = MessagePackSerializer.Deserialize<Datas[]>(stream, Options)!;
-			object?[] res = new object?[typeAndObjects.Length];
-			for (int i = 0; i < typeAndObjects.Length; i++)
+			object?[] res = new object[types.Length];
+
+			using var r = new MessagePackStreamReader(stream, true);
+
+			var ae = r.ReadArrayAsync(CancellationToken.None).GetAsyncEnumerator();
+			try
 			{
-				var to = typeAndObjects[i];
-				res[i] = to.Data;
+				int i = 0;
+				while (ae.MoveNextAsync().GetAwaiter().GetResult())
+				{
+					var c = ae.Current;
+
+					// problem: if we supported references, we would have lost references in the other arguments (since we desser every arg. individually but serialize together)
+					// So...
+					res[i] = MessagePackSerializer.Deserialize(types[i], c, Options);
+					i++;
+				}
 			}
+			finally
+			{
+				ae.DisposeAsync().GetAwaiter().GetResult();
+			}
+
+			//var typeAndObjects = MessagePackSerializer.Deserialize<Datas[]>(stream, Options)!;
+			//object?[] res = new object?[typeAndObjects.Length];
+			//for (int i = 0; i < typeAndObjects.Length; i++)
+			//{
+			//	var to = typeAndObjects[i];
+			//	res[i] = to.Data;
+			//}
+			//return res;
 			return res;
 		}
 
-		[MessagePackObject]
-		public class Datas
-		{
-			[Key(0)]
-			[MessagePackFormatter(typeof(TypelessFormatter))]
-			public object? Data { get; set; }
-		}
+		//[MessagePackObject]
+		//public class Datas
+		//{
+		//	[Key(0)]
+		//	[MessagePackFormatter(typeof(TypelessFormatter))]
+		//	public object? Data { get; set; }
+		//}
 
 		public object GetSerializableException(Exception ex)
 		{
-			//if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject ||
-			//				ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrRemoteInvocationException)
-			//{
-			//	try
-			//	{
-			//		// INFO: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
-			//		if (ex.GetType().IsSerializable)
-			//			return new ExceptionWrapper { Format = ExceptionFormat.BinaryFormatter, BinaryFormatterData = _bfa.Value.GetExceptionData(ex) };
-			//	}
-			//	catch { }
-
-			//	var ed = ExceptionSerializationHelpers.GetExceptionData(ex);
-			//	if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject)
-			//		return ToExceptionWrapper(ed, ExceptionFormat.UninitializedObject);
-			//	else if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrRemoteInvocationException)
-			//		return ToExceptionWrapper(ed, ExceptionFormat.RemoteInvocationException);
-			//	else
-			//		throw new NotSupportedException(ExceptionStrategy.ToString());
-			//}
-			//else 
 			if (ExceptionStrategy == ExceptionFormatStrategy.UninitializedObject)
 				return ToExceptionWrapper(ExceptionSerializationHelpers.GetExceptionData(ex), ExceptionFormat.UninitializedObject);
 			else if (ExceptionStrategy == ExceptionFormatStrategy.RemoteInvocationException)
@@ -78,8 +81,8 @@ namespace GoreRemoting.Serialization.MessagePack
 			var ew = (ExceptionWrapper)ex;
 			return ew.Format switch
 			{
-			//	ExceptionFormat.BinaryFormatter => _bfa.Value.RestoreException(ew.BinaryFormatterData),
-				ExceptionFormat.UninitializedObject => ExceptionSerializationHelpers.RestoreAsUninitializedObject(ToExceptionData(ew)),
+				// TODO: add exception allow list, use Type.ToString() as lookup
+				ExceptionFormat.UninitializedObject => ExceptionSerializationHelpers.RestoreAsUninitializedObject(ToExceptionData(ew), Type.GetType(ew.TypeName)),
 				ExceptionFormat.RemoteInvocationException => ExceptionSerializationHelpers.RestoreAsRemoteInvocationException(ToExceptionData(ew)),
 				_ => throw new NotSupportedException(ew.Format.ToString())
 			};
@@ -109,6 +112,9 @@ namespace GoreRemoting.Serialization.MessagePack
 			return value;
 		}
 
+		public Type ExceptionType => typeof(ExceptionWrapper);
+
+
 		[MessagePackObject(true)]
 		public class ExceptionWrapper
 		{
@@ -122,14 +128,6 @@ namespace GoreRemoting.Serialization.MessagePack
 
 	public enum ExceptionFormatStrategy
 	{
-		///// <summary>
-		///// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)
-		///// </summary>
-		//BinaryFormatterOrUninitializedObject = 1,
-		///// <summary>
-		///// BinaryFormatter used (if serializable, everything is preserved, else serialized as RemoteInvocationException)
-		///// </summary>
-		//BinaryFormatterOrRemoteInvocationException = 2,
 		/// <summary>
 		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
 		/// </summary>
@@ -142,10 +140,6 @@ namespace GoreRemoting.Serialization.MessagePack
 
 	public enum ExceptionFormat
 	{
-		/// <summary>
-		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)
-		/// </summary>
-		//BinaryFormatter = 1,
 		/// <summary>
 		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
 		/// </summary>

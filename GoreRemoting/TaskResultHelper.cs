@@ -45,6 +45,7 @@ namespace GoreRemoting
 						var valueTaskToTask = typeof(TaskResultHelper)
 							.GetMethod(nameof(ValueTaskToTask), BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.InvokeMethod)
 							.MakeGenericMethod(returnType.GenericTypeArguments.Single());
+						// OR GetGenericArguments ?
 
 						await (Task)valueTaskToTask.Invoke(null, new[] { resultIn });
 

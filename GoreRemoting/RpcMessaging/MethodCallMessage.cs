@@ -8,20 +8,6 @@ namespace GoreRemoting.RpcMessaging
 	/// </summary>
 	public class MethodCallMessage : IGorializer
 	{
-		/// <summary>
-		/// Gets or sets the name of the remote service that should be called.
-		/// </summary>
-		public string ServiceName { get; set; }
-
-		/// <summary>
-		/// Gets or sets the name of the remote method that should be called.
-		/// </summary>
-		public string MethodName { get; set; }
-
-		/// <summary>
-		/// Gets or sets an array of messages that describes the parameters that should be passed to the remote method.
-		/// </summary>
-		//public MethodCallParameterMessage[] Parameters { get; set; }
 
 		public MethodCallArgument[] Arguments { get; set; }
 
@@ -33,29 +19,40 @@ namespace GoreRemoting.RpcMessaging
 
 		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
-			w.Write(ServiceName);
-			w.Write(MethodName);
-
 			w.WriteVarInt(Arguments.Length);
 			foreach (var a in Arguments)
 				a.Serialize(w, st);
+
+			if (CallContextSnapshot == null)
+				w.WriteVarInt(0);
+			else
+			{
+				w.WriteVarInt(CallContextSnapshot.Length);
+				foreach (var entry in CallContextSnapshot)
+					entry.Serialize(w, st);
+			}
 		}
 
 		public void Deserialize(GoreBinaryReader r)
 		{
-			ServiceName = r.ReadString();
-			MethodName = r.ReadString();
-
 			var n = r.ReadVarInt();
 			Arguments = new MethodCallArgument[n];
 			for (int i = 0; i < n; i++)
 				Arguments[i] = new MethodCallArgument(r);
+
+			var c = r.ReadVarInt();
+			CallContextSnapshot = new CallContextEntry[c];
+			for (int j = 0; j < c; j++)
+				CallContextSnapshot[j] = new CallContextEntry(r);
 		}
 
 		public void Deserialize(Stack<object?> st)
 		{
 			foreach (var a in Arguments)
 				a.Deserialize(st);
+
+			foreach (var cc in CallContextSnapshot)
+				cc.Deserialize(st);
 		}
 	}
 }

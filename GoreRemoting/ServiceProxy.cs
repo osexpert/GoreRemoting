@@ -40,6 +40,8 @@ namespace GoreRemoting
 			var args = invocation.Arguments;
 			var targetMethod = invocation.Method;
 
+			_client._serviceMethodLookup.TryAdd((_serviceName, targetMethod.Name), targetMethod);
+
 			(var arguments, var cancel, var streamingDelePos) = MapArguments(targetMethod, args);
 
 			var headers = new Metadata();
@@ -54,33 +56,37 @@ namespace GoreRemoting
 			//	headers.Add(Constants.CompressorHeaderKey, compressor.EncodingName);
 
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
-				remoteServiceName: _serviceName,
 				targetMethod: targetMethod,
 				args: arguments,
 				setCallContext: _client._config.SetCallContext
 				);
 
-			var requestMsg = new GoreRequestMessage(callMessage, serializer, compressor);
+			var requestMsg = new GoreRequestMessage(callMessage, _serviceName, targetMethod.Name, serializer, compressor);
 
 			var resultMessage = _client.Invoke(requestMsg,
 				(callback, res) => HandleResponseAsync(serializer, compressor, callback, res, args, streamingDelePos),
 				new CallOptions(headers: headers, cancellationToken: cancel));
 
-			if (resultMessage.Exception != null)
-				throw serializer.RestoreSerializedException(resultMessage.Exception);
+			if (resultMessage.ResultType == ResultKind.Exception)
+				throw serializer.RestoreSerializedException(resultMessage.Value!);
 
 			var parameterInfos = targetMethod.GetParameters();
 
 			foreach (var outArgument in resultMessage.OutArguments)
 			{
-				var parameterInfo = parameterInfos.Single(p => p.Name == outArgument.ParameterName);
+				var parameterInfo = parameterInfos[outArgument.Position];
+					//.Single(p => p.Name == outArgument.ParameterName);
+
 				// GetElementType() https://stackoverflow.com/a/738281/2671330
-				if (!parameterInfo.ParameterType.IsByRef)
-					throw new Exception("Impossible: out arg but not IsByRef");
-				args[parameterInfo.Position] = serializer.Deserialize(parameterInfo.ParameterType.GetElementType(), outArgument.OutValue);
+				if (!parameterInfo.IsOutParameterForReal())
+					throw new Exception("Impossible: out arg but not IsOut");
+				args[parameterInfo.Position] = outArgument.OutValue;
 			}
 
-			invocation.ReturnValue = serializer.Deserialize(targetMethod.ReturnType, resultMessage.ReturnValue);
+//			if (resultMessage.ResultType == ResultKind.ResultValue)
+			invocation.ReturnValue = resultMessage.Value;
+	//		else // ResultVoid
+		//		invocation.ReturnValue = null;
 
 			// restore context flow from server
 			if (_client._config.RestoreCallContext)
@@ -97,6 +103,8 @@ namespace GoreRemoting
 			var args = invocation.Arguments.ToArray();
 			var targetMethod = invocation.Method;
 
+			_client._serviceMethodLookup.TryAdd((_serviceName, targetMethod.Name), targetMethod);
+
 			(var arguments, var cancel, var streamingDelePos) = MapArguments(targetMethod, args);
 
 			var headers = new Metadata();
@@ -110,32 +118,31 @@ namespace GoreRemoting
 			//	headers.Add(Constants.CompressorHeaderKey, compressor.EncodingName);
 
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
-				remoteServiceName: _serviceName,
 				targetMethod: targetMethod,
 				args: arguments,
 				setCallContext: _client._config.SetCallContext
 				);
 
-			var requestMsg = new GoreRequestMessage(callMessage, serializer, compressor);
+			var requestMsg = new GoreRequestMessage(callMessage, _serviceName, targetMethod.Name, serializer, compressor);
 
 			var resultMessage = await _client.InvokeAsync(requestMsg,
 				(callback, req) => HandleResponseAsync(serializer, compressor, callback, req, args.ToArray(), streamingDelePos),
 				new CallOptions(headers: headers, cancellationToken: cancel)).ConfigureAwait(false);
 
-			if (resultMessage.Exception != null)
-				throw serializer.RestoreSerializedException(resultMessage.Exception);
+			if (resultMessage.ResultType == ResultKind.Exception)
+				throw serializer.RestoreSerializedException(resultMessage.Value!);
 
 			// out|ref not possible with async
 
-			if (targetMethod.ReturnType.IsGenericType)
-			{
+//			if (targetMethod.ReturnType.IsGenericType)
+	//		{
 				// a Task<T>, ValueTask<T>, etc.
-				invocation.Result = serializer.Deserialize(targetMethod.ReturnType.GetGenericArguments().Single(), resultMessage.ReturnValue);
-			}
-			else
-			{
-				invocation.Result = resultMessage.ReturnValue;
-			}
+			invocation.Result = resultMessage.Value;
+			//}
+			//else
+			//{
+			//	invocation.Result = resultMessage.Value;
+			//}
 
 			// restore context flow from server
 			if (_client._config.RestoreCallContext)
@@ -200,6 +207,8 @@ namespace GoreRemoting
 			Func<GoreRequestMessage, Task> res, object?[] args,
 			int? streamingDelegatePosition)
 		{
+			// WEIRD BUT...callbackData also has serializer and compressor!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! This make no sense.
+
 			switch (callbackData.ResponseType)
 			{
 				case ResponseType.MethodResult:
@@ -222,7 +231,7 @@ namespace GoreRemoting
 						try
 						{
 							// FIXME: but we need to know if the delegate has a result or not???!!!
-							result = delegt.DynamicInvoke(Gorializer.DeserializeArguments(serializer, delegt.Method, delegateMsg.Arguments));
+							result = delegt.DynamicInvoke(delegateMsg.Arguments);
 
 							result = await TaskResultHelper.GetTaskResult(delegt.Method, result);
 						}
@@ -258,11 +267,24 @@ namespace GoreRemoting
 
 						DelegateResultMessage msg;
 						if (exception != null)
-							msg = new DelegateResultMessage { Position = delegateMsg.Position, Exception = exception };
+							msg = new DelegateResultMessage 
+							{ 
+								Position = delegateMsg.Position,
+								ParameterName = delegateMsg.ParameterName,
+								Value = exception, 
+								ReturnKind = DelegateResultType.Exception 
+							};
 						else
-							msg = new DelegateResultMessage { Position = delegateMsg.Position, Result = result, StreamingStatus = streamingStatus };
+							msg = new DelegateResultMessage 
+							{ 
+								Position = delegateMsg.Position,
+								ParameterName = delegateMsg.ParameterName,
+								Value = result, 
+								StreamingStatus = streamingStatus,
+								ReturnKind = DelegateResultType.ReturnValue
+							};
 
-						var requestMsg = new GoreRequestMessage(msg, serializer, compressor);
+						var requestMsg = new GoreRequestMessage(msg, callbackData.ServiceName, callbackData.MethodName, serializer, compressor);
 
 						await res(requestMsg).ConfigureAwait(false);
 

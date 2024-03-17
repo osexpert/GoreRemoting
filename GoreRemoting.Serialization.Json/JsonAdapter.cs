@@ -10,9 +10,6 @@ namespace GoreRemoting.Serialization.Json
 		public JsonSerializerOptions Options { get; }
 
 		public ExceptionFormatStrategy ExceptionStrategy { get; set; } = ExceptionFormatStrategy.UninitializedObject;
-			//= ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject;
-
-		//readonly Lazy<BinaryFormatterAdapter> _bfa = new(() => new());
 
 		public JsonAdapter()
 		{
@@ -84,7 +81,7 @@ namespace GoreRemoting.Serialization.Json
 		/// Deserializes raw data back into an object graph.
 		/// </summary>
 		/// <returns>Deserialized object graph</returns>
-		public object?[] Deserialize(Stream stream)
+		public object?[] Deserialize(Stream stream, Type[] types)
 		{
 			Dictionary<int, byte[]> byteArrays = new();
 
@@ -100,6 +97,9 @@ namespace GoreRemoting.Serialization.Json
 
 			var objects = JsonSerializer.Deserialize<object[]>(stream, Options)!;
 
+			if (objects.Length != types.Length)
+				throw new Exception("mismatch objects vs types");
+
 			object?[] res = new object?[objects.Length];
 
 			for (int i = 0; i < objects.Length; i++)
@@ -113,7 +113,7 @@ namespace GoreRemoting.Serialization.Json
 				}
 				else
 				{
-					res[i] = to;
+					res[i] = Deserialize(types[i], to);
 				}
 			}
 
@@ -121,9 +121,10 @@ namespace GoreRemoting.Serialization.Json
 
 			//// maybe we can convert to same type as parameters?
 			////https://stackoverflow.com/questions/58138793/system-text-json-jsonelement-toobject-workaround
-			//	throw new NotImplementedException();
 		}
 
+
+		public Type ExceptionType => typeof(ExceptionWrapper);
 
 		class ExceptionWrapper
 		{
@@ -135,27 +136,6 @@ namespace GoreRemoting.Serialization.Json
 
 		public object GetSerializableException(Exception ex)
 		{
-			//if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject ||
-			//				ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrRemoteInvocationException)
-			//{
-			//	try
-			//	{
-			//		// INFO: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
-			//		if (ex.GetType().IsSerializable)
-			//			return new ExceptionWrapper { Format = ExceptionFormat.BinaryFormatter, BinaryFormatterData = _bfa.Value.GetExceptionData(ex) };
-			//	}
-			//	catch
-			//	{ }
-
-			//	var ed = ExceptionSerializationHelpers.GetExceptionData(ex);
-			//	if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject)
-			//		return ToExceptionWrapper(ed, ExceptionFormat.UninitializedObject);
-			//	else if (ExceptionStrategy == ExceptionFormatStrategy.BinaryFormatterOrRemoteInvocationException)
-			//		return ToExceptionWrapper(ed, ExceptionFormat.RemoteInvocationException);
-			//	else
-			//		throw new NotSupportedException(ExceptionStrategy.ToString());
-			//}
-			//else 
 			if (ExceptionStrategy == ExceptionFormatStrategy.UninitializedObject)
 				return ToExceptionWrapper(ExceptionSerializationHelpers.GetExceptionData(ex), ExceptionFormat.UninitializedObject);
 			else if (ExceptionStrategy == ExceptionFormatStrategy.RemoteInvocationException)
@@ -169,8 +149,8 @@ namespace GoreRemoting.Serialization.Json
 			var ew = (ExceptionWrapper)Deserialize(typeof(ExceptionWrapper), ex)!;
 			return ew.Format switch
 			{
-				//ExceptionFormat.BinaryFormatter => _bfa.Value.RestoreException(ew.BinaryFormatterData),
-				ExceptionFormat.UninitializedObject => ExceptionSerializationHelpers.RestoreAsUninitializedObject(ToExceptionData(ew)),
+				// TODO: add exception allow list, use Type.ToString() as lookup
+				ExceptionFormat.UninitializedObject => ExceptionSerializationHelpers.RestoreAsUninitializedObject(ToExceptionData(ew), Type.GetType(ew.TypeName)),
 				ExceptionFormat.RemoteInvocationException => ExceptionSerializationHelpers.RestoreAsRemoteInvocationException(ToExceptionData(ew)),
 				_ => throw new NotSupportedException(ew.Format.ToString())
 			};
@@ -208,14 +188,6 @@ namespace GoreRemoting.Serialization.Json
 
 	public enum ExceptionFormatStrategy
 	{
-	//	/// <summary>
-	//	/// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)
-	//	/// </summary>
-	//	BinaryFormatterOrUninitializedObject = 1,
-	//	/// <summary>
-	//	/// BinaryFormatter used (if serializable, everything is preserved, else serialized as RemoteInvocationException)
-	//	/// </summary>
-	//	BinaryFormatterOrRemoteInvocationException = 2,
 		/// <summary>
 		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
 		/// </summary>
@@ -228,10 +200,6 @@ namespace GoreRemoting.Serialization.Json
 
 	public enum ExceptionFormat
 	{
-		/// <summary>
-		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)
-		/// </summary>
-		//BinaryFormatter = 1,
 		/// <summary>
 		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
 		/// </summary>

@@ -15,6 +15,8 @@ namespace GoreRemoting.RpcMessaging
 			Deserialize(r);
 		}
 
+		public string ParameterName { get; set; }
+
 		public int Position { get; set; }
 
 		public object?[] Arguments { get; set; }
@@ -23,6 +25,7 @@ namespace GoreRemoting.RpcMessaging
 
 		public void Deserialize(GoreBinaryReader r)
 		{
+			ParameterName = r.ReadString();
 			Position = r.ReadVarInt();
 			OneWay = r.ReadBoolean();
 
@@ -38,6 +41,7 @@ namespace GoreRemoting.RpcMessaging
 
 		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
+			w.Write(ParameterName);
 			w.WriteVarInt(Position);
 			w.Write(OneWay);
 

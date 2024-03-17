@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using GoreRemoting.Serialization;
 using Grpc.Net.Compression;
 
@@ -8,6 +9,11 @@ namespace GoreRemoting.RpcMessaging
 
 	public class GoreRequestMessage
 	{
+		// only used on deserialize
+		internal MethodInfo Method { get; set;  }
+
+		internal string ServiceName { get; }
+		internal string MethodName { get; }
 
 		internal DelegateResultMessage DelegateResultMessage { get; }
 		internal MethodCallMessage MethodCallMessage { get; }
@@ -18,30 +24,39 @@ namespace GoreRemoting.RpcMessaging
 		internal ICompressionProvider? Compressor { get; }
 
 
-		public GoreRequestMessage(DelegateResultMessage drm, ISerializerAdapter serializer, ICompressionProvider? compressor)
+		public GoreRequestMessage(DelegateResultMessage drm, string serviceName, string methodName, ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			DelegateResultMessage = drm;
 			RequestType = RequestType.DelegateResult;
 			Serializer = serializer;
 			Compressor = compressor;
+			//Method = method;
+			ServiceName = serviceName;
+			MethodName = methodName;
 		}
 
-		public GoreRequestMessage(MethodCallMessage mcm, ISerializerAdapter serializer, ICompressionProvider? compressor)
+		public GoreRequestMessage(MethodCallMessage mcm, string serviceName, string methodName, ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			MethodCallMessage = mcm;
 			RequestType = RequestType.MethodCall;
 			Serializer = serializer;
 			Compressor = compressor;
+			ServiceName = serviceName;
+			MethodName = methodName;
 		}
 
-		public static GoreRequestMessage Deserialize(Stream s, RequestType mType, ISerializerAdapter serializer, ICompressionProvider? compressor)
+		public static GoreRequestMessage Deserialize(Stream s, RequestType mType, string serviceName, string methodName, MethodInfo method, ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
+			GoreRequestMessage res;
 			if (mType == RequestType.DelegateResult)
-				return new GoreRequestMessage(Gorializer.GoreDeserialize<DelegateResultMessage>(s, serializer, compressor), serializer, compressor);
+				res = new GoreRequestMessage(Gorializer.GoreDeserialize<DelegateResultMessage>(s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
 			else if (mType == RequestType.MethodCall)
-				return new GoreRequestMessage(Gorializer.GoreDeserialize<MethodCallMessage>(s, serializer, compressor), serializer, compressor);
+				res = new GoreRequestMessage(Gorializer.GoreDeserialize<MethodCallMessage>(s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
 			else
 				throw new Exception();
+
+			res.Method = method;
+			return res;
 		}
 
 		internal void Serialize(Stream s)

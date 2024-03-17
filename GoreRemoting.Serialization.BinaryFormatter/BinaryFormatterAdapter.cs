@@ -116,7 +116,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		/// Deserializes raw data back into an object graph.
 		/// </summary>
 		/// <returns>Deserialized object graph</returns>
-		public object[] Deserialize(Stream stream)
+		public object[] Deserialize(Stream stream, Type[] types)
 		{
 			var binaryFormatter = GetFormatter();
 			return (object[])DeserializeSafe(binaryFormatter, stream, Options);
@@ -164,7 +164,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 			return ew.Format switch
 			{
 				ExceptionFormat.BinaryFormatter => ExceptionSerializationHelpers.RestoreAsBinaryFormatter(ew.BinaryFormatterData),
-				ExceptionFormat.UninitializedObject => ExceptionSerializationHelpers.RestoreAsUninitializedObject(ToExceptionData(ew)),
+				ExceptionFormat.UninitializedObject => ExceptionSerializationHelpers.RestoreAsUninitializedObject(ToExceptionData(ew), Type.GetType(ew.TypeName)),
 				ExceptionFormat.RemoteInvocationException => ExceptionSerializationHelpers.RestoreAsRemoteInvocationException(ToExceptionData(ew)),
 				_ => throw new NotSupportedException(ew.Format.ToString())
 			};
@@ -197,6 +197,8 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 			public string TypeName { get; set; }
 			public Dictionary<string, string> PropertyData { get; set; }
 		}
+
+		public Type ExceptionType => typeof(ExceptionWrapper);
 
 		public string Name => "BinaryFormatter";
 

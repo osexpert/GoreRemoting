@@ -25,6 +25,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		public void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
 		{
 			var type = (Type)obj;
+
 			// BinaryFormatter in .NET Core 2.0 cannot persist types in System.Private.CoreLib.dll
 			// that are not forwareded to mscorlib, including System.RuntimeType
 			info.SetType(typeof(TypeReference));

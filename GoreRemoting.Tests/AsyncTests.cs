@@ -434,10 +434,10 @@ namespace GoreRemoting.Tests
 
 	public enum enSerializer
 	{
-		BinaryFormatter,
-		MemoryPack,
-		Json,
-		MessagePack
+		BinaryFormatter = 1,
+		MemoryPack = 2,
+		Json = 3,
+		MessagePack = 4
 
 	}
 
