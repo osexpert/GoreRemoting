@@ -93,12 +93,12 @@ namespace GoreRemoting.RpcMessaging
 				throw new Exception();
 		}
 
-		internal void Serialize(Stream s)
+		internal void Serialize(Stream s, MethodInfo method)
 		{
 			if (ResponseType == ResponseType.MethodResult)
-				Gorializer.GoreSerialize(s, MethodResult, Serializer, Compressor);
+				Gorializer.GoreSerialize(s, method, MethodResult, Serializer, Compressor);
 			else if (ResponseType == ResponseType.DelegateCall)
-				Gorializer.GoreSerialize(s, DelegateCall, Serializer, Compressor);
+				Gorializer.GoreSerialize(s, method, DelegateCall, Serializer, Compressor);
 			else
 				throw new Exception();
 		}

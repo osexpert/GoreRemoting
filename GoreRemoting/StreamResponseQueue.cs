@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using GoreRemoting.RpcMessaging;
 using Grpc.Core;
 #if NETSTANDARD2_0
 using Open.ChannelExtensions;
@@ -72,25 +73,35 @@ namespace GoreRemoting
 		/// </summary>
 		public Task CompleteAsync()
 		{
-			_channel.Writer.Complete();
+			_channel.Writer.TryComplete();// was Complete();
 			return _consumer;
 		}
 
 		private async Task Consume(CancellationToken cancellationToken)
 		{
+			try
+			{
 
 #if NETSTANDARD2_0
-			// Using Open.ChannelExtensions since ReadAllAsync not available in netstandard 2.0
-			// ValueTask confusion here...
-			var _ = await _channel.Reader.ReadAllAsync(cancellationToken, msg => new ValueTask(_stream.WriteAsync(msg))).ConfigureAwait(false);
+				// Using Open.ChannelExtensions since ReadAllAsync not available in netstandard 2.0
+				// ValueTask confusion here...
+				var _ = await _channel.Reader.ReadAllAsync(cancellationToken, msg => new ValueTask(_stream.WriteAsync(msg))).ConfigureAwait(false);
 #else
-
-			await foreach (var message in _channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
-			{
-				await _stream.WriteAsync(message).ConfigureAwait(false);
-			}
-
+				await foreach (var message in _channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
+				{
+					await _stream.WriteAsync(message).ConfigureAwait(false);
+				}
 #endif
+			}
+			catch (Exception e)
+			{
+				// could get a hang here, if we could not serelize the response (crash within the serializer itself)...during delegate callbacks.
+				// this seems to fix it...
+				_channel.Writer.TryComplete(e);
+
+				throw;
+			}
 		}
+
 	}
 }

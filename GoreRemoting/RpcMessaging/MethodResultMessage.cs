@@ -90,9 +90,6 @@ namespace GoreRemoting.RpcMessaging
 			}
 			else if (ResultType == ResultKind.ResultValue)
 			{
-				if (Value == null)
-					throw new Exception("ResultValue wuthout value");
-
 				st.Push(Value);
 			}
 			else

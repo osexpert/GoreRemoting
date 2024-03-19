@@ -60,5 +60,16 @@ namespace GoreRemoting.Tests.Tools
 		{
 			return s;
 		}
+
+		public string? TestReturnNull()
+		{
+			return null;
+		}
+
+		public int TestReferences1(List<TestObj> l1, List<TestObj> l2)
+		{
+			var g1 = l1.Union(l2).GroupBy(a => a).Count();
+			return g1;
+		}
 	}
 }

@@ -45,7 +45,9 @@ namespace GoreRemoting
 					bw.Write(arg.MethodName);
 					bw.Write((byte)arg.RequestType);
 
-					arg.Serialize(s);
+					MethodInfo method = GetServiceMethod(arg.ServiceName, arg.MethodName);
+
+					arg.Serialize(s, method);
 				}
 			}
 			finally

@@ -113,7 +113,9 @@ namespace GoreRemoting
 					bw.Write(arg.MethodName);
 					bw.Write((byte)arg.ResponseType);
 
-					arg.Serialize(s);
+					MethodInfo method = GetServiceMethod(arg.ServiceName, arg.MethodName);
+
+					arg.Serialize(s, method);
 				}
 			}
 			finally
@@ -351,7 +353,7 @@ namespace GoreRemoting
 						if (msg.Position != delegateCallMsg.Position)
 							throw new Exception("Incorrect result position");
 
-						if (msg.ReturnKind == DelegateResultType.Exception)// msg.Exception != null)
+						if (msg.ReturnKind == DelegateResultType.Exception)
 							throw request.Serializer.RestoreSerializedException(msg.Value!);
 
 						if (msg.StreamingStatus == StreamingStatus.Active)
@@ -359,13 +361,7 @@ namespace GoreRemoting
 						else if (msg.StreamingStatus == StreamingStatus.Done)
 							throw new StreamingDoneException();
 
-						if (method.ReturnType.IsGenericType)
-						{
-							// a Task<T>, ValueTask<T>, etc. since we are async
-							return msg.Value;//  request.Serializer.Deserialize(method.ReturnType.GetGenericArguments().Single(), msg.Result);
-						}
-						else
-							return msg.Value;
+						return msg.Value;
 					}
 				}
 				finally
@@ -390,9 +386,6 @@ namespace GoreRemoting
 
 				callContext = _config.CreateCallContext?.Invoke();
 				callContext?.Start(context, request.ServiceName, request.MethodName, service, request.Method, parameterValues);
-
-				// translate from eg JsonElement to real type
-				//parameterValues = Gorializer.DeserializeArguments(request.Serializer, request.Method, parameterValues);
 
 				result = request.Method.Invoke(service, parameterValues);
 				result = await TaskResultHelper.GetTaskResult(request.Method, result);
@@ -433,7 +426,7 @@ namespace GoreRemoting
 							method: request.Method,
 							args: parameterValues,
 							returnValue: result,
-							setCallContext: _config.SetCallContext);
+							emitCallContext: _config.EmitCallContext);
 			}
 			else
 			{

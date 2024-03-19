@@ -59,7 +59,7 @@ namespace GoreRemoting
 		// the buffering was a side effect that I think may cause problems, at least unbounded, it may use all memory.
 		public int? ResponseQueueLength { get; set; } = 1;
 
-		public bool SetCallContext { get; set; } = true;
+		public bool EmitCallContext { get; set; } = true;
 		public bool RestoreCallContext { get; set; } = true;
 
 		private Dictionary<string, ICompressionProvider> _compressors = new();

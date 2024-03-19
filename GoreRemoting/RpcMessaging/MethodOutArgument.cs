@@ -34,7 +34,6 @@ namespace GoreRemoting.RpcMessaging
 		{
 			ParameterName = r.ReadString();
 			Position = r.ReadVarInt();
-			
 		}
 
 		public void Deserialize(Stack<object?> st)
@@ -46,7 +45,6 @@ namespace GoreRemoting.RpcMessaging
 		{
 			w.Write(ParameterName);
 			w.WriteVarInt(Position);
-			
 
 			st.Push(OutValue);
 		}

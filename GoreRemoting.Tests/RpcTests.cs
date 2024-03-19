@@ -24,11 +24,69 @@ namespace GoreRemoting.Tests
 			_testOutputHelper = testOutputHelper;
 		}
 
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		[InlineData(enSerializer.MessagePack)]
+		public async Task TestReferences(enSerializer ser)
+		{
+			var serverConfig =
+				new ServerConfig(Serializers.GetSerializer(ser));
+
+			await using var server = new NativeServer(9095, serverConfig);
+			server.RegisterService<ITestService, TestService>();
+			server.Start();
+
+			await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
+
+			var proxy = client.CreateProxy<ITestService>();
+
+			var l1 = new List<TestObj>();
+			var l2 = new List<TestObj>();
+
+			var to = new TestObj() { Test = "42" };
+			l1.Add(to);
+			l1.Add(to);
+			l2.Add(to);
+			l2.Add(to);
+
+			var result = proxy.TestReferences1(l1, l2);
+
+			if (ser == enSerializer.BinaryFormatter)
+				Assert.Equal(1, result);
+			else if (ser == enSerializer.Json)
+				Assert.Equal(1, result); // json dedup only within the same list? WHY?
+			else if (ser == enSerializer.MemoryPack)
+				Assert.Equal(1, result);
+			else if (ser == enSerializer.MessagePack)
+				Assert.Equal(4, result);
+		}
 
 
 
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		[InlineData(enSerializer.MessagePack)]
+		public async Task ReturnNull(enSerializer ser)
+		{
+			var serverConfig =
+				new ServerConfig(Serializers.GetSerializer(ser));
 
+			await using var server = new NativeServer(9095, serverConfig);
+			server.RegisterService<ITestService, TestService>();
+			server.Start();
 
+			await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
+
+			var proxy = client.CreateProxy<ITestService>();
+
+			var result = proxy.TestReturnNull();
+
+			Assert.Null(result);
+		}
 
 
 
@@ -867,6 +925,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+//		[InlineData(enSerializer.Protobuf)]
 		public async Task MultipleDelegateCallback(enSerializer ser)
 		{
 			var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
@@ -1561,9 +1620,11 @@ namespace GoreRemoting.Tests
 			r3 = r;
 		}
 
+
+
 	}
 
 
-
+	
 
 }

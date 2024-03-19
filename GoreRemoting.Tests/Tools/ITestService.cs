@@ -1,5 +1,7 @@
 using System;
 using GoreRemoting.Tests.ExternalTypes;
+using MemoryPack;
+using MessagePack;
 
 namespace GoreRemoting.Tests.Tools
 {
@@ -22,6 +24,19 @@ namespace GoreRemoting.Tests.Tools
 		string Echo(string text);
 
 		void MethodWithOutParameter(out int counter);
+
+		string? TestReturnNull();
+
+		int TestReferences1(List<TestObj> l1, List<TestObj> l2);
+	}
+
+	[Serializable]
+	[MemoryPackable(GenerateType.CircularReference)]
+	[MessagePackObject(true)]
+	public partial class TestObj
+	{
+		[MemoryPackOrder(0)]
+		public string Test { get; set; }
 	}
 
 	public interface IBaseService

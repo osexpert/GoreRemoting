@@ -2,12 +2,11 @@
 
 namespace GoreRemoting.RpcMessaging
 {
-	public class DelegateResultMessage : IGorializer//, IServiceMethod
+	public class DelegateResultMessage : IGorializer
 	{
 		public string ParameterName { get; set; }
 		public int Position { get; set; }
 
-		// TODO: could have enum with Result or Exception?
 		public object? Value { get; set; }
 
 		public DelegateResultType ReturnKind;
@@ -25,11 +24,7 @@ namespace GoreRemoting.RpcMessaging
 		}
 		public void Deserialize(Stack<object?> st)
 		{
-//			if (ReturnKind != ResultKind.ResultVoid)
 			Value = st.Pop();
-	//		else
-		//		Value = null;
-			//Exception = st.Pop();
 		}
 		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
@@ -39,10 +34,7 @@ namespace GoreRemoting.RpcMessaging
 			w.Write((byte)ReturnKind);
 			w.Write((byte)StreamingStatus);
 
-//			if (ReturnKind != ResultKind.ResultVoid)
 			st.Push(Value);
-
-			//st.Push(Exception);
 		}
 	}
 

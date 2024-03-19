@@ -437,8 +437,7 @@ namespace GoreRemoting.Tests
 		BinaryFormatter = 1,
 		MemoryPack = 2,
 		Json = 3,
-		MessagePack = 4
-
+		MessagePack = 4,
 	}
 
 	public static class Serializers

@@ -9,7 +9,7 @@
 
 
     <ItemGroup>
-      <ProjectReference Include="..\GoreRemoting.Serialization.MemoryPack\GoreRemoting.Serialization.MemoryPack.csproj" />
+		<PackageReference Include="MemoryPack" />
     </ItemGroup>
 
 </Project>

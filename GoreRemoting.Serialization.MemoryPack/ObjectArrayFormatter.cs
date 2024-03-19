@@ -1,4 +1,5 @@
-﻿
+﻿#if false
+
 using System;
 using MemoryPack;
 
@@ -96,3 +97,4 @@ namespace GoreRemoting.Serialization.MemoryPack
 		}
 	}
 }
+#endif

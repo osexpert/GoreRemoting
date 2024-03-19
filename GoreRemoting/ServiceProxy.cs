@@ -58,7 +58,7 @@ namespace GoreRemoting
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
 				targetMethod: targetMethod,
 				args: arguments,
-				setCallContext: _client._config.SetCallContext
+				emitCallContext: _client._config.EmitCallContext
 				);
 
 			var requestMsg = new GoreRequestMessage(callMessage, _serviceName, targetMethod.Name, serializer, compressor);
@@ -83,10 +83,7 @@ namespace GoreRemoting
 				args[parameterInfo.Position] = outArgument.OutValue;
 			}
 
-//			if (resultMessage.ResultType == ResultKind.ResultValue)
 			invocation.ReturnValue = resultMessage.Value;
-	//		else // ResultVoid
-		//		invocation.ReturnValue = null;
 
 			// restore context flow from server
 			if (_client._config.RestoreCallContext)
@@ -120,7 +117,7 @@ namespace GoreRemoting
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
 				targetMethod: targetMethod,
 				args: arguments,
-				setCallContext: _client._config.SetCallContext
+				emitCallContext: _client._config.EmitCallContext
 				);
 
 			var requestMsg = new GoreRequestMessage(callMessage, _serviceName, targetMethod.Name, serializer, compressor);
@@ -134,15 +131,7 @@ namespace GoreRemoting
 
 			// out|ref not possible with async
 
-//			if (targetMethod.ReturnType.IsGenericType)
-	//		{
-				// a Task<T>, ValueTask<T>, etc.
 			invocation.Result = resultMessage.Value;
-			//}
-			//else
-			//{
-			//	invocation.Result = resultMessage.Value;
-			//}
 
 			// restore context flow from server
 			if (_client._config.RestoreCallContext)

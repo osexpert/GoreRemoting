@@ -30,7 +30,6 @@ namespace GoreRemoting.RpcMessaging
 			RequestType = RequestType.DelegateResult;
 			Serializer = serializer;
 			Compressor = compressor;
-			//Method = method;
 			ServiceName = serviceName;
 			MethodName = methodName;
 		}
@@ -59,12 +58,12 @@ namespace GoreRemoting.RpcMessaging
 			return res;
 		}
 
-		internal void Serialize(Stream s)
+		internal void Serialize(Stream s, MethodInfo method)
 		{
 			if (RequestType == RequestType.DelegateResult)
-				Gorializer.GoreSerialize(s, DelegateResultMessage, Serializer, Compressor);
+				Gorializer.GoreSerialize(s, method, DelegateResultMessage, Serializer, Compressor);
 			else if (RequestType == RequestType.MethodCall)
-				Gorializer.GoreSerialize(s, MethodCallMessage, Serializer, Compressor);
+				Gorializer.GoreSerialize(s, method, MethodCallMessage, Serializer, Compressor);
 			else
 				throw new Exception();
 
