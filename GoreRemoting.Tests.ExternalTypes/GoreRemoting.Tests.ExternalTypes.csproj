@@ -10,6 +10,7 @@
 
     <ItemGroup>
 		<PackageReference Include="MemoryPack" />
+		<PackageReference Include="protobuf-net" />
     </ItemGroup>
 
 </Project>

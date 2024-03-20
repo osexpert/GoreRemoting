@@ -258,6 +258,7 @@ namespace GoreRemoting
 						if (exception != null)
 							msg = new DelegateResultMessage 
 							{ 
+								// Hmmm...is this really interesting if EXCEPTION? (position, parametername etc.?) Could exception be its own message?
 								Position = delegateMsg.Position,
 								ParameterName = delegateMsg.ParameterName,
 								Value = exception, 

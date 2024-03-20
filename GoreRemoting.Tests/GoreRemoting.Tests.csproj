@@ -29,6 +29,7 @@
       <ProjectReference Include="..\GoreRemoting.Serialization.Json\GoreRemoting.Serialization.Json.csproj" />
       <ProjectReference Include="..\GoreRemoting.Serialization.MemoryPack\GoreRemoting.Serialization.MemoryPack.csproj" />
       <ProjectReference Include="..\GoreRemoting.Serialization.MessagePack\GoreRemoting.Serialization.MessagePack.csproj" />
+      <ProjectReference Include="..\GoreRemoting.Serialization.Protobuf\GoreRemoting.Serialization.Protobuf.csproj" />
       <ProjectReference Include="..\GoreRemoting.Tests.ExternalTypes\GoreRemoting.Tests.ExternalTypes.csproj" />
       <ProjectReference Include="..\GoreRemoting\GoreRemoting.csproj" />
     </ItemGroup>

@@ -8,6 +8,7 @@ using GoreRemoting.Tests.ExternalTypes;
 using GoreRemoting.Tests.Tools;
 using MemoryPack;
 using MessagePack;
+using ProtoBuf;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -25,10 +26,78 @@ namespace GoreRemoting.Tests
 		}
 
 		[Theory]
+//		[InlineData(enSerializer.BinaryFormatter)] FIXME: TimeOnly, DateOnly missing
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
+		public async Task TestMiscTypes(enSerializer ser)
+		{
+			var serverConfig =
+				new ServerConfig(Serializers.GetSerializer(ser));
+
+			await using var server = new NativeServer(9095, serverConfig);
+			server.RegisterService<ITestService, TestService>();
+			server.Start();
+
+			await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
+
+			var proxy = client.CreateProxy<ITestService>();
+
+			var dt = DateTime.Now;
+			var dto = DateTimeOffset.Now;
+			var g = Guid.NewGuid();
+			var to = TimeOnly.FromDateTime(dt);
+			var don = DateOnly.FromDateTime(dt);
+			var en = TestEnum4.Test2;
+			var span = dt.TimeOfDay;
+			var echo = proxy.EchoMiscBasicTypes(dt, dto, g, to, don, en, span, null);
+
+			Assert.Equal(dt, echo.dt);
+			Assert.Equal(dto, echo.off);
+			Assert.Equal(g, echo.g);
+			Assert.Equal(to, echo.to);
+			Assert.Equal(don, echo.don);
+			Assert.Equal(en, echo.enu);
+			Assert.Equal(span, echo.ts);
+			Assert.Null(echo.nullDto);
+		}
+
+
+		[Theory]
 		[InlineData(enSerializer.BinaryFormatter)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
+		public async Task TestSendBytes(enSerializer ser)
+		{
+			var serverConfig =
+				new ServerConfig(Serializers.GetSerializer(ser));
+
+			await using var server = new NativeServer(9095, serverConfig);
+			server.RegisterService<ITestService, TestService>();
+			server.Start();
+
+			await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
+
+			var proxy = client.CreateProxy<ITestService>();
+
+			var res = proxy.TestSendBytes(new byte[] { 77, 99, 12 }, out var outBytes);
+
+			Assert.Equal(new byte[] { 1, 2, 3, 4, 42 }, res);
+			Assert.Equal(new byte[] { 77, 99, 12, 32, 42, 66 }, outBytes);
+		
+		}
+
+
+
+		[Theory]
+		[InlineData(enSerializer.BinaryFormatter)]
+		[InlineData(enSerializer.MemoryPack)]
+		[InlineData(enSerializer.Json)]
+		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task TestReferences(enSerializer ser)
 		{
 			var serverConfig =
@@ -56,11 +125,15 @@ namespace GoreRemoting.Tests
 			if (ser == enSerializer.BinaryFormatter)
 				Assert.Equal(1, result);
 			else if (ser == enSerializer.Json)
-				Assert.Equal(1, result); // json dedup only within the same list? WHY?
+				Assert.Equal(1, result);
 			else if (ser == enSerializer.MemoryPack)
 				Assert.Equal(1, result);
 			else if (ser == enSerializer.MessagePack)
 				Assert.Equal(4, result);
+			else if (ser == enSerializer.Protobuf)
+				Assert.Equal(4, result);
+			else
+				throw new NotImplementedException();
 		}
 
 
@@ -70,6 +143,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task ReturnNull(enSerializer ser)
 		{
 			var serverConfig =
@@ -95,6 +169,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task Inherited_methods_should_be_called_correctly(enSerializer ser)
 		{
 			var serverConfig =
@@ -129,6 +204,8 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack, true)]
 		[InlineData(enSerializer.Json, true)]
 		[InlineData(enSerializer.MessagePack, true)]
+		[InlineData(enSerializer.Protobuf, false)]
+		[InlineData(enSerializer.Protobuf, true)]
 		public async Task Call_on_Proxy_should_be_invoked_on_remote_service(enSerializer ser, bool compress)
 		{
 			bool remoteServiceCalled = false;
@@ -228,6 +305,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task Call_on_Proxy_should_be_invoked_on_remote_service_without_MessageEncryption(enSerializer ser)
 		{
 			bool remoteServiceCalled = false;
@@ -318,6 +396,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task Delegate_invoked_on_server_should_callback_client(enSerializer ser)
 		{
 			string? argumentFromServer = null;
@@ -362,6 +441,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task Events_should_NOT_work_remotly(enSerializer ser)
 		{
 			var testService = new TestService();
@@ -409,6 +489,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task External_types_should_work_as_remote_service_parameters(enSerializer ser)
 		{
 			bool remoteServiceCalled = false;
@@ -525,6 +606,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task Generic_methods_should_be_called_correctly(enSerializer ser)
 		{
 			var serverConfig =
@@ -593,6 +675,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task Enum_arguments_should_be_passed_correctly(enSerializer ser)
 		{
 			var serverConfig =
@@ -640,6 +723,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task Ref_param_should_fail(enSerializer ser)
 		{
 			var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
@@ -755,6 +839,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task Delegate_callback_after_return(enSerializer ser)
 		{
 			var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
@@ -925,7 +1010,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
-//		[InlineData(enSerializer.Protobuf)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task MultipleDelegateCallback(enSerializer ser)
 		{
 			var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
@@ -1035,7 +1120,7 @@ namespace GoreRemoting.Tests
 
 		public interface IVarArgTest
 		{
-			int[] Test0(int a, params int[] b);
+			int[] Test0(bool isProtobuf, int a, params int[] b);
 
 			Task<int> Test1(Func<int, Task<int>> lol);
 
@@ -1061,10 +1146,15 @@ namespace GoreRemoting.Tests
 
 		public class VarArgTest : IVarArgTest
 		{
-			public int[] Test0(int a, params int[] b)
+			public int[] Test0(bool isProtobuf, int a, params int[] b)
 			{
 				var l = new List<int>();
 				l.Add(a);
+
+				// ARGH!!!
+				if (isProtobuf && b == null)
+					b = new int[] { };
+
 				l.AddRange(b);
 				return l.ToArray();
 			}
@@ -1275,6 +1365,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task DoVarArgTest(enSerializer ser)
 		{
 			await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
@@ -1285,13 +1376,13 @@ namespace GoreRemoting.Tests
 
 			var proxy = client.CreateProxy<IVarArgTest>();
 			{
-				var r1 = proxy.Test0(1);
+				var r1 = proxy.Test0(ser == enSerializer.Protobuf, 1);
 				Assert.Single(r1);
 				Assert.Equal(1, r1[0]);
 			}
 
 			{
-				var r2 = proxy.Test0(1, 2, 3);
+				var r2 = proxy.Test0(ser == enSerializer.Protobuf, 1, 2, 3);
 				Assert.Equal(3, r2.Length);
 				Assert.Equal(1, r2[0]);
 				Assert.Equal(2, r2[1]);
@@ -1299,7 +1390,7 @@ namespace GoreRemoting.Tests
 			}
 
 			{
-				var r3 = proxy.Test0(1, 2);
+				var r3 = proxy.Test0(ser == enSerializer.Protobuf, 1, 2);
 				Assert.Equal(2, r3.Length);
 				Assert.Equal(1, r3[0]);
 				Assert.Equal(2, r3[1]);
@@ -1515,8 +1606,10 @@ namespace GoreRemoting.Tests
 	[Serializable]
 	[MemoryPackable]
 	[MessagePackObject(keyAsPropertyName: true)]
+	[ProtoContract]
 	public partial class S1
 	{
+		[ProtoMember(1)]
 		public string s1;
 		public S1(string s)
 		{
@@ -1533,8 +1626,10 @@ namespace GoreRemoting.Tests
 	[Serializable]
 	[MemoryPackable]
 	[MessagePackObject(keyAsPropertyName: true)]
+	[ProtoContract]
 	public partial class S2
 	{
+		[ProtoMember(1)]
 		public string s2;
 		public S2(string s)
 		{
@@ -1551,8 +1646,10 @@ namespace GoreRemoting.Tests
 	[Serializable]
 	[MemoryPackable]
 	[MessagePackObject(keyAsPropertyName: true)]
+	[ProtoContract]
 	public partial class S3
 	{
+		[ProtoMember(1)]
 		public string s3;
 		public S3(string s)
 		{
@@ -1569,8 +1666,10 @@ namespace GoreRemoting.Tests
 	[Serializable]
 	[MemoryPackable]
 	[MessagePackObject(keyAsPropertyName: true)]
+	[ProtoContract]
 	public partial class R1
 	{
+		[ProtoMember(1)]
 		public string r1;
 		public R1(string r)
 		{
@@ -1587,8 +1686,10 @@ namespace GoreRemoting.Tests
 	[Serializable]
 	[MemoryPackable]
 	[MessagePackObject(keyAsPropertyName: true)]
+	[ProtoContract]
 	public partial class R2
 	{
+		[ProtoMember(1)]
 		public string r2;
 		public R2(string r)
 		{
@@ -1605,8 +1706,10 @@ namespace GoreRemoting.Tests
 	[Serializable]
 	[MemoryPackable]
 	[MessagePackObject(keyAsPropertyName: true)]
+	[ProtoContract]
 	public partial class R3
 	{
+		[ProtoMember(1)]
 		public string r3;
 
 		[MemoryPackConstructor]

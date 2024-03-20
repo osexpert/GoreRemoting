@@ -13,12 +13,18 @@ namespace GoreRemoting.Serialization
 
 		object?[] Deserialize(Stream stream, Type[] types);
 
+
+		string Name { get; }
 		object GetSerializableException(Exception ex);
 
 		Exception RestoreSerializedException(object ex);
 
-		string Name { get; }
-
 		Type ExceptionType { get; }
+
 	}
+
+	//public interface ISerializerExceptionHandler
+	//{
+		
+	//}
 }

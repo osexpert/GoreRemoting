@@ -30,7 +30,7 @@ namespace GoreRemoting
 		public void Deserialize(GoreBinaryReader r)
 		{
 			Name = r.ReadString();
-			Value = r.ReadBoolean() ? r.ReadString() : null;
+			Value = r.ReadNullableString();
 		}
 
 		public void Deserialize(Stack<object?> st)
@@ -40,11 +40,7 @@ namespace GoreRemoting
 		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
 			w.Write(Name);
-
-			var hasValue = Value != null;
-			w.Write(hasValue);
-			if (hasValue)
-				w.Write(Value);
+			w.WriteNullableString(Value);
 		}
 	}
 

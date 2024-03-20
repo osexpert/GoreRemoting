@@ -71,5 +71,18 @@ namespace GoreRemoting.Tests.Tools
 			var g1 = l1.Union(l2).GroupBy(a => a).Count();
 			return g1;
 		}
+
+		public byte[] TestSendBytes(byte[] inbytes, out byte[] outBytes)
+		{
+			outBytes = inbytes.Concat(new byte[] { 32, 42, 66 }).ToArray();
+			return new byte[] { 1, 2, 3, 4, 42 };
+		}
+
+		public (DateTime dt, DateTimeOffset off, Guid g, TimeOnly to, DateOnly don, TestEnum4 enu, TimeSpan ts, DateTimeOffset? nullDto) 
+			EchoMiscBasicTypes(DateTime dt, DateTimeOffset off, Guid g, TimeOnly to, DateOnly don, TestEnum4 enu, TimeSpan ts, DateTimeOffset? nullDto)
+		{
+			return (dt, off, g, to, don, enu, ts, nullDto);
+		}
+
 	}
 }

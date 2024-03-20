@@ -12,6 +12,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task CallContext_should_flow_from_client_to_server_and_back(enSerializer ser)
 		{
 			var testService =

@@ -206,6 +206,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task YieldTest(enSerializer ser)
 		{
 			await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));

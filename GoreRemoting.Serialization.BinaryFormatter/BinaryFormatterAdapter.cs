@@ -10,8 +10,9 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 	/// <summary>
 	/// Serializer adapter to allow binary serialization.
 	/// </summary>
-	public class BinaryFormatterAdapter : ISerializerAdapter
+	public class BinaryFormatterAdapter : ISerializerAdapter//, ISerializerExceptionHandler
 	{
+		public string Name => "BinaryFormatter";
 
 		[ThreadStatic]
 		private static BF.BinaryFormatter _formatter;
@@ -135,42 +136,59 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 
 		public object GetSerializableException(Exception ex)
 		{
-			var ed = ExceptionSerializationHelpers.GetExceptionData(ex);
-			var ew = ToExceptionWrapper(ed);
+			if (ExceptionStrategy == ExceptionStrategy.Default)
+			{
+				return ExceptionSerialization.GetSerializableExceptionDictionary(ex);
+			}
+			else
+			{
+				var ed = ExceptionSerialization.GetExceptionData(ex);
+				var ew = ToExceptionWrapper(ed);
 
-			// INFO: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
-			if (ex.GetType().IsSerializable)
-				ew.BinaryFormatterData = ex;
+				// INFO: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
+				if (ex.GetType().IsSerializable)
+					ew.BinaryFormatterData = ex;
 
-			return ew;
+				return ew;
+			}
 		}
 
 		public Exception RestoreSerializedException(object ex)
 		{
-			var ew = (ExceptionWrapper)ex;
-
-			if (ExceptionStrategy == ExceptionStrategy.BinaryFormatterOrUninitializedObject)
+			if (ExceptionStrategy == ExceptionStrategy.Default)
 			{
+				return ExceptionSerialization.RestoreSerializedExceptionDictionary((Dictionary<string, string>)ex);
+			}
+			else if (ExceptionStrategy == ExceptionStrategy.BinaryFormatterOrUninitializedObject)
+			{
+				var ew = (ExceptionWrapper)ex;
 				if (ew.BinaryFormatterData != null)
-					return ExceptionSerializationHelpers.RestoreAsBinaryFormatter(ew.BinaryFormatterData);
+					return ExceptionSerialization.RestoreAsBinaryFormatter(ew.BinaryFormatterData);
 				else
-					return ExceptionSerializationHelpers.RestoreAsUninitializedObject(ToExceptionData(ew), Type.GetType(ew.TypeName));
+				{
+					var ed = ToExceptionData(ew);
+					return ExceptionSerialization.RestoreAsUninitializedObject(ed, Type.GetType(ed.TypeName));
+				}
 			}
 			else if (ExceptionStrategy == ExceptionStrategy.BinaryFormatterOrRemoteInvocationException)
 			{
+				var ew = (ExceptionWrapper)ex;
 				if (ew.BinaryFormatterData != null)
-					return ExceptionSerializationHelpers.RestoreAsBinaryFormatter(ew.BinaryFormatterData);
+					return ExceptionSerialization.RestoreAsBinaryFormatter(ew.BinaryFormatterData);
 				else
-					return ExceptionSerializationHelpers.RestoreAsRemoteInvocationException(ToExceptionData(ew));
+				{
+				//	var ed = ToExceptionData(ew);
+					return ExceptionSerialization.RestoreAsRemoteInvocationException(ToExceptionData(ew));
+				}
 			}
-			else if (ExceptionStrategy == ExceptionStrategy.UninitializedObject)
-			{
-				return ExceptionSerializationHelpers.RestoreAsUninitializedObject(ToExceptionData(ew), Type.GetType(ew.TypeName));
-			}
-			else if (ExceptionStrategy == ExceptionStrategy.RemoteInvocationException)
-			{
-				return ExceptionSerializationHelpers.RestoreAsRemoteInvocationException(ToExceptionData(ew));
-			}
+			//else if (ExceptionStrategy == ExceptionStrategy.UninitializedObject)
+			//{
+			//	return ExceptionSerializationHelpers.RestoreAsUninitializedObject(ToExceptionData(ew), Type.GetType(ew.TypeName));
+			//}
+			//else if (ExceptionStrategy == ExceptionStrategy.RemoteInvocationException)
+			//{
+			//	return ExceptionSerializationHelpers.RestoreAsRemoteInvocationException(ToExceptionData(ew));
+			//}
 			else
 				throw new NotImplementedException("strategy: " + ExceptionStrategy); ;
 		}
@@ -179,7 +197,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		{
 			return new ExceptionWrapper
 			{
-				TypeName = ed.TypeName,
+//				TypeName = ed.TypeName,
 				PropertyData = ed.PropertyData,
 			};
 		}
@@ -188,7 +206,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		{
 			return new ExceptionData
 			{
-				TypeName = ew.TypeName,
+//				TypeName = ew.TypeName,
 				PropertyData = ew.PropertyData
 			};
 		}
@@ -197,13 +215,23 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		class ExceptionWrapper
 		{
 			public Exception BinaryFormatterData { get; set; }
-			public string TypeName { get; set; }
+//			public string TypeName { get; set; }
 			public Dictionary<string, string> PropertyData { get; set; }
 		}
 
-		public Type ExceptionType => typeof(ExceptionWrapper);
+		public Type ExceptionType
+		{
+			get
+			{
+				if (ExceptionStrategy == ExceptionStrategy.Default)
+					return typeof(Dictionary<string, string>);
+				else
+					return typeof(ExceptionWrapper);
+			}
+		}
+		
 
-		public string Name => "BinaryFormatter";
+		
 
 		//public byte[] GetExceptionData(Exception e)
 		//{
@@ -248,22 +276,26 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 
 	public enum ExceptionStrategy
 	{
+		Default = 0, // UninitializedObject
+
+		//UninitializedObject = 1,
+		///// <summary>
+		///// Always type RemoteInvocationException, with only Message, StackTrace, ClassName and PropertyData set
+		///// </summary>
+		//RemoteInvocationException = 2,
+
 		/// <summary>
 		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)
 		/// </summary>
-		BinaryFormatterOrUninitializedObject = 1,
+		BinaryFormatterOrUninitializedObject = 3,
 		/// <summary>
 		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as RemoteInvocationException)
 		/// </summary>
-		BinaryFormatterOrRemoteInvocationException = 2,
+		BinaryFormatterOrRemoteInvocationException = 4,
 		/// <summary>
 		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
 		/// </summary>
-		UninitializedObject = 3,
-		/// <summary>
-		/// Always type RemoteInvocationException, with only Message, StackTrace, ClassName and PropertyData set
-		/// </summary>
-		RemoteInvocationException = 4
+		
 	}
 
 }

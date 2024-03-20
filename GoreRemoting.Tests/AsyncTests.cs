@@ -8,6 +8,7 @@ using GoreRemoting.Serialization.BinaryFormatter;
 using GoreRemoting.Serialization.Json;
 using GoreRemoting.Serialization.MemoryPack;
 using GoreRemoting.Serialization.MessagePack;
+using GoreRemoting.Serialization.Protobuf;
 using GoreRemoting.Tests.Tools;
 using Microsoft.Data.SqlClient;
 using Xunit;
@@ -62,6 +63,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async void AsyncMethods_should_work(enSerializer ser)
 		{
 			var serverConfig =
@@ -102,6 +104,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async Task AwaitingNonGenericTask_should_not_hang_forever(enSerializer ser)
 		{
 			var port = 9197;
@@ -267,6 +270,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async void ExceptionTests(enSerializer ser)
 		{
 			var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
@@ -388,6 +392,7 @@ namespace GoreRemoting.Tests
 		[InlineData(enSerializer.Json)]
 		[InlineData(enSerializer.MemoryPack)]
 		[InlineData(enSerializer.MessagePack)]
+		[InlineData(enSerializer.Protobuf)]
 		public async void ExceptionTests_InnerEx(enSerializer ser)
 		{
 			var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
@@ -438,6 +443,7 @@ namespace GoreRemoting.Tests
 		MemoryPack = 2,
 		Json = 3,
 		MessagePack = 4,
+		Protobuf = 5
 	}
 
 	public static class Serializers
@@ -450,6 +456,7 @@ namespace GoreRemoting.Tests
 				enSerializer.MemoryPack => new MemoryPackAdapter(),
 				enSerializer.Json => new JsonAdapter(),
 				enSerializer.MessagePack => new MessagePackAdapter(),
+				enSerializer.Protobuf => new ProtobufAdapter(),
 				_ => throw new NotImplementedException(),
 			};
 		}

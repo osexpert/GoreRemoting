@@ -1,27 +1,31 @@
-﻿using System.Text;
-using GoreRemoting.Serialization.MessagePack.ArgTypes;
-using MessagePack;
-using MessagePack.Formatters;
-using MessagePack.Resolvers;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using GoreRemoting.Serialization.Protobuf.ArgTypes;
+using ProtoBuf;
+using ProtoBuf.Meta;
 
-namespace GoreRemoting.Serialization.MessagePack
+namespace GoreRemoting.Serialization.Protobuf
 {
-	public class MessagePackAdapter : ISerializerAdapter
+	public class ProtobufAdapter : ISerializerAdapter
 	{
-		/// <summary>
-		/// v2: type no longer written. Args generics.
-		/// </summary>
-		public string Name => "MessagePack_v2";
 
-		public MessagePackSerializerOptions? Options { get; set; } = CreateDefaultOptions();
+		public string Name => "Protobuf";
 
-		private static MessagePackSerializerOptions CreateDefaultOptions()
+		private static object _lock = new();
+
+		public ProtobufAdapter(bool addSurrogates = true)
 		{
-			return new MessagePackSerializerOptions(
-				CompositeResolver.Create(
-					NativeDateTimeResolver.Instance,
-					MessagePackSerializerOptions.Standard.Resolver)
-					);
+			if (addSurrogates)
+			{
+				lock (_lock)
+				{
+					if (!RuntimeTypeModel.Default.IsDefined(typeof(Version)))
+						RuntimeTypeModel.Default.Add(typeof(Version), false).SetSurrogate(typeof(VersionSurrogate));
+					if (!RuntimeTypeModel.Default.IsDefined(typeof(DateTimeOffset)))
+						RuntimeTypeModel.Default.Add(typeof(DateTimeOffset), false).SetSurrogate(typeof(DateTimeOffsetSurrogate));
+				}
+			}
 		}
 
 		public void Serialize(Stream stream, object?[] graph, Type[] types)
@@ -31,15 +35,16 @@ namespace GoreRemoting.Serialization.MessagePack
 			args.Set(graph);
 			object o = args;
 
-			MessagePackSerializer.Serialize(t, stream, o, Options);
+			Serializer.Serialize(stream, o);
 		}
 
 		public object?[] Deserialize(Stream stream, Type[] types)
 		{
 			var t = GetArgsType(types);
-			var res = (IArgs)MessagePackSerializer.Deserialize(t, stream, Options)!;
+			var res = (IArgs)Serializer.Deserialize(t, stream);
 			return res.Get();
 		}
+
 
 		private static Type GetArgsType(Type[] types)
 		{

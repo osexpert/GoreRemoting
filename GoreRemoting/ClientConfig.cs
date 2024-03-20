@@ -111,6 +111,7 @@ namespace GoreRemoting
 
 		public bool RestoreCallContext { get; set; } = true;
 
+		//public ExceptionStrategy ExceptionStrategy => ExceptionStrategy.UninitializedObject;
 
 		private Dictionary<Type, ICompressionProvider> _compressors = new();
 		private Dictionary<string, ICompressionProvider> _compressorsByName = new();

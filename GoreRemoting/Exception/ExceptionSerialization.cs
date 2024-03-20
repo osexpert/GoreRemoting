@@ -8,12 +8,16 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Linq;
+using GoreRemoting.Serialization;
 
 namespace GoreRemoting
 {
 
-	public static class ExceptionSerializationHelpers
+	public static class ExceptionSerialization
 	{
+		public static ExceptionStrategy ExceptionStrategy => ExceptionStrategy.UninitializedObject;
+
+
 		public static ExceptionData GetExceptionData(Exception ex)
 		{
 			Dictionary<string, string> propertyData = new();
@@ -40,9 +44,11 @@ namespace GoreRemoting
 			// Will include namespace but not full instantiation and assembly name.
 			propertyData.Add(ExceptionData.ClassNameKey, ex.GetType().ToString());
 
+			propertyData.Add(ExceptionData.TypeNameKey, TypeShortener.GetShortType(ex.GetType()));
+
 			return new ExceptionData
 			{
-				TypeName = TypeShortener.GetShortType(ex.GetType()),
+//				TypeName = ,
 				PropertyData = propertyData
 			};
 		}
@@ -147,6 +153,33 @@ namespace GoreRemoting
 				return e;
 			}
 		}
+
+		public static Dictionary<string, string> GetSerializableExceptionDictionary(Exception ex)
+		{
+			return GetExceptionData(ex).PropertyData;
+		}
+
+		public static Exception RestoreSerializedExceptionDictionary(Dictionary<string, string> ex)
+		{
+			return ExceptionStrategy switch
+			{
+				ExceptionStrategy.UninitializedObject => ExceptionSerialization.RestoreAsUninitializedObject(ex),
+				ExceptionStrategy.RemoteInvocationException => ExceptionSerialization.RestoreAsRemoteInvocationException(ex),
+				_ => throw new NotImplementedException()
+			};
+		}
+
+		private static Exception RestoreAsRemoteInvocationException(Dictionary<string, string> ex)
+		{
+			var ed = new ExceptionData() { PropertyData = ex };
+			return ExceptionSerialization.RestoreAsRemoteInvocationException(ed);
+		}
+
+		private static Exception RestoreAsUninitializedObject(Dictionary<string, string> ex)
+		{
+			var ed = new ExceptionData() { PropertyData = ex };
+			return ExceptionSerialization.RestoreAsUninitializedObject(ed, Type.GetType(ed.TypeName));
+		}
 	}
 
 	public class ExceptionHelper
@@ -186,12 +219,14 @@ namespace GoreRemoting
 
 	public class ExceptionData
 	{
-		public string TypeName;
+		
 
 		public const string MessageKey = nameof(Exception.Message);
 		public const string StackTraceKey = nameof(Exception.StackTrace);
 		public const string InnerExceptionKey = nameof(Exception.InnerException);
 		public const string ClassNameKey = nameof(RemoteInvocationException.ClassName);
+
+		public const string TypeNameKey = nameof(ExceptionData.TypeName);
 
 		public string? GetValue(string key)
 		{
@@ -204,6 +239,8 @@ namespace GoreRemoting
 		public string Message => GetValue(MessageKey);
 		public string StackTrace => GetValue(StackTraceKey);
 		public string InnerException => GetValue(InnerExceptionKey);
+
+		public string TypeName => GetValue(TypeNameKey);
 
 		public string FullStackTrace()
 		{
@@ -219,6 +256,16 @@ namespace GoreRemoting
 	}
 
 
-
+	public enum ExceptionStrategy
+	{
+		/// <summary>
+		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
+		/// </summary>
+		UninitializedObject = 1,
+		/// <summary>
+		/// Always type RemoteInvocationException, with only Message, StackTrace, ClassName and PropertyData set
+		/// </summary>
+		RemoteInvocationException = 2
+	}
 
 }

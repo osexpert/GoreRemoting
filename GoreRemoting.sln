@@ -35,6 +35,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoreRemoting.Compression.Lz
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoreRemoting.Serialization.MessagePack", "GoreRemoting.Serialization.MessagePack\GoreRemoting.Serialization.MessagePack.csproj", "{5D7CF749-B924-4740-824D-966A53601D1F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoreRemoting.Serialization.Protobuf", "GoreRemoting.Serialization.Protobuf\GoreRemoting.Serialization.Protobuf.csproj", "{5C7E2E07-5390-4505-BD83-ED9CB86BC891}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -101,6 +103,10 @@ Global
 		{5D7CF749-B924-4740-824D-966A53601D1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5D7CF749-B924-4740-824D-966A53601D1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5D7CF749-B924-4740-824D-966A53601D1F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C7E2E07-5390-4505-BD83-ED9CB86BC891}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C7E2E07-5390-4505-BD83-ED9CB86BC891}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C7E2E07-5390-4505-BD83-ED9CB86BC891}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C7E2E07-5390-4505-BD83-ED9CB86BC891}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
