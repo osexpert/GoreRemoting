@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace GoreRemoting.RpcMessaging
+﻿namespace GoreRemoting.RpcMessaging
 {
 	/// <summary>
 	/// Serializable message that describes an out parameter.

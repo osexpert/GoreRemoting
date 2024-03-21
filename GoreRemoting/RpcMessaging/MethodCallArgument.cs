@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using GoreRemoting.RemoteDelegates;
+﻿using GoreRemoting.RemoteDelegates;
 
 namespace GoreRemoting.RpcMessaging
 {

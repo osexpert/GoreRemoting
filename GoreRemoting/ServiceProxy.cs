@@ -68,7 +68,7 @@ namespace GoreRemoting
 				new CallOptions(headers: headers, cancellationToken: cancel));
 
 			if (resultMessage.ResultType == ResultKind.Exception)
-				throw serializer.RestoreSerializedException(resultMessage.Value!);
+				throw Gorializer.RestoreSerializedException(serializer, resultMessage.Value!);
 
 			var parameterInfos = targetMethod.GetParameters();
 
@@ -127,7 +127,7 @@ namespace GoreRemoting
 				new CallOptions(headers: headers, cancellationToken: cancel)).ConfigureAwait(false);
 
 			if (resultMessage.ResultType == ResultKind.Exception)
-				throw serializer.RestoreSerializedException(resultMessage.Value!);
+				throw Gorializer.RestoreSerializedException(serializer, resultMessage.Value!);
 
 			// out|ref not possible with async
 
@@ -246,7 +246,7 @@ namespace GoreRemoting
 								}
 								else
 								{
-									exception = serializer.GetSerializableException(ex2);
+									exception = Gorializer.GetSerializableException(serializer, ex2);
 								}
 							}
 						}

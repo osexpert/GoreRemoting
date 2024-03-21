@@ -1,12 +1,9 @@
-﻿using System;
-using System.IO;
-using System.Reflection;
+﻿using System.Reflection;
 using GoreRemoting.Serialization;
 using Grpc.Net.Compression;
 
 namespace GoreRemoting.RpcMessaging
 {
-
 	public class GoreRequestMessage
 	{
 		// only used on deserialize

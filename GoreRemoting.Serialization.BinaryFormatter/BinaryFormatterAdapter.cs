@@ -10,7 +10,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 	/// <summary>
 	/// Serializer adapter to allow binary serialization.
 	/// </summary>
-	public class BinaryFormatterAdapter : ISerializerAdapter//, ISerializerExceptionHandler
+	public class BinaryFormatterAdapter : ISerializerAdapter, IExceptionAdapter
 	{
 		public string Name => "BinaryFormatter";
 

@@ -1,9 +1,5 @@
-﻿using System.Collections.Generic;
-
-namespace GoreRemoting.RpcMessaging
+﻿namespace GoreRemoting.RpcMessaging
 {
-
-
 	public enum ResultKind
 	{
 		ResultValue = 1,

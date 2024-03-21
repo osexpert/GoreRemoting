@@ -10,6 +10,7 @@ You can send extra headers with every call from client to server, eg. a sessionI
 Clients create proxies from service interfaces (typically in shared assembly).
 No support for MarshalByRef behaviour. Everything is by value.
 GoreRemoting does not use .proto files (Protobuf).
+Currently there is a limit of 20 method parameters. It is possible to increase it, possibly can increated to 30 if demand. But more than 30 won't happen.
 
 ## Callbacks from server to client
 It is not possible to callback to clients directly, callbacks must happen during a call from client to server.
@@ -40,18 +41,17 @@ But best to not mix Grpc dotnet with anything else.
 Reason: under stress will get errors, specifically ENHANCE_YOUR_CALM
 
 ## Serializers
-Currently has serializers for BinaryFormatter, System.Text.Json, MessagePack, MemoryPack.
+Currently has serializers for BinaryFormatter, System.Text.Json, MessagePack, MemoryPack, Protobuf.
 Must set a default serializer. Can overide serializer per service\per method with SerializerAttribute.
 This way migration from BinaryFormatter to eg. System.Text.Json can happen method by method\service by service.
 
 ### Exception handling
-Exceptions thrown are marshalled based on a setting in the serializer: ExceptionStrategy.
-The default for all serializers are ExceptionFormatStrategy.BinaryFormatterOrUninitializedObject, to make exception marshalling the same regardless of serializer.
-When\if you want to stop all use of BinaryFormatter (when migration is complete, BinaryFormatter is not longer available, etc.), it should be changed
-to eg. ExceptionFormatStrategy.UninitializedObject.
+Exceptions thrown are marshalled based on a setting in ExceptionSerialization: ExceptionStrategy.
+The default for all serializers (except BinaryFormatter) are ExceptionStrategy.UninitializedObject.
+BinaryFormatter has its own ExceptionStrategy setting (override) and its default is ExceptionStrategy.BinaryFormatterOrUninitializedObject.
 
 ### Exception strategies
-	public enum ExceptionFormatStrategy
+	public enum ExceptionStrategy
 	{
 		/// <summary>
 		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)

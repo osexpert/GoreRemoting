@@ -1,5 +1,3 @@
-using System;
-
 namespace GoreRemoting.RpcMessaging
 {
 	/// <summary>

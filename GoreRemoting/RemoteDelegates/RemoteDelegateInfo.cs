@@ -8,8 +8,6 @@ namespace GoreRemoting.RemoteDelegates
 
 	public class RemoteDelegateInfo : IGorializer
 	{
-
-
 		private bool _hasResult;
 
 		/// <summary>
@@ -25,8 +23,6 @@ namespace GoreRemoting.RemoteDelegates
 		{
 			Deserialize(r);
 		}
-
-
 
 		/// <summary>
 		/// HasResult
@@ -48,7 +44,6 @@ namespace GoreRemoting.RemoteDelegates
 			w.Write(_hasResult);
 		}
 	}
-
 
 	public class CancellationTokenPlaceholder
 	{

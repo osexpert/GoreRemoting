@@ -15,6 +15,11 @@ namespace GoreRemoting.Serialization
 
 
 		string Name { get; }
+		
+	}
+
+	public interface IExceptionAdapter
+	{
 		object GetSerializableException(Exception ex);
 
 		Exception RestoreSerializedException(object ex);
@@ -22,9 +27,4 @@ namespace GoreRemoting.Serialization
 		Type ExceptionType { get; }
 
 	}
-
-	//public interface ISerializerExceptionHandler
-	//{
-		
-	//}
 }

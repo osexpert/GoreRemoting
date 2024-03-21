@@ -299,7 +299,7 @@ namespace GoreRemoting
 							throw new Exception("Incorrect result position");
 
 						if (msg.ReturnKind == DelegateResultType.Exception)// msg.Exception != null)
-							throw request.Serializer.RestoreSerializedException(msg.Value!);
+							throw Gorializer.RestoreSerializedException(request.Serializer, msg.Value!);
 
 						if (msg.StreamingStatus == StreamingStatus.Active)
 							activeStreamingDelegatePosition = msg.Position;
@@ -354,7 +354,7 @@ namespace GoreRemoting
 							throw new Exception("Incorrect result position");
 
 						if (msg.ReturnKind == DelegateResultType.Exception)
-							throw request.Serializer.RestoreSerializedException(msg.Value!);
+							throw Gorializer.RestoreSerializedException(request.Serializer, msg.Value!);
 
 						if (msg.StreamingStatus == StreamingStatus.Active)
 							activeStreamingDelegatePosition = msg.Position;
@@ -430,7 +430,7 @@ namespace GoreRemoting
 			}
 			else
 			{
-				var serEx = request.Serializer.GetSerializableException(ex2);
+				var serEx = Gorializer.GetSerializableException(request.Serializer, ex2);
 				resultMessage = new MethodResultMessage { Value = serEx, ResultType = ResultKind.Exception };
 			}
 

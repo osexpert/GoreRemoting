@@ -40,7 +40,7 @@ namespace GoreRemoting
 				}
 			}
 
-			// Same logic as in dotnet:
+			// Same logic as in dotnet (ToString() on the type):
 			// Will include namespace but not full instantiation and assembly name.
 			propertyData.Add(ExceptionData.ClassNameKey, ex.GetType().ToString());
 

@@ -60,6 +60,10 @@ namespace GoreRemoting
 		/// <param name="entries">Call context entries</param>
 		internal static void RestoreFromSnapshot(IEnumerable<CallContextEntry> entries)
 		{
+			// This logic is weird... Why set everything to null in this case???
+			// Also...will it ever be null?
+			// And if we have empty collection, suddenly the logic switch completely...to do nothing at all.
+			// This make no sense IMO.
 			if (entries == null)
 			{
 				foreach (var entry in State)

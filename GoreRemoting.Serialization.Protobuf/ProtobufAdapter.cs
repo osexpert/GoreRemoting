@@ -9,7 +9,6 @@ namespace GoreRemoting.Serialization.Protobuf
 {
 	public class ProtobufAdapter : ISerializerAdapter
 	{
-
 		public string Name => "Protobuf";
 
 		private static object _lock = new();
@@ -22,6 +21,7 @@ namespace GoreRemoting.Serialization.Protobuf
 				{
 					if (!RuntimeTypeModel.Default.IsDefined(typeof(Version)))
 						RuntimeTypeModel.Default.Add(typeof(Version), false).SetSurrogate(typeof(VersionSurrogate));
+
 					if (!RuntimeTypeModel.Default.IsDefined(typeof(DateTimeOffset)))
 						RuntimeTypeModel.Default.Add(typeof(DateTimeOffset), false).SetSurrogate(typeof(DateTimeOffsetSurrogate));
 				}

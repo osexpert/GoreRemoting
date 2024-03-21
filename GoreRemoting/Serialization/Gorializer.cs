@@ -1,20 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
-using System.Security.Cryptography;
+﻿using System.Reflection;
 using System.Text;
 using GoreRemoting.RpcMessaging;
 using GoreRemoting.Serialization;
-using Grpc.Core;
 using Grpc.Net.Compression;
 
 namespace GoreRemoting
 {
 	public interface IGorializer
 	{
-		//MethodInfo Method { get; set;  }
-
 		void Serialize(GoreBinaryWriter w, Stack<object?> st);
 		void Deserialize(GoreBinaryReader r);
 		void Deserialize(Stack<object?> st);
@@ -95,7 +88,7 @@ namespace GoreRemoting
 			{
 				if (mrm.ResultType == ResultKind.Exception)
 				{
-					return new Type[] { serializer.ExceptionType };
+					return new Type[] { Gorializer.GetExceptionType(serializer) };
 				}
 				else
 				{
@@ -175,7 +168,7 @@ namespace GoreRemoting
 			{
 				if (drm.ReturnKind == DelegateResultType.Exception)
 				{
-					return new Type[] { serializer.ExceptionType };
+					return new Type[] { Gorializer.GetExceptionType(serializer) };
 				}
 				else
 				{
@@ -209,6 +202,31 @@ namespace GoreRemoting
 		}
 
 
+		private static Type GetExceptionType(ISerializerAdapter serializer)
+		{
+			if (serializer is IExceptionAdapter ea)
+				return ea.ExceptionType;
+			else
+				return typeof(Dictionary<string, string>);
+		}
+
+
+		internal static Exception RestoreSerializedException(ISerializerAdapter serializer, object ex)
+		{
+			if (serializer is IExceptionAdapter ea)
+				return ea.RestoreSerializedException(ex);
+			else
+				return ExceptionSerialization.RestoreSerializedExceptionDictionary((Dictionary<string, string>)ex);
+		}
+
+		internal static object GetSerializableException(ISerializerAdapter serializer, Exception ex)
+		{
+			if (serializer is IExceptionAdapter ea)
+				return ea.GetSerializableException(ex);
+			else
+				return ExceptionSerialization.GetSerializableExceptionDictionary(ex);
+		}
+	
 	}
 
 	public class GoreBinaryWriter : BinaryWriter

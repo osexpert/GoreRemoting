@@ -6,13 +6,9 @@ using TupleAsJsonArray;
 
 namespace GoreRemoting.Serialization.Json
 {
-
 	public class JsonAdapter : ISerializerAdapter
 	{
-		/// <summary>
-		/// v2: Type no longer written. Args generics.
-		/// </summary>
-		public string Name => "Json_v2";
+		public string Name => "Json";
 
 		public JsonSerializerOptions Options { get; } = CreateDefaultOptions();
 
@@ -88,18 +84,6 @@ namespace GoreRemoting.Serialization.Json
 				res[kv.Key] = kv.Value;
 
 			return res;
-		}
-
-		public Type ExceptionType => typeof(Dictionary<string, string>);
-
-		public object GetSerializableException(Exception ex)
-		{
-			return ExceptionSerialization.GetSerializableExceptionDictionary(ex);
-		}
-
-		public Exception RestoreSerializedException(object ex)
-		{
-			return ExceptionSerialization.RestoreSerializedExceptionDictionary((Dictionary<string, string>)ex);
 		}
 
 		private static Type GetArgsType(Type[] types)

@@ -8,10 +8,7 @@ namespace GoreRemoting.Serialization.MessagePack
 {
 	public class MessagePackAdapter : ISerializerAdapter
 	{
-		/// <summary>
-		/// v2: type no longer written. Args generics.
-		/// </summary>
-		public string Name => "MessagePack_v2";
+		public string Name => "MessagePack";
 
 		public MessagePackSerializerOptions? Options { get; set; } = CreateDefaultOptions();
 
@@ -70,17 +67,6 @@ namespace GoreRemoting.Serialization.MessagePack
 			return type;
 		}
 
-		public Type ExceptionType => typeof(Dictionary<string, string>);
-
-		public object GetSerializableException(Exception ex)
-		{
-			return ExceptionSerialization.GetSerializableExceptionDictionary(ex);
-		}
-
-		public Exception RestoreSerializedException(object ex)
-		{
-			return ExceptionSerialization.RestoreSerializedExceptionDictionary((Dictionary<string, string>)ex);
-		}
 	}
 
 }

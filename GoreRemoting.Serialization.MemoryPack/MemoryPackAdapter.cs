@@ -7,11 +7,7 @@ namespace GoreRemoting.Serialization.MemoryPack
 {
 	public class MemoryPackAdapter : ISerializerAdapter
 	{
-		/// <summary>
-		/// v2: type no longer written. Args generics
-		/// </summary>
-		public string Name => "MemoryPack_v2";
-
+		public string Name => "MemoryPack";
 
 		public MemoryPackSerializerOptions? Options { get; set; }
 
@@ -30,18 +26,6 @@ namespace GoreRemoting.Serialization.MemoryPack
 			var t = GetArgsType(types);
 			var res = (IArgs)MemoryPackSerializer.DeserializeAsync(t, stream, Options).GetAwaiter().GetResult()!;
 			return res.Get();
-		}
-
-		public Type ExceptionType => typeof(Dictionary<string, string>);
-
-		public object GetSerializableException(Exception ex)
-		{
-			return ExceptionSerialization.GetSerializableExceptionDictionary(ex);
-		}
-
-		public Exception RestoreSerializedException(object ex)
-		{
-			return ExceptionSerialization.RestoreSerializedExceptionDictionary((Dictionary<string, string>)ex);
 		}
 
 		private static Type GetArgsType(Type[] types)
