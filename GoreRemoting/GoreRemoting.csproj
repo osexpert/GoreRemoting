@@ -15,7 +15,8 @@
 <!--      <PackageReference Include="Nerdbank.Streams" Version="2.9.112" /> -->
 		<PackageReference Include="Castle.Core" />
 		<PackageReference Include="Nullable" />
-      <PackageReference Include="Grpc.Net.Common" /> 
+      <PackageReference Include="Grpc.Net.Common" />
+		<PackageReference Include="System.Text.Json" />
       <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Condition="'$(TargetFramework)' == 'NETSTANDARD2.0'" /> 
 
       

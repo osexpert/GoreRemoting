@@ -107,9 +107,9 @@ namespace GoreRemoting
 			return res;
 		}
 
-		public bool EmitCallContext { get; set; } = true;
+//		public bool EmitCallContext { get; set; } = true;
 
-		public bool RestoreCallContext { get; set; } = true;
+	//	public bool RestoreCallContext { get; set; } = true;
 
 		//public ExceptionStrategy ExceptionStrategy => ExceptionStrategy.UninitializedObject;
 

@@ -166,8 +166,9 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 					return ExceptionSerialization.RestoreAsBinaryFormatter(ew.BinaryFormatterData);
 				else
 				{
-					var ed = ToExceptionData(ew);
-					return ExceptionSerialization.RestoreAsUninitializedObject(ed, Type.GetType(ed.TypeName));
+					//					var ed = ToExceptionData(ew);
+					//				return ExceptionSerialization.RestoreAsUninitializedObject(ed, Type.GetType(ed.TypeName));
+					return ExceptionSerialization.RestoreAsUninitializedObject(ew.PropertyData);
 				}
 			}
 			else if (ExceptionStrategy == ExceptionStrategy.BinaryFormatterOrRemoteInvocationException)
@@ -177,8 +178,8 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 					return ExceptionSerialization.RestoreAsBinaryFormatter(ew.BinaryFormatterData);
 				else
 				{
-				//	var ed = ToExceptionData(ew);
-					return ExceptionSerialization.RestoreAsRemoteInvocationException(ToExceptionData(ew));
+					//	var ed = ToExceptionData(ew);
+					return ExceptionSerialization.RestoreAsRemoteInvocationException(ew.PropertyData);// ToExceptionData(ew));
 				}
 			}
 			//else if (ExceptionStrategy == ExceptionStrategy.UninitializedObject)
@@ -193,22 +194,18 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 				throw new NotImplementedException("strategy: " + ExceptionStrategy); ;
 		}
 
-		private static ExceptionWrapper ToExceptionWrapper(ExceptionData ed)
+		private static ExceptionWrapper ToExceptionWrapper(Dictionary<string, string> ed)
 		{
 			return new ExceptionWrapper
 			{
 //				TypeName = ed.TypeName,
-				PropertyData = ed.PropertyData,
+				PropertyData = ed,
 			};
 		}
 
 		private static ExceptionData ToExceptionData(ExceptionWrapper ew)
 		{
-			return new ExceptionData
-			{
-//				TypeName = ew.TypeName,
-				PropertyData = ew.PropertyData
-			};
+			return new ExceptionData(ew.PropertyData);
 		}
 
 		[Serializable]
@@ -292,9 +289,10 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as RemoteInvocationException)
 		/// </summary>
 		BinaryFormatterOrRemoteInvocationException = 4,
-		/// <summary>
-		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
-		/// </summary>
+
+		//// <summary>
+		//// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
+		//// </summary>
 		
 	}
 

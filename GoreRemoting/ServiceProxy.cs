@@ -57,8 +57,8 @@ namespace GoreRemoting
 
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
 				targetMethod: targetMethod,
-				args: arguments,
-				emitCallContext: _client._config.EmitCallContext
+				args: arguments//,
+				//emitCallContext: _client._config.EmitCallContext
 				);
 
 			var requestMsg = new GoreRequestMessage(callMessage, _serviceName, targetMethod.Name, serializer, compressor);
@@ -86,10 +86,10 @@ namespace GoreRemoting
 			invocation.ReturnValue = resultMessage.Value;
 
 			// restore context flow from server
-			if (_client._config.RestoreCallContext)
-			{
-				CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
-			}
+//			if (_client._config.RestoreCallContext)
+	//		{
+			CallContext.RestoreFromChangesSnapshot(resultMessage.CallContextSnapshot);
+			//}
 		}
 
 
@@ -116,8 +116,8 @@ namespace GoreRemoting
 
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
 				targetMethod: targetMethod,
-				args: arguments,
-				emitCallContext: _client._config.EmitCallContext
+				args: arguments
+				//emitCallContext: _client._config.EmitCallContext
 				);
 
 			var requestMsg = new GoreRequestMessage(callMessage, _serviceName, targetMethod.Name, serializer, compressor);
@@ -134,8 +134,8 @@ namespace GoreRemoting
 			invocation.Result = resultMessage.Value;
 
 			// restore context flow from server
-			if (_client._config.RestoreCallContext)
-				CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
+//			if (_client._config.RestoreCallContext)
+			CallContext.RestoreFromChangesSnapshot(resultMessage.CallContextSnapshot);
 		}
 
 		private ISerializerAdapter ChooseSerializer(Type t, MethodInfo mi)

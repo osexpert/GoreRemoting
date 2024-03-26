@@ -247,8 +247,8 @@ namespace GoreRemoting
 		{
 			var callMessage = request.MethodCallMessage;
 
-			if (_config.RestoreCallContext)
-				CallContext.RestoreFromSnapshot(callMessage.CallContextSnapshot);
+//			if (_config.RestoreCallContext)
+			CallContext.RestoreFromChangesSnapshot(callMessage.CallContextSnapshot);
 
 			var parameterTypes = request.Method.GetParameters().Select(p => p.ParameterType).ToArray();
 
@@ -425,8 +425,9 @@ namespace GoreRemoting
 					MethodCallMessageBuilder.BuildMethodCallResultMessage(
 							method: request.Method,
 							args: parameterValues,
-							returnValue: result,
-							emitCallContext: _config.EmitCallContext);
+							returnValue: result
+							//emitCallContext: _config.EmitCallContext
+							);
 			}
 			else
 			{

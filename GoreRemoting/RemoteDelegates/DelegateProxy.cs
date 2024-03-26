@@ -14,6 +14,11 @@ namespace GoreRemoting.RemoteDelegates
 
 		AsyncInterceptor _aInterceptor;
 
+		static readonly MethodInfo _interceptMethod = typeof(DelegateProxy ).GetMethod(
+				name: nameof(DelegateProxy.Intercept),
+			bindingAttr: BindingFlags.NonPublic | BindingFlags.InvokeMethod | BindingFlags.Instance);
+
+
 		/// <summary>
 		/// Creates a new instance of the DelegateProxy class.
 		/// </summary>
@@ -31,16 +36,10 @@ namespace GoreRemoting.RemoteDelegates
 				callInterceptionAsyncHandler ??
 					throw new ArgumentNullException(nameof(callInterceptionAsyncHandler));
 
-			var interceptMethod =
-				this.GetType()
-					.GetMethod(
-						name: nameof(Intercept),
-						bindingAttr: BindingFlags.NonPublic | BindingFlags.InvokeMethod | BindingFlags.Instance);
-
 			ProxiedDelegate =
 				CreateProxiedDelegate(
 					delegateType: delegateType,
-					interceptMethod: interceptMethod,
+					interceptMethod: _interceptMethod,
 					interceptor: this);
 
 			_aInterceptor = new AsyncInterceptor(InterceptSync, InterceptAsync);

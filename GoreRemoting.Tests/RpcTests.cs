@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -8,29 +9,29 @@ using GoreRemoting.Tests.ExternalTypes;
 using GoreRemoting.Tests.Tools;
 using MemoryPack;
 using MessagePack;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ProtoBuf;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace GoreRemoting.Tests
 {
+	[TestClass]
 	public class RpcTests
 	{
-		private readonly ITestOutputHelper _testOutputHelper;
+		//private readonly ITestOutputHelper _testOutputHelper;
 
 
 
-		public RpcTests(ITestOutputHelper testOutputHelper)
-		{
-			_testOutputHelper = testOutputHelper;
-		}
+		//public RpcTests(ITestOutputHelper testOutputHelper)
+		//{
+		//	_testOutputHelper = testOutputHelper;
+		//}
 
-		[Theory]
-//		[InlineData(enSerializer.BinaryFormatter)] FIXME: TimeOnly, DateOnly missing
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+//		[DataRow(enSerializer.BinaryFormatter)] FIXME: TimeOnly, DateOnly missing
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task TestMiscTypes(enSerializer ser)
 		{
 			var serverConfig =
@@ -53,23 +54,23 @@ namespace GoreRemoting.Tests
 			var span = dt.TimeOfDay;
 			var echo = proxy.EchoMiscBasicTypes(dt, dto, g, to, don, en, span, null);
 
-			Assert.Equal(dt, echo.dt);
-			Assert.Equal(dto, echo.off);
-			Assert.Equal(g, echo.g);
-			Assert.Equal(to, echo.to);
-			Assert.Equal(don, echo.don);
-			Assert.Equal(en, echo.enu);
-			Assert.Equal(span, echo.ts);
-			Assert.Null(echo.nullDto);
+			Assert.AreEqual(dt, echo.dt);
+			Assert.AreEqual(dto, echo.off);
+			Assert.AreEqual(g, echo.g);
+			Assert.AreEqual(to, echo.to);
+			Assert.AreEqual(don, echo.don);
+			Assert.AreEqual(en, echo.enu);
+			Assert.AreEqual(span, echo.ts);
+			Assert.IsNull(echo.nullDto);
 		}
 
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task TestSendBytes(enSerializer ser)
 		{
 			var serverConfig =
@@ -85,19 +86,19 @@ namespace GoreRemoting.Tests
 
 			var res = proxy.TestSendBytes(new byte[] { 77, 99, 12 }, out var outBytes);
 
-			Assert.Equal(new byte[] { 1, 2, 3, 4, 42 }, res);
-			Assert.Equal(new byte[] { 77, 99, 12, 32, 42, 66 }, outBytes);
+			Assert.IsTrue(Enumerable.SequenceEqual(new byte[] { 1, 2, 3, 4, 42 }, res));
+			Assert.IsTrue(Enumerable.SequenceEqual(new byte[] { 77, 99, 12, 32, 42, 66 }, outBytes));
 		
 		}
 
 
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task TestReferences(enSerializer ser)
 		{
 			var serverConfig =
@@ -123,27 +124,27 @@ namespace GoreRemoting.Tests
 			var result = proxy.TestReferences1(l1, l2);
 
 			if (ser == enSerializer.BinaryFormatter)
-				Assert.Equal(1, result);
+				Assert.AreEqual(1, result);
 			else if (ser == enSerializer.Json)
-				Assert.Equal(1, result);
+				Assert.AreEqual(1, result);
 			else if (ser == enSerializer.MemoryPack)
-				Assert.Equal(1, result);
+				Assert.AreEqual(1, result);
 			else if (ser == enSerializer.MessagePack)
-				Assert.Equal(4, result);
+				Assert.AreEqual(4, result);
 			else if (ser == enSerializer.Protobuf)
-				Assert.Equal(4, result);
+				Assert.AreEqual(4, result);
 			else
 				throw new NotImplementedException();
 		}
 
 
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task ReturnNull(enSerializer ser)
 		{
 			var serverConfig =
@@ -159,17 +160,17 @@ namespace GoreRemoting.Tests
 
 			var result = proxy.TestReturnNull();
 
-			Assert.Null(result);
+			Assert.IsNull(result);
 		}
 
 
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task Inherited_methods_should_be_called_correctly(enSerializer ser)
 		{
 			var serverConfig =
@@ -186,8 +187,8 @@ namespace GoreRemoting.Tests
 			var result = proxy.BaseEcho("lol");
 			var result2 = proxy.BaseEchoInt(3);
 
-			Assert.Equal("lol", result);
-			Assert.Equal(3, result2);
+			Assert.AreEqual("lol", result);
+			Assert.AreEqual(3, result2);
 		}
 
 
@@ -195,17 +196,17 @@ namespace GoreRemoting.Tests
 
 
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter, false)]
-		[InlineData(enSerializer.MemoryPack, false)]
-		[InlineData(enSerializer.Json, false)]
-		[InlineData(enSerializer.MessagePack, false)]
-		[InlineData(enSerializer.BinaryFormatter, true)]
-		[InlineData(enSerializer.MemoryPack, true)]
-		[InlineData(enSerializer.Json, true)]
-		[InlineData(enSerializer.MessagePack, true)]
-		[InlineData(enSerializer.Protobuf, false)]
-		[InlineData(enSerializer.Protobuf, true)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter, false)]
+		[DataRow(enSerializer.MemoryPack, false)]
+		[DataRow(enSerializer.Json, false)]
+		[DataRow(enSerializer.MessagePack, false)]
+		[DataRow(enSerializer.BinaryFormatter, true)]
+		[DataRow(enSerializer.MemoryPack, true)]
+		[DataRow(enSerializer.Json, true)]
+		[DataRow(enSerializer.MessagePack, true)]
+		[DataRow(enSerializer.Protobuf, false)]
+		[DataRow(enSerializer.Protobuf, true)]
 		public async Task Call_on_Proxy_should_be_invoked_on_remote_service(enSerializer ser, bool compress)
 		{
 			bool remoteServiceCalled = false;
@@ -246,46 +247,46 @@ namespace GoreRemoting.Tests
 					await using var client = new NativeClient(9094, cc);
 
 					stopWatch.Stop();
-					_testOutputHelper.WriteLine($"Creating client took {stopWatch.ElapsedMilliseconds} ms");
+				//	_testOutputHelper.WriteLine($"Creating client took {stopWatch.ElapsedMilliseconds} ms");
 					stopWatch.Reset();
 					stopWatch.Start();
 
 					//client.Connect();
 
 					stopWatch.Stop();
-					_testOutputHelper.WriteLine($"Establishing connection took {stopWatch.ElapsedMilliseconds} ms");
+			//		_testOutputHelper.WriteLine($"Establishing connection took {stopWatch.ElapsedMilliseconds} ms");
 					stopWatch.Reset();
 					stopWatch.Start();
 
 					var proxy = client.CreateProxy<ITestService>();
 
 					stopWatch.Stop();
-					_testOutputHelper.WriteLine($"Creating proxy took {stopWatch.ElapsedMilliseconds} ms");
+		//			_testOutputHelper.WriteLine($"Creating proxy took {stopWatch.ElapsedMilliseconds} ms");
 					stopWatch.Reset();
 					stopWatch.Start();
 
 					var result = proxy.TestMethod("test");
 
 					stopWatch.Stop();
-					_testOutputHelper.WriteLine($"Remote method invocation took {stopWatch.ElapsedMilliseconds} ms");
+	//				_testOutputHelper.WriteLine($"Remote method invocation took {stopWatch.ElapsedMilliseconds} ms");
 					stopWatch.Reset();
 					stopWatch.Start();
 
 					var result2 = proxy.TestMethod("test");
 
 					stopWatch.Stop();
-					_testOutputHelper.WriteLine($"Second remote method invocation took {stopWatch.ElapsedMilliseconds} ms");
+//					_testOutputHelper.WriteLine($"Second remote method invocation took {stopWatch.ElapsedMilliseconds} ms");
 
-					Assert.Equal("test", result);
-					Assert.Equal("test", result2);
+					Assert.AreEqual("test", result);
+					Assert.AreEqual("test", result2);
 
 					proxy.MethodWithOutParameter(out int methodCallCount);
 
-					Assert.Equal(1, methodCallCount);
+					Assert.AreEqual(1, methodCallCount);
 				}
 				catch (Exception e)
 				{
-					_testOutputHelper.WriteLine(e.ToString());
+//					_testOutputHelper.WriteLine(e.ToString());
 					throw;
 				}
 			}
@@ -297,15 +298,15 @@ namespace GoreRemoting.Tests
 			clientThread.Start();
 			clientThread.Join();
 
-			Assert.True(remoteServiceCalled);
+			Assert.IsTrue(remoteServiceCalled);
 		}
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task Call_on_Proxy_should_be_invoked_on_remote_service_without_MessageEncryption(enSerializer ser)
 		{
 			bool remoteServiceCalled = false;
@@ -341,42 +342,42 @@ namespace GoreRemoting.Tests
 					await using var client = new NativeClient(9094, new ClientConfig(Serializers.GetSerializer(ser)));
 
 					stopWatch.Stop();
-					_testOutputHelper.WriteLine($"Creating client took {stopWatch.ElapsedMilliseconds} ms");
+		//			_testOutputHelper.WriteLine($"Creating client took {stopWatch.ElapsedMilliseconds} ms");
 					stopWatch.Reset();
 					stopWatch.Start();
 
 					//client.Connect();
 
 					stopWatch.Stop();
-					_testOutputHelper.WriteLine($"Establishing connection took {stopWatch.ElapsedMilliseconds} ms");
+	//				_testOutputHelper.WriteLine($"Establishing connection took {stopWatch.ElapsedMilliseconds} ms");
 					stopWatch.Reset();
 					stopWatch.Start();
 
 					var proxy = client.CreateProxy<ITestService>();
 
 					stopWatch.Stop();
-					_testOutputHelper.WriteLine($"Creating proxy took {stopWatch.ElapsedMilliseconds} ms");
+//					_testOutputHelper.WriteLine($"Creating proxy took {stopWatch.ElapsedMilliseconds} ms");
 					stopWatch.Reset();
 					stopWatch.Start();
 
 					var result = proxy.TestMethod("test");
 
 					stopWatch.Stop();
-					_testOutputHelper.WriteLine($"Remote method invocation took {stopWatch.ElapsedMilliseconds} ms");
+			//		_testOutputHelper.WriteLine($"Remote method invocation took {stopWatch.ElapsedMilliseconds} ms");
 					stopWatch.Reset();
 					stopWatch.Start();
 
 					var result2 = proxy.TestMethod("test");
 
 					stopWatch.Stop();
-					_testOutputHelper.WriteLine($"Second remote method invocation took {stopWatch.ElapsedMilliseconds} ms");
+				//	_testOutputHelper.WriteLine($"Second remote method invocation took {stopWatch.ElapsedMilliseconds} ms");
 
-					Assert.Equal("test", result);
-					Assert.Equal("test", result2);
+					Assert.AreEqual("test", result);
+					Assert.AreEqual("test", result2);
 				}
 				catch (Exception e)
 				{
-					_testOutputHelper.WriteLine(e.ToString());
+					//_testOutputHelper.WriteLine(e.ToString());
 					throw;
 				}
 			}
@@ -388,15 +389,15 @@ namespace GoreRemoting.Tests
 			clientThread.Start();
 			clientThread.Join();
 
-			Assert.True(remoteServiceCalled);
+			Assert.IsTrue(remoteServiceCalled);
 		}
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task Delegate_invoked_on_server_should_callback_client(enSerializer ser)
 		{
 			string? argumentFromServer = null;
@@ -421,7 +422,7 @@ namespace GoreRemoting.Tests
 				}
 				catch (Exception e)
 				{
-					_testOutputHelper.WriteLine(e.ToString());
+//					_testOutputHelper.WriteLine(e.ToString());
 					throw;
 				}
 			}
@@ -433,15 +434,15 @@ namespace GoreRemoting.Tests
 			clientThread.Start();
 			clientThread.Join();
 
-			Assert.Equal("test", argumentFromServer);
+			Assert.AreEqual("test", argumentFromServer);
 		}
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task Events_should_NOT_work_remotly(enSerializer ser)
 		{
 			var testService = new TestService();
@@ -478,18 +479,18 @@ namespace GoreRemoting.Tests
 			{
 				ex = e;
 			}
-			Assert.Equal("Too late, result sent", ex!.Message);
-			Assert.Equal(15, ex.ToString().Split(Environment.NewLine).Length);
+			Assert.AreEqual("Too late, result sent", ex!.Message);
+			Assert.AreEqual(15, ex.ToString().Split(Environment.NewLine).Length);
 
-			Assert.False(serviceEventCalled);
+			Assert.IsFalse(serviceEventCalled);
 		}
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task External_types_should_work_as_remote_service_parameters(enSerializer ser)
 		{
 			bool remoteServiceCalled = false;
@@ -525,11 +526,11 @@ namespace GoreRemoting.Tests
 					var proxy = client.CreateProxy<ITestService>();
 					proxy.TestExternalTypeParameter(new DataClass() { Value = 42 });
 
-					Assert.Equal(42, parameterValue!.Value);
+					Assert.AreEqual(42, parameterValue!.Value);
 				}
 				catch (Exception e)
 				{
-					_testOutputHelper.WriteLine(e.ToString());
+//					_testOutputHelper.WriteLine(e.ToString());
 					throw;
 				}
 			}
@@ -541,7 +542,7 @@ namespace GoreRemoting.Tests
 			clientThread.Start();
 			clientThread.Join();
 
-			Assert.True(remoteServiceCalled);
+			Assert.IsTrue(remoteServiceCalled);
 		}
 
 		#region Service with generic method
@@ -601,12 +602,12 @@ namespace GoreRemoting.Tests
 
 		#endregion
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task Generic_methods_should_be_called_correctly(enSerializer ser)
 		{
 			var serverConfig =
@@ -621,16 +622,16 @@ namespace GoreRemoting.Tests
 			var proxy = client.CreateProxy<IGenericEchoService>();
 
 			var result = proxy.Echo("Yay");
-			Assert.Equal("Yay", result);
+			Assert.AreEqual("Yay", result);
 
 			//var result2 = proxy.Echo(42);
 			//Assert.Equal(42, result2);
 
 			var result3 = proxy.Echo2(new List<int> { 1, 2, 3 });
-			Assert.Equal(3, result3.Count);
-			Assert.Equal(1, result3[0]);
-			Assert.Equal(2, result3[1]);
-			Assert.Equal(3, result3[2]);
+			Assert.AreEqual(3, result3.Count);
+			Assert.AreEqual(1, result3[0]);
+			Assert.AreEqual(2, result3[1]);
+			Assert.AreEqual(3, result3[2]);
 
 			proxy.a();
 
@@ -670,12 +671,12 @@ namespace GoreRemoting.Tests
 
 		#endregion
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task Enum_arguments_should_be_passed_correctly(enSerializer ser)
 		{
 			var serverConfig =
@@ -692,8 +693,8 @@ namespace GoreRemoting.Tests
 			var resultFirst = proxy.Echo(TestEnum.First);
 			var resultSecond = proxy.Echo(TestEnum.Second);
 
-			Assert.Equal(TestEnum.First, resultFirst);
-			Assert.Equal(TestEnum.Second, resultSecond);
+			Assert.AreEqual(TestEnum.First, resultFirst);
+			Assert.AreEqual(TestEnum.Second, resultSecond);
 		}
 
 
@@ -718,12 +719,12 @@ namespace GoreRemoting.Tests
 		}
 
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task Ref_param_should_fail(enSerializer ser)
 		{
 			var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
@@ -737,12 +738,12 @@ namespace GoreRemoting.Tests
 			var proxy = client.CreateProxy<IRefTestService>();
 
 			string aString = "test";
-			Assert.Throws<NotSupportedException>(() => proxy.EchoRef(ref aString));
-			Assert.Equal("test", aString);
+			Assert.ThrowsException<NotSupportedException>(() => proxy.EchoRef(ref aString));
+			Assert.AreEqual("test", aString);
 
 			var r = proxy.EchoOut(out var outstr);
-			Assert.Equal("result", r);
-			Assert.Equal("I am out", outstr);
+			Assert.AreEqual("result", r);
+			Assert.AreEqual("I am out", outstr);
 		}
 
 
@@ -775,7 +776,7 @@ namespace GoreRemoting.Tests
 							{
 
 								var r = echo("hi");
-								Assert.Equal("hihi", r);
+								Assert.AreEqual("hihi", r);
 
 								Test_Thread_DidRun = true;
 							}
@@ -804,7 +805,7 @@ namespace GoreRemoting.Tests
 
 						}
 
-						Assert.Equal("Too late, result sent", ex.Message);
+						Assert.AreEqual("Too late, result sent", ex.Message);
 
 
 					}
@@ -834,12 +835,12 @@ namespace GoreRemoting.Tests
 		volatile static bool Test_Thread_Done = false;
 
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task Delegate_callback_after_return(enSerializer ser)
 		{
 			var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
@@ -861,18 +862,18 @@ namespace GoreRemoting.Tests
 				return e + "hi";
 			});
 
-			Assert.Equal("bollocks", res);
+			Assert.AreEqual("bollocks", res);
 
-			Assert.True(wasHere);
-			Assert.True(Test_HasReturned);
-			Assert.True(Test_Thread_DidRun);
+			Assert.IsTrue(wasHere);
+			Assert.IsTrue(Test_HasReturned);
+			Assert.IsTrue(Test_Thread_DidRun);
 
 			while (!Test_Thread_Done)
 			{
 				Thread.Sleep(10);
 			}
-			Assert.True(Test_Thread_Done);
-			Assert.True(Test_Thread_Callback_Failed);
+			Assert.IsTrue(Test_Thread_Done);
+			Assert.IsTrue(Test_Thread_Callback_Failed);
 		}
 
 
@@ -895,7 +896,7 @@ namespace GoreRemoting.Tests
 			public string Test(Func<S1, R1> echo, Func<S2, R2> echo2, Func<S3, R3> echo3)
 			{
 				// can't get here
-				Assert.True(false);
+				Assert.IsTrue(false);
 
 				throw new NotImplementedException();
 			}
@@ -919,7 +920,7 @@ namespace GoreRemoting.Tests
 					while (run)
 					{
 						var r = echo2(new S2("Yhello"));
-						Assert.Equal("Yhellohi", r.r2);
+						Assert.AreEqual("Yhellohi", r.r2);
 						i1++;
 					}
 				});
@@ -938,9 +939,9 @@ namespace GoreRemoting.Tests
 
 				Thread.Sleep(1000);
 
-				Assert.True(i > 0);
-				Assert.True(i1 > 0);
-				Assert.True(i2 > 0);
+				Assert.IsTrue(i > 0);
+				Assert.IsTrue(i1 > 0);
+				Assert.IsTrue(i2 > 0);
 
 
 				run = false;
@@ -971,7 +972,7 @@ namespace GoreRemoting.Tests
 					while (run)
 					{
 						var r = await echo2(new S2("Yhello"));
-						Assert.Equal("Yhellohi", r.r2);
+						Assert.AreEqual("Yhellohi", r.r2);
 						i1++;
 					}
 				});
@@ -990,9 +991,9 @@ namespace GoreRemoting.Tests
 
 				Thread.Sleep(1000);
 
-				Assert.True(i > 0);
-				Assert.True(i1 > 0);
-				Assert.True(i2 > 0);
+				Assert.IsTrue(i > 0);
+				Assert.IsTrue(i1 > 0);
+				Assert.IsTrue(i2 > 0);
 
 
 				run = false;
@@ -1005,12 +1006,12 @@ namespace GoreRemoting.Tests
 			}
 		}
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task MultipleDelegateCallback(enSerializer ser)
 		{
 			var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
@@ -1047,18 +1048,18 @@ namespace GoreRemoting.Tests
 					return new(e3.s3 + "hi");
 				});
 
-				Assert.Equal("רזו", res1);
+				Assert.AreEqual("רזו", res1);
 			}
 			catch (Exception e)
 			{
 				ex1 = e;
 			}
 
-			Assert.False(wasHere);
-			Assert.False(wasHere2);
-			Assert.False(wasHere3);
+			Assert.IsFalse(wasHere);
+			Assert.IsFalse(wasHere2);
+			Assert.IsFalse(wasHere3);
 
-			Assert.True(ex1!.Message == "Only one delegate with result is supported");
+			Assert.IsTrue(ex1!.Message == "Only one delegate with result is supported");
 
 			wasHere = false;
 			wasHere2 = false;
@@ -1081,11 +1082,11 @@ namespace GoreRemoting.Tests
 				//return new(e3 + "hi");
 			});
 
-			Assert.Equal("רזו", res);
+			Assert.AreEqual("רזו", res);
 
-			Assert.True(wasHere);
-			Assert.True(wasHere2);
-			Assert.True(wasHere3);
+			Assert.IsTrue(wasHere);
+			Assert.IsTrue(wasHere2);
+			Assert.IsTrue(wasHere3);
 
 
 			wasHere = false;
@@ -1109,11 +1110,11 @@ namespace GoreRemoting.Tests
 				//return new(e3 + "hi");
 			});
 
-			Assert.Equal("רזו", res);
+			Assert.AreEqual("רזו", res);
 
-			Assert.True(wasHere);
-			Assert.True(wasHere2);
-			Assert.True(wasHere3);
+			Assert.IsTrue(wasHere);
+			Assert.IsTrue(wasHere2);
+			Assert.IsTrue(wasHere3);
 
 
 		}
@@ -1166,7 +1167,7 @@ namespace GoreRemoting.Tests
 					await Task.Delay(1000);
 					var res = await lol(42);
 					await Task.Delay(1000);
-					Assert.Equal(422, res);
+					Assert.AreEqual(422, res);
 					return res;
 				}
 				catch (Exception)
@@ -1184,7 +1185,7 @@ namespace GoreRemoting.Tests
 					await Task.Delay(1000);
 					var res = await lol(42);
 					await Task.Delay(1000);
-					Assert.Equal(422, res);
+					Assert.AreEqual(422, res);
 					return res;
 				}
 				catch (Exception)
@@ -1198,7 +1199,7 @@ namespace GoreRemoting.Tests
 			public async Task<int> Test3(Func<int> f, Action a, Func<Task> a2, Func<ValueTask> vt)
 			{
 				var r1 = f();
-				Assert.Equal(42, r1);
+				Assert.AreEqual(42, r1);
 				a();
 				await a2();
 				await vt();
@@ -1209,14 +1210,14 @@ namespace GoreRemoting.Tests
 			{
 				a();
 				var i1 = await a2();
-				Assert.Equal(42, i1);
+				Assert.AreEqual(42, i1);
 				await vt();
 			}
 
 			public async ValueTask<int> Test5(Func<int> f, Action a, Func<Task> a2, Func<ValueTask<int>> vt)
 			{
 				var r1 = f();
-				Assert.Equal(42, r1);
+				Assert.AreEqual(42, r1);
 				a();
 				await a2();
 				await vt();
@@ -1229,7 +1230,7 @@ namespace GoreRemoting.Tests
 				a();
 				await a2();
 				var r = await vt();
-				Assert.Equal(42, r);
+				Assert.AreEqual(42, r);
 			}
 
 			public async Task Throw1(Action a)
@@ -1360,12 +1361,12 @@ namespace GoreRemoting.Tests
 		static Exception? throw8Ex;
 		static Exception? throw9Ex;
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task DoVarArgTest(enSerializer ser)
 		{
 			await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
@@ -1377,45 +1378,45 @@ namespace GoreRemoting.Tests
 			var proxy = client.CreateProxy<IVarArgTest>();
 			{
 				var r1 = proxy.Test0(ser == enSerializer.Protobuf, 1);
-				Assert.Single(r1);
-				Assert.Equal(1, r1[0]);
+				Assert.IsTrue(r1.Length == 1);
+				Assert.AreEqual(1, r1[0]);
 			}
 
 			{
 				var r2 = proxy.Test0(ser == enSerializer.Protobuf, 1, 2, 3);
-				Assert.Equal(3, r2.Length);
-				Assert.Equal(1, r2[0]);
-				Assert.Equal(2, r2[1]);
-				Assert.Equal(3, r2[2]);
+				Assert.AreEqual(3, r2.Length);
+				Assert.AreEqual(1, r2[0]);
+				Assert.AreEqual(2, r2[1]);
+				Assert.AreEqual(3, r2[2]);
 			}
 
 			{
 				var r3 = proxy.Test0(ser == enSerializer.Protobuf, 1, 2);
-				Assert.Equal(2, r3.Length);
-				Assert.Equal(1, r3[0]);
-				Assert.Equal(2, r3[1]);
+				Assert.AreEqual(2, r3.Length);
+				Assert.AreEqual(1, r3[0]);
+				Assert.AreEqual(2, r3[1]);
 			}
 
 			{
 				var v = await proxy.Test1(async (a) =>
 				{
-					Assert.Equal(42, a);
+					Assert.AreEqual(42, a);
 					await Task.CompletedTask;
 					await Task.Delay(1000);
 					return 422;
 				});
-				Assert.Equal(422, v);
+				Assert.AreEqual(422, v);
 			}
 
 			{
 				var v2 = await proxy.Test2(async (a) =>
 				{
-					Assert.Equal(42, a);
+					Assert.AreEqual(42, a);
 					await Task.CompletedTask;
 					await Task.Delay(1000);
 					return 422;
 				});
-				Assert.Equal(422, v2);
+				Assert.AreEqual(422, v2);
 			}
 
 			{
@@ -1436,10 +1437,10 @@ namespace GoreRemoting.Tests
 					await Task.CompletedTask;
 					t3_called3 = true;
 				});
-				Assert.True(t3_called1);
-				Assert.True(t3_called2);
-				Assert.True(t3_called3);
-				Assert.Equal(44, i3r);
+				Assert.IsTrue(t3_called1);
+				Assert.IsTrue(t3_called2);
+				Assert.IsTrue(t3_called3);
+				Assert.AreEqual(44, i3r);
 			}
 
 			{
@@ -1461,9 +1462,9 @@ namespace GoreRemoting.Tests
 					await Task.CompletedTask;
 					t4_called3 = true;
 				});
-				Assert.True(t4_called1);
-				Assert.True(t4_called2);
-				Assert.True(t4_called3);
+				Assert.IsTrue(t4_called1);
+				Assert.IsTrue(t4_called2);
+				Assert.IsTrue(t4_called3);
 			}
 
 			bool t5_failed = false;
@@ -1495,17 +1496,17 @@ namespace GoreRemoting.Tests
 					t5_called4 = true;
 					return 42;
 				});
-				Assert.True(t5_called1);
-				Assert.True(t5_called2);
-				Assert.True(t5_called3);
-				Assert.True(t5_called4);
-				Assert.Equal(44, t5ir);
+				Assert.IsTrue(t5_called1);
+				Assert.IsTrue(t5_called2);
+				Assert.IsTrue(t5_called3);
+				Assert.IsTrue(t5_called4);
+				Assert.AreEqual(44, t5ir);
 			}
 			catch (Exception e)
 			{
 				t5_failed = e.Message == "Only one delegate with result is supported";
 			}
-			Assert.True(t5_failed);
+			Assert.IsTrue(t5_failed);
 
 			{
 				bool t6_called1 = false;
@@ -1533,10 +1534,10 @@ namespace GoreRemoting.Tests
 					t6_called4 = true;
 					return 42;
 				});
-				Assert.True(t6_called1);
-				Assert.True(t6_called2);
-				Assert.True(t6_called3);
-				Assert.True(t6_called4);
+				Assert.IsTrue(t6_called1);
+				Assert.IsTrue(t6_called2);
+				Assert.IsTrue(t6_called3);
+				Assert.IsTrue(t6_called4);
 			}
 
 
@@ -1591,15 +1592,15 @@ namespace GoreRemoting.Tests
 				throw new Exception("test");
 			});
 
-			Assert.Null(throw1Ex);
-			Assert.Null(throw2Ex);
-			Assert.Null(throw3Ex);
-			Assert.Equal("test", throw4Ex!.Message);
-			Assert.Equal("test", throw5Ex!.Message);
-			Assert.Null(throw6Ex);
-			Assert.Equal("test", throw7Ex!.Message);
-			Assert.Null(throw8Ex);
-			Assert.Equal("test", throw9Ex!.Message);
+			Assert.IsNull(throw1Ex);
+			Assert.IsNull(throw2Ex);
+			Assert.IsNull(throw3Ex);
+			Assert.AreEqual("test", throw4Ex!.Message);
+			Assert.AreEqual("test", throw5Ex!.Message);
+			Assert.IsNull(throw6Ex);
+			Assert.AreEqual("test", throw7Ex!.Message);
+			Assert.IsNull(throw8Ex);
+			Assert.AreEqual("test", throw9Ex!.Message);
 		}
 	}
 

@@ -47,7 +47,7 @@ namespace GoreRemoting
 							.MakeGenericMethod(returnType.GenericTypeArguments.Single());
 						// OR GetGenericArguments ?
 
-						await (Task)valueTaskToTask.Invoke(null, new[] { resultIn });
+						await (Task)valueTaskToTask.Invoke(null, new[] { resultIn }); // slow?
 
 						resultOut = returnType.GetProperty("Result")?.GetValue(resultIn); // why '?' ?
 					}

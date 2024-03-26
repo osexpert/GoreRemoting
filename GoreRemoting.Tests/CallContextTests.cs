@@ -1,18 +1,19 @@
 using System.Threading;
 using System.Threading.Tasks;
 using GoreRemoting.Tests.Tools;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace GoreRemoting.Tests
 {
+	[TestClass]
 	public class CallContextTests
 	{
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task CallContext_should_flow_from_client_to_server_and_back(enSerializer ser)
 		{
 			var testService =
@@ -21,9 +22,9 @@ namespace GoreRemoting.Tests
 					TestMethodFake = _ =>
 					{
 						// I don't think it is possible to test this in same process...
-						CallContext.SetData("test", "Changed");
-						CallContext.SetData("test2", null);
-						return (string)CallContext.GetData("test")!;
+						CallContext.SetValue("test", "Changed");
+						CallContext.SetValue("test2", null);
+						return (string)CallContext.GetValue("test")!;
 					}
 				};
 
@@ -44,22 +45,28 @@ namespace GoreRemoting.Tests
 			var clientThread =
 				new Thread(async () =>
 				{
-					CallContext.SetData("test", "CallContext");
-					Assert.Equal("CallContext", CallContext.GetData("test"));
+					var g = Guid.NewGuid();
+					CallContext.SetValue("testGuid", g);
+					var t = DateTime.Now;
+					CallContext.SetValue("testTime", t);
+					CallContext.SetValue("test", "CallContext");
+					Assert.AreEqual("CallContext", CallContext.GetValue("test"));
 
 					await using var client = new NativeClient(9093, new ClientConfig(Serializers.GetSerializer(ser)));
 
-					var localCallContextValueBeforeRpc = CallContext.GetData("test");
+					var localCallContextValueBeforeRpc = CallContext.GetValue("test");
 
 					var proxy = client.CreateProxy<ITestService>();
 					var result = (string)proxy.TestMethod("x")!;
 
-					var localCallContextValueAfterRpc = CallContext.GetData("test");
+					var localCallContextValueAfterRpc = CallContext.GetValue("test");
 
-					Assert.NotEqual(localCallContextValueBeforeRpc, result);
-					Assert.Equal("Changed", result);
-					Assert.Equal("Changed", CallContext.GetData("test"));
-					Assert.Equal("Changed", localCallContextValueAfterRpc);
+					Assert.AreNotEqual(localCallContextValueBeforeRpc, result);
+					Assert.AreEqual("Changed", result);
+					Assert.AreEqual(g, CallContext.GetValue<Guid>("testGuid"));
+					Assert.AreEqual(t, CallContext.GetValue<DateTime>("testTime"));
+					Assert.AreEqual("Changed", CallContext.GetValue("test"));
+					Assert.AreEqual("Changed", localCallContextValueAfterRpc);
 				});
 
 			clientThread.Start();

@@ -4,10 +4,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using GoreRemoting.Tests.Tools;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace GoreRemoting.Tests
 {
+	[TestClass]
 	public class EnumerableYield
 	{
 		public interface IIenumera
@@ -201,12 +202,12 @@ namespace GoreRemoting.Tests
 
 
 
-		[Theory]
-		[InlineData(enSerializer.BinaryFormatter)]
-		[InlineData(enSerializer.MemoryPack)]
-		[InlineData(enSerializer.Json)]
-		[InlineData(enSerializer.MessagePack)]
-		[InlineData(enSerializer.Protobuf)]
+		[TestMethod]
+		[DataRow(enSerializer.BinaryFormatter)]
+		[DataRow(enSerializer.MemoryPack)]
+		[DataRow(enSerializer.Json)]
+		[DataRow(enSerializer.MessagePack)]
+		[DataRow(enSerializer.Protobuf)]
 		public async Task YieldTest(enSerializer ser)
 		{
 			await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
@@ -218,9 +219,9 @@ namespace GoreRemoting.Tests
 			var proxy = client.CreateProxy<IIenumera>();
 
 			var n1 = proxy.NonJild().ToList();
-			Assert.Equal(2, n1.Count);
-			Assert.Equal("1", n1[0]);
-			Assert.Equal("2", n1[1]);
+			Assert.AreEqual(2, n1.Count);
+			Assert.AreEqual("1", n1[0]);
+			Assert.AreEqual("2", n1[1]);
 
 			//List<string> i1 = new();
 			//foreach (var i in proxy.Jild())
@@ -254,9 +255,9 @@ namespace GoreRemoting.Tests
 				//Debug.WriteLine(i);
 			}
 
-			Assert.Equal(2, i2.Count);
-			Assert.Equal("1", i2[0]);
-			Assert.Equal("2", i2[1]);
+			Assert.AreEqual(2, i2.Count);
+			Assert.AreEqual("1", i2[0]);
+			Assert.AreEqual("2", i2[1]);
 
 
 
@@ -266,12 +267,12 @@ namespace GoreRemoting.Tests
 			var ra1 = await proxy.RetACom1();
 			var ra2 = await proxy.RetACom2();
 			var ra3 = await proxy.RetACom3();
-			Assert.True(r1.Item1 == "1" && r1.Item2 == 2);
-			Assert.True(r2.Item1 == "1" && r2.Item2 == 2);
-			Assert.True(r3.Item1 == "1" && r3.Item2 == 2);
-			Assert.True(ra1.Item1 == "1" && ra1.Item2 == 2);
-			Assert.True(ra2.Item1 == "1" && ra2.Item2 == 2);
-			Assert.True(ra3.Item1 == "1" && ra3.Item2 == 2);
+			Assert.IsTrue(r1.Item1 == "1" && r1.Item2 == 2);
+			Assert.IsTrue(r2.Item1 == "1" && r2.Item2 == 2);
+			Assert.IsTrue(r3.Item1 == "1" && r3.Item2 == 2);
+			Assert.IsTrue(ra1.Item1 == "1" && ra1.Item2 == 2);
+			Assert.IsTrue(ra2.Item1 == "1" && ra2.Item2 == 2);
+			Assert.IsTrue(ra3.Item1 == "1" && ra3.Item2 == 2);
 
 
 			var t1 = DateTime.Now;
@@ -294,8 +295,8 @@ namespace GoreRemoting.Tests
 
 			var td = DateTime.Now - t1;
 //			Assert.True(td.TotalSeconds < 10);
-			Assert.True(hit1 == 3);
-			Assert.True(wasC);
+			Assert.IsTrue(hit1 == 3);
+			Assert.IsTrue(wasC);
 
 			Exception? cee = null;
 			try
@@ -306,7 +307,7 @@ namespace GoreRemoting.Tests
 			{
 				cee = e;
 			}
-			Assert.Equal("More than one CancellationToken", cee!.Message);
+			Assert.AreEqual("More than one CancellationToken", cee!.Message);
 
 			List<int> l = new();
 			var p = new GoodProgress<int>();
@@ -319,8 +320,8 @@ namespace GoreRemoting.Tests
 			//weird hack: ProgressChanged is called on background thread?
 			//await Task.Delay(100);
 
-			Assert.True(l.Count == 2);
-			Assert.True(l.Sum() == 43);
+			Assert.IsTrue(l.Count == 2);
+			Assert.IsTrue(l.Sum() == 43);
 
 			Exception? _ex1 = null;
 			try
@@ -342,8 +343,8 @@ namespace GoreRemoting.Tests
 				_ex2 = e;
 			}
 
-			Assert.Equal("Exception of type 'GoreRemoting.Tests.EnumerableYield+NonoEx' was thrown.", _ex1!.Message);
-			Assert.Equal("mess", _ex2!.Message);
+			Assert.AreEqual("Exception of type 'GoreRemoting.Tests.EnumerableYield+NonoEx' was thrown.", _ex1!.Message);
+			Assert.AreEqual("mess", _ex2!.Message);
 
 		}
 
