@@ -32,7 +32,7 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 			Options = GetOptions(netCore);
 		}
 
-		public ExceptionStrategy ExceptionStrategy { get; set; } = ExceptionStrategy.BinaryFormatterOrUninitializedObject;
+		public ExceptionStrategy ExceptionStrategy { get; set; } = ExceptionStrategy.BinaryFormatter;
 
 		private static BinarySerializerOptions GetOptions(bool netCore)
 		{
@@ -136,76 +136,75 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 
 		public object GetSerializableException(Exception ex)
 		{
-			if (ExceptionStrategy == ExceptionStrategy.Default)
-			{
-				return ExceptionSerialization.GetSerializableExceptionDictionary(ex);
-			}
-			else
-			{
-				var ed = ExceptionSerialization.GetExceptionData(ex);
-				var ew = ToExceptionWrapper(ed);
+			var dict = ExceptionSerialization.GetSerializableExceptionDictionary(ex);
 
-				// INFO: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
-				if (ex.GetType().IsSerializable)
-					ew.BinaryFormatterData = ex;
+			var ew = new ExceptionWrapper{ PropertyData = dict };
 
-				return ew;
-			}
+			// INFO: even if this is true, serialization may fail based on what is put in the Data-dictionary etc.
+			if (ex.GetType().IsSerializable)
+				ew.BinaryFormatterData = ex;
+
+			return ew;
 		}
 
 		public Exception RestoreSerializedException(object ex)
 		{
+			var ew = (ExceptionWrapper)ex;
+
 			if (ExceptionStrategy == ExceptionStrategy.Default)
 			{
-				return ExceptionSerialization.RestoreSerializedExceptionDictionary((Dictionary<string, string>)ex);
+				return ExceptionSerialization.RestoreSerializedExceptionDictionary(ew.PropertyData);
 			}
-			else if (ExceptionStrategy == ExceptionStrategy.BinaryFormatterOrUninitializedObject)
+			else if (ExceptionStrategy == ExceptionStrategy.BinaryFormatter)
 			{
-				var ew = (ExceptionWrapper)ex;
 				if (ew.BinaryFormatterData != null)
-					return ExceptionSerialization.RestoreAsBinaryFormatter(ew.BinaryFormatterData);
+					return RestoreAsBinaryFormatter(ew.BinaryFormatterData);
 				else
-				{
-					//					var ed = ToExceptionData(ew);
-					//				return ExceptionSerialization.RestoreAsUninitializedObject(ed, Type.GetType(ed.TypeName));
-					return ExceptionSerialization.RestoreAsUninitializedObject(ew.PropertyData);
-				}
+					return ExceptionSerialization.RestoreSerializedExceptionDictionary(ew.PropertyData);
 			}
-			else if (ExceptionStrategy == ExceptionStrategy.BinaryFormatterOrRemoteInvocationException)
-			{
-				var ew = (ExceptionWrapper)ex;
-				if (ew.BinaryFormatterData != null)
-					return ExceptionSerialization.RestoreAsBinaryFormatter(ew.BinaryFormatterData);
-				else
-				{
-					//	var ed = ToExceptionData(ew);
-					return ExceptionSerialization.RestoreAsRemoteInvocationException(ew.PropertyData);// ToExceptionData(ew));
-				}
-			}
-			//else if (ExceptionStrategy == ExceptionStrategy.UninitializedObject)
-			//{
-			//	return ExceptionSerializationHelpers.RestoreAsUninitializedObject(ToExceptionData(ew), Type.GetType(ew.TypeName));
-			//}
-			//else if (ExceptionStrategy == ExceptionStrategy.RemoteInvocationException)
-			//{
-			//	return ExceptionSerializationHelpers.RestoreAsRemoteInvocationException(ToExceptionData(ew));
-			//}
 			else
 				throw new NotImplementedException("strategy: " + ExceptionStrategy); ;
 		}
 
-		private static ExceptionWrapper ToExceptionWrapper(Dictionary<string, string> ed)
+		public static Exception RestoreAsBinaryFormatter(Exception e)
 		{
-			return new ExceptionWrapper
-			{
-//				TypeName = ed.TypeName,
-				PropertyData = ed,
-			};
+			ExceptionHelper.SetRemoteStackTrace(e, e.StackTrace);
+			return e;
 		}
 
-		private static ExceptionData ToExceptionData(ExceptionWrapper ew)
+		public class ExceptionHelper
 		{
-			return new ExceptionData(ew.PropertyData);
+			private static void SetRemoteStackTraceString(Exception e, string stackTrace)
+			{
+				FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
+				remoteStackTraceString.SetValue(e, stackTrace);
+			}
+
+			//#if NET6_0_OR_GREATER
+			//		public static void SetRemoteStackTrace(Exception e, string stackTrace) => ExceptionDispatchInfo.SetRemoteStackTrace(e, stackTrace);
+			//#else
+			public static void SetRemoteStackTrace(Exception e, string stackTrace)
+			{
+				//            if (!CanSetRemoteStackTrace())
+				//          {
+				//            return; // early-exit
+				//      }
+
+				// Store the provided text into the "remote" stack trace, following the same format SetCurrentStackTrace
+				// would have generated.
+				var _remoteStackTraceString = stackTrace + Environment.NewLine +
+				//SR.Exception_EndStackTraceFromPreviousThrow 
+				"--- End of stack trace from previous location ---"
+				+ Environment.NewLine;
+
+				SetRemoteStackTraceString(e, _remoteStackTraceString);
+			}
+			//#endif
+			//public static void SetMessage(Exception e, string message)
+			//{
+			//	var msgField = typeof(Exception).GetField("_message", BindingFlags.Instance | BindingFlags.NonPublic);
+			//	msgField.SetValue(e, message);
+			//}
 		}
 
 		[Serializable]
@@ -220,10 +219,10 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		{
 			get
 			{
-				if (ExceptionStrategy == ExceptionStrategy.Default)
-					return typeof(Dictionary<string, string>);
-				else
-					return typeof(ExceptionWrapper);
+				//if (ExceptionStrategy == ExceptionStrategy.Default)
+				//	return typeof(Dictionary<string, string>);
+				//else
+				return typeof(ExceptionWrapper);
 			}
 		}
 		
@@ -273,7 +272,10 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 
 	public enum ExceptionStrategy
 	{
-		Default = 0, // UninitializedObject
+		/// <summary>
+		/// Use ExceptionSerialization.ExceptionStrategy setting
+		/// </summary>
+		Default = 0,
 
 		//UninitializedObject = 1,
 		///// <summary>
@@ -282,18 +284,9 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		//RemoteInvocationException = 2,
 
 		/// <summary>
-		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)
+		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as default)
 		/// </summary>
-		BinaryFormatterOrUninitializedObject = 3,
-		/// <summary>
-		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as RemoteInvocationException)
-		/// </summary>
-		BinaryFormatterOrRemoteInvocationException = 4,
-
-		//// <summary>
-		//// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
-		//// </summary>
-		
+		BinaryFormatter = 3,
 	}
 
 }

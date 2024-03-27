@@ -20,10 +20,10 @@ namespace GoreRemoting
 		/// </summary>
 		/// <param name="name">The name with which to associate the new item in the call context.</param>
 		/// <param name="data">The object to store in the call context.</param>
-		public static void SetValue(string name, string? data) =>
+		private static void SetStringPrivate(string name, string? data) =>
 			State.GetOrAdd(name, _ => new AsyncLocal<(string?, bool)>()).Value = (data, true);
 
-		private static void SetValueNotChanged(string name, string? data) =>
+		private static void SetStringNotChanged(string name, string? data) =>
 			State.GetOrAdd(name, _ => new AsyncLocal<(string?, bool)>()).Value = (data, false);
 
 		/// <summary>
@@ -31,14 +31,14 @@ namespace GoreRemoting
 		/// </summary>
 		/// <param name="name">The name of the item in the call context.</param>
 		/// <returns>The object in the call context associated with the specified name, or <see langword="null"/> if not found.</returns>
-		public static string? GetValue(string name) =>
+		private static string? GetStringPrivate(string name) =>
 			State.TryGetValue(name, out AsyncLocal<(string?, bool)> data) ? data.Value.Item1 : null;
 
 	//	public static void RemoveData(string name) => State.TryRemove(name, out AsyncLocal<string> _);
 
 		public static T? GetValue<T>(string name)
 		{
-			var value = GetValue(name);
+			var value = GetStringPrivate(name);
 			if (value == null)
 				return default;
 			else if (typeof(T) == typeof(string))
@@ -50,11 +50,11 @@ namespace GoreRemoting
 		public static void SetValue<T>(string name, T? value)
 		{
 			if (value is null)
-				SetValue(name, null);
+				SetStringPrivate(name, null);
 			else if (value is string s)
-				SetValue(name, s);
+				SetStringPrivate(name, s);
 			else
-				SetValue(name, JsonSerializer.Serialize<T>(value));
+				SetStringPrivate(name, JsonSerializer.Serialize<T>(value));
 		}
 
 		/// <summary>
@@ -73,12 +73,11 @@ namespace GoreRemoting
 			{
 				var entry = stateSnaphsotChanged[i];
 
-				result[i] =
-					new CallContextEntry()
-					{
-						Name = entry.Key,
-						Value = entry.Value.Value.Item1
-					};
+				result[i] =	new CallContextEntry()
+				{
+					Name = entry.Key,
+					Value = entry.Value.Value.Item1
+				};
 			}
 
 			return result;
@@ -109,7 +108,7 @@ namespace GoreRemoting
 
 			foreach (var entry in entries)
 			{
-				SetValueNotChanged(entry.Name, entry.Value);
+				SetStringNotChanged(entry.Name, entry.Value);
 			}
 		}
 	}

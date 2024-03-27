@@ -74,18 +74,6 @@ namespace GoreRemoting.Serialization.Protobuf
 			};
 			return type;
 		}
-
-		public Type ExceptionType => typeof(Dictionary<string, string>);
-
-		public object GetSerializableException(Exception ex)
-		{
-			return ExceptionSerialization.GetSerializableExceptionDictionary(ex);
-		}
-
-		public Exception RestoreSerializedException(object ex)
-		{
-			return ExceptionSerialization.RestoreSerializedExceptionDictionary((Dictionary<string, string>)ex);
-		}
 	}
 
 }

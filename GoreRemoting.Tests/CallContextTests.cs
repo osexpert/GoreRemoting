@@ -23,8 +23,8 @@ namespace GoreRemoting.Tests
 					{
 						// I don't think it is possible to test this in same process...
 						CallContext.SetValue("test", "Changed");
-						CallContext.SetValue("test2", null);
-						return (string)CallContext.GetValue("test")!;
+						CallContext.SetValue<string>("test2", null);
+						return CallContext.GetValue<string>("test")!;
 					}
 				};
 
@@ -50,22 +50,22 @@ namespace GoreRemoting.Tests
 					var t = DateTime.Now;
 					CallContext.SetValue("testTime", t);
 					CallContext.SetValue("test", "CallContext");
-					Assert.AreEqual("CallContext", CallContext.GetValue("test"));
+					Assert.AreEqual("CallContext", CallContext.GetValue<string>("test"));
 
 					await using var client = new NativeClient(9093, new ClientConfig(Serializers.GetSerializer(ser)));
 
-					var localCallContextValueBeforeRpc = CallContext.GetValue("test");
+					var localCallContextValueBeforeRpc = CallContext.GetValue<string>("test");
 
 					var proxy = client.CreateProxy<ITestService>();
 					var result = (string)proxy.TestMethod("x")!;
 
-					var localCallContextValueAfterRpc = CallContext.GetValue("test");
+					var localCallContextValueAfterRpc = CallContext.GetValue<string>("test");
 
 					Assert.AreNotEqual(localCallContextValueBeforeRpc, result);
 					Assert.AreEqual("Changed", result);
 					Assert.AreEqual(g, CallContext.GetValue<Guid>("testGuid"));
 					Assert.AreEqual(t, CallContext.GetValue<DateTime>("testTime"));
-					Assert.AreEqual("Changed", CallContext.GetValue("test"));
+					Assert.AreEqual("Changed", CallContext.GetValue<string>("test"));
 					Assert.AreEqual("Changed", localCallContextValueAfterRpc);
 				});
 
