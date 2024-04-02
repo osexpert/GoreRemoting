@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Reflection;
 using System.Text;
 using GoreRemoting.RpcMessaging;
 using GoreRemoting.Serialization;
@@ -13,10 +15,27 @@ namespace GoreRemoting
 		void Deserialize(Stack<object?> st);
 	}
 
+	public interface IMessage : IGorializer
+	{
+		MessageType MessageType { get; }
+
+		/// <summary>
+		/// A value to separate messages of same type (for the same method).
+		/// </summary>
+		int CacheKey { get; }
+	}
+	public enum MessageType
+	{
+		MethodCall = 1,
+		MethodResult = 2,
+		DelegateCall = 3,
+		DelegateResult = 4,
+	}
+
 	internal class Gorializer
 	{
 
-		public static void GoreSerialize(Stream ms, MethodInfo method, IGorializer data, ISerializerAdapter serializer, ICompressionProvider? compressor)
+		public static void GoreSerialize(IRemoting r, Stream ms, MethodInfo method, IMessage msg, ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			//using var ms = PooledMemoryStream.GetStream();
 
@@ -26,11 +45,11 @@ namespace GoreRemoting
 				var stack = new Stack<object?>();
 
 				var bw = new GoreBinaryWriter(cs);
-				data.Serialize(bw, stack);
+				msg.Serialize(bw, stack);
 
 				if (stack.Any())
 				{ 
-					var types = GetTypes(data, method, serializer);
+					var types = GetTypes(r, method, msg, serializer);
 					// We can't get the elements out in the "correct" order...how they are stored internally...
 					serializer.Serialize(cs, stack.Reverse().ToArray(), types);
 				}
@@ -52,23 +71,23 @@ namespace GoreRemoting
 				return null;// new NonDisposablePassthruStream(ms);
 		}
 
-		public static T GoreDeserialize<T>(Stream ms, MethodInfo method, ISerializerAdapter serializer, ICompressionProvider? compressor) 
-			where T : IGorializer, new()
+		public static T GoreDeserialize<T>(IRemoting r, Stream ms, MethodInfo method, ISerializerAdapter serializer, ICompressionProvider? compressor) 
+			where T : IMessage, new()
 		{
-			var res = new T();
+			var msg = new T();
 
 			var ds = GetDecompressor(compressor, ms) ?? ms;
 			try
 			{
 				var br = new GoreBinaryReader(ds);
-				res.Deserialize(br);
+				msg.Deserialize(br);
 
-				var types = GetTypes(res, method, serializer);
+				var types = GetTypes(r, method, msg, serializer);
 
 				if (types.Any())
 				{
 					object?[] arr = serializer.Deserialize(ds, types);
-					res.Deserialize(new Stack<object?>(arr.Reverse()));
+					msg.Deserialize(new Stack<object?>(arr.Reverse()));
 				}
 			}
 			finally
@@ -77,18 +96,38 @@ namespace GoreRemoting
 					ds.Dispose();
 			}
 
-			return res;
+			return msg;
 		}
 
-		private static Type[] GetTypes(IGorializer res, MethodInfo method, ISerializerAdapter serializer)
+		
+
+		private static Type[] GetTypes(IRemoting r, MethodInfo method, IMessage msg, ISerializerAdapter serializer)
+		{
+			if (r._typesCache.TryGetValue((method, msg.MessageType, msg.CacheKey), out var types))
+				return types;
+
+			types = GetTypesUncached(method, msg, serializer);
+			r._typesCache.TryAdd((method, msg.MessageType, msg.CacheKey), types);
+
+			return types;
+		}
+
+		/// <summary>
+		/// BUG: funker inte...cache key er mer komplisert....enn metode + type
+		/// </summary>
+		private static Type[] GetTypesUncached(MethodInfo method, IMessage msg, ISerializerAdapter serializer)
 		{
 			var param_s = method.GetParameters();
 
-			if (res is MethodResultMessage mrm)
+			if (msg is MethodResultMessage mrm)
 			{
 				if (mrm.ResultType == ResultKind.Exception)
 				{
 					return new Type[] { Gorializer.GetExceptionType(serializer) };
+				}
+				else if (mrm.ResultType == ResultKind.Exception_dict_internal)
+				{
+					return new Type[] { };
 				}
 				else
 				{
@@ -122,7 +161,7 @@ namespace GoreRemoting
 					return l.ToArray();
 				}
 			}
-			else if (res is MethodCallMessage mcm)
+			else if (msg is MethodCallMessage mcm)
 			{
 				var types =	param_s
 					//						.Select(p => p.ParameterType)
@@ -151,9 +190,9 @@ namespace GoreRemoting
 						return t.ParameterType;
 					})
 					.ToArray();
-				return  types;
+				return types;
 			}
-			else if (res is DelegateCallMessage dcm)
+			else if (msg is DelegateCallMessage dcm)
 			{
 				// what if delegate without args`? Func vs Action...
 				//arr = serializer.Deserialize(ds, param_s[dcm.Position].ParameterType.GenericTypeArguments.Skip(1).ToArray());
@@ -164,11 +203,15 @@ namespace GoreRemoting
 				return invokeMethod.GetParameters().Select(p => p.ParameterType).ToArray();
 
 			}
-			else if (res is DelegateResultMessage drm)
+			else if (msg is DelegateResultMessage drm)
 			{
 				if (drm.ReturnKind == DelegateResultType.Exception)
 				{
 					return new Type[] { Gorializer.GetExceptionType(serializer) };
+				}
+				else if (drm.ReturnKind == DelegateResultType.Exception_dict_internal)
+				{
+					return new Type[] { };
 				}
 				else
 				{

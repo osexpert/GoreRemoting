@@ -14,8 +14,11 @@
 		/// v3:
 		/// - changed a lot...not pushing all args. Adding ParameterName\Position?
 		/// - Add result types (kind).
+		/// v4:
+		/// - include execption map in gorelizer
+		/// - move request type to top
 		/// </summary>
-		internal static readonly byte SerializationVersion = 3;
+		internal static readonly int SerializationVersion = 4;
 
 
 		//	public const string SerializerHeaderKey = "gore-serializer";

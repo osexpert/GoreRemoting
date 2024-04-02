@@ -67,7 +67,7 @@ namespace GoreRemoting
 				(callback, res) => HandleResponseAsync(serializer, compressor, callback, res, args, streamingDelePos),
 				new CallOptions(headers: headers, cancellationToken: cancel));
 
-			if (resultMessage.ResultType == ResultKind.Exception)
+			if (resultMessage.IsException)
 				throw Gorializer.RestoreSerializedException(serializer, resultMessage.Value!);
 
 			var parameterInfos = targetMethod.GetParameters();
@@ -75,7 +75,7 @@ namespace GoreRemoting
 			foreach (var outArgument in resultMessage.OutArguments)
 			{
 				var parameterInfo = parameterInfos[outArgument.Position];
-					//.Single(p => p.Name == outArgument.ParameterName);
+				//.Single(p => p.Name == outArgument.ParameterName);
 
 				// GetElementType() https://stackoverflow.com/a/738281/2671330
 				if (!parameterInfo.IsOutParameterForReal())
@@ -86,14 +86,8 @@ namespace GoreRemoting
 			invocation.ReturnValue = resultMessage.Value;
 
 			// restore context flow from server
-//			if (_client._config.RestoreCallContext)
-	//		{
 			CallContext.RestoreFromChangesSnapshot(resultMessage.CallContextSnapshot);
-			//}
 		}
-
-
-
 
 		async ValueTask InterceptAsync(IAsyncInvocation invocation)
 		{
@@ -117,7 +111,6 @@ namespace GoreRemoting
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
 				targetMethod: targetMethod,
 				args: arguments
-				//emitCallContext: _client._config.EmitCallContext
 				);
 
 			var requestMsg = new GoreRequestMessage(callMessage, _serviceName, targetMethod.Name, serializer, compressor);
@@ -126,7 +119,7 @@ namespace GoreRemoting
 				(callback, req) => HandleResponseAsync(serializer, compressor, callback, req, args.ToArray(), streamingDelePos),
 				new CallOptions(headers: headers, cancellationToken: cancel)).ConfigureAwait(false);
 
-			if (resultMessage.ResultType == ResultKind.Exception)
+			if (resultMessage.IsException)
 				throw Gorializer.RestoreSerializedException(serializer, resultMessage.Value!);
 
 			// out|ref not possible with async
@@ -134,7 +127,6 @@ namespace GoreRemoting
 			invocation.Result = resultMessage.Value;
 
 			// restore context flow from server
-//			if (_client._config.RestoreCallContext)
 			CallContext.RestoreFromChangesSnapshot(resultMessage.CallContextSnapshot);
 		}
 

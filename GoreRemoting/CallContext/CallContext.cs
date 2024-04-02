@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading;
 
@@ -11,9 +12,14 @@ namespace GoreRemoting
 	/// </summary>
 	public static class CallContext
 	{
+		static JsonSerializerOptions _opt = new JsonSerializerOptions
+		{
+			Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+		};
+
 		// bool: true if changed
-		private static readonly ConcurrentDictionary<string, AsyncLocal<(string?, bool)>> State =
-			new ConcurrentDictionary<string, AsyncLocal<(string?, bool)>>();
+		private static readonly ConcurrentDictionary<string, AsyncLocal<(string, bool)>> State =
+			new ConcurrentDictionary<string, AsyncLocal<(string, bool)>>();
 
 		/// <summary>
 		/// Stores a given object and associates it with the specified name.
@@ -21,10 +27,10 @@ namespace GoreRemoting
 		/// <param name="name">The name with which to associate the new item in the call context.</param>
 		/// <param name="data">The object to store in the call context.</param>
 		private static void SetStringPrivate(string name, string? data) =>
-			State.GetOrAdd(name, _ => new AsyncLocal<(string?, bool)>()).Value = (data, true);
+			State.GetOrAdd(name, _ => new AsyncLocal<(string, bool)>()).Value = (data, true);
 
-		private static void SetStringNotChanged(string name, string? data) =>
-			State.GetOrAdd(name, _ => new AsyncLocal<(string?, bool)>()).Value = (data, false);
+		private static void SetStringNotChanged(string name, string data) =>
+			State.GetOrAdd(name, _ => new AsyncLocal<(string, bool)>()).Value = (data, false);
 
 		/// <summary>
 		/// Retrieves an object with the specified name from the <see cref="CallContext"/>.
@@ -32,7 +38,7 @@ namespace GoreRemoting
 		/// <param name="name">The name of the item in the call context.</param>
 		/// <returns>The object in the call context associated with the specified name, or <see langword="null"/> if not found.</returns>
 		private static string? GetStringPrivate(string name) =>
-			State.TryGetValue(name, out AsyncLocal<(string?, bool)> data) ? data.Value.Item1 : null;
+			State.TryGetValue(name, out AsyncLocal<(string, bool)> data) ? data.Value.Item1 : null;//"null";
 
 	//	public static void RemoveData(string name) => State.TryRemove(name, out AsyncLocal<string> _);
 
@@ -41,20 +47,23 @@ namespace GoreRemoting
 			var value = GetStringPrivate(name);
 			if (value == null)
 				return default;
-			else if (typeof(T) == typeof(string))
-				return (T)(object)value;
-			else
-				return JsonSerializer.Deserialize<T>(value);
+
+			//if (value == null)
+			//	return default;
+			//else if (typeof(T) == typeof(string))
+			//	return (T)(object)value;
+			//else
+			return JsonSerializer.Deserialize<T>(value, _opt);
 		}
 
 		public static void SetValue<T>(string name, T? value)
 		{
-			if (value is null)
-				SetStringPrivate(name, null);
-			else if (value is string s)
-				SetStringPrivate(name, s);
-			else
-				SetStringPrivate(name, JsonSerializer.Serialize<T>(value));
+			//if (value is null)
+			//	SetStringPrivate(name, null);
+			//else if (value is string s)
+			//	SetStringPrivate(name, s);
+			//else
+			SetStringPrivate(name, JsonSerializer.Serialize<T?>(value, _opt));
 		}
 
 		/// <summary>

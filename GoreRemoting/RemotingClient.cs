@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using System.Threading.Tasks;
 using GoreRemoting.RpcMessaging;
+using GoreRemoting.Serialization;
 using Grpc.Core;
 using Grpc.Net.Compression;
 using Nerdbank.Streams;
@@ -10,10 +11,14 @@ using Nerdbank.Streams;
 namespace GoreRemoting
 {
 
-	public class RemotingClient
+	public class RemotingClient : IRemoting
 	{
 		internal ClientConfig _config;
 		CallInvoker _callInvoker;
+		public ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> _typesCache { get; } = new ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]>();
+
+		internal ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodLookup = new ConcurrentDictionary<(string, string), MethodInfo>();
+
 
 		public RemotingClient(CallInvoker callInvoker, ClientConfig config)
 		{
@@ -25,12 +30,7 @@ namespace GoreRemoting
 				Marshallers.Create<GoreResponseMessage>(SerializeResponse, DeserializeResponse)
 				);
 		}
-
-		private GoreRequestMessage DeserializeRequest(DeserializationContext arg)
-		{
-			throw new NotSupportedException();
-		}
-
+		
 		private void SerializeRequest(GoreRequestMessage arg, SerializationContext sc)
 		{
 			try
@@ -38,16 +38,19 @@ namespace GoreRemoting
 				using (var s = sc.GetBufferWriter().AsStream())
 				{
 					var bw = new GoreBinaryWriter(s);
+
 					bw.Write((byte)Constants.SerializationVersion); // version
+
+					bw.Write((byte)arg.RequestType);
+
 					bw.Write(arg.Serializer.Name);
 					bw.Write(arg.Compressor?.EncodingName ?? string.Empty);
 					bw.Write(arg.ServiceName);
 					bw.Write(arg.MethodName);
-					bw.Write((byte)arg.RequestType);
 
 					MethodInfo method = GetServiceMethod(arg.ServiceName, arg.MethodName);
 
-					arg.Serialize(s, method);
+					arg.Serialize(this, s, method);
 				}
 			}
 			finally
@@ -61,14 +64,17 @@ namespace GoreRemoting
 			using var s = arg.PayloadAsReadOnlySequence().AsStream();
 
 			var br = new GoreBinaryReader(s);
+
 			byte version = br.ReadByte();
 			if (version != Constants.SerializationVersion)
 				throw new Exception("Unsupported version " + version);
+
+			var mType = (ResponseType)br.ReadByte();
+
 			var serializerName = br.ReadString();
 			var compressorName = br.ReadString();
 			var serviceName = br.ReadString();
 			var methodName = br.ReadString();
-			var mType = (ResponseType)br.ReadByte();
 
 			var serializer = _config.GetSerializerByName(serializerName);
 
@@ -80,20 +86,23 @@ namespace GoreRemoting
 
 			MethodInfo method = GetServiceMethod(serviceName, methodName);
 
-			return GoreResponseMessage.Deserialize(s, mType, serviceName, methodName, method,
+			return GoreResponseMessage.Deserialize(this, s, mType, serviceName, methodName, method,
 				serializer, compressor);
 		}
 
-		internal ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodLookup = new ConcurrentDictionary<(string, string), MethodInfo>();
-
-		private MethodInfo GetServiceMethod(string serviceName, string methodName)
+		private GoreRequestMessage DeserializeRequest(DeserializationContext arg)
 		{
-			return _serviceMethodLookup[(serviceName, methodName)];
+			throw new NotSupportedException();
 		}
 
 		private void SerializeResponse(GoreResponseMessage arg, SerializationContext sc)
 		{
 			throw new NotSupportedException();
+		}
+
+		private MethodInfo GetServiceMethod(string serviceName, string methodName)
+		{
+			return _serviceMethodLookup[(serviceName, methodName)];
 		}
 
 		public Method<GoreRequestMessage, GoreResponseMessage> DuplexCallDescriptor { get; }
@@ -116,6 +125,9 @@ namespace GoreRemoting
 
 		internal MethodResultMessage Invoke(GoreRequestMessage req, Func<GoreResponseMessage, Func<GoreRequestMessage, Task>, Task<MethodResultMessage?>> reponseHandler, CallOptions callOpt)
 		{
+			if (req.RequestType != RequestType.MethodCall)
+				throw new Exception("not RequestType.MethodCall");
+
 			using (var call = _callInvoker.AsyncDuplexStreamingCall(DuplexCallDescriptor, null, callOpt))
 			{
 				try
@@ -138,6 +150,9 @@ namespace GoreRemoting
 
 		internal async Task<MethodResultMessage> InvokeAsync(GoreRequestMessage req, Func<GoreResponseMessage, Func<GoreRequestMessage, Task>, Task<MethodResultMessage?>> reponseHandler, CallOptions callOpt)
 		{
+			if (req.RequestType != RequestType.MethodCall)
+				throw new Exception("not RequestType.MethodCall");
+
 			using (var call = _callInvoker.AsyncDuplexStreamingCall(DuplexCallDescriptor, null, callOpt))
 			{
 				try
@@ -189,5 +204,10 @@ namespace GoreRemoting
     }
 #endif
 
+
+	public interface IRemoting
+	{
+		 ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> _typesCache { get; }
+	}
 
 }

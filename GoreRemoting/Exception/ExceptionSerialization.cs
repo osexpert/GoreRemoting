@@ -21,21 +21,17 @@ namespace GoreRemoting
 
 		public static Exception RestoreAsOriginalException(Dictionary<string, string> dict)
 		{
-			// TODO: keep ExceptionConverter static? Or JsonSerializerOptions? Or lazy?
-			var con = new ExceptionConverter(new JsonSerializerOptions());
-			return con.Read(dict);
+			return ExceptionConverter.ToException(dict);
 		}
 
 		public static Exception RestoreAsRemoteInvocationException(Dictionary<string, string> dict)
 		{
-			var con = new ExceptionConverter(new JsonSerializerOptions());
-			return con.ReadRemoteInvocationException(dict);
+			return ExceptionConverter.ReadRemoteInvocationException(dict);
 		}
 
 		public static Dictionary<string, string> GetSerializableExceptionDictionary(Exception ex)
 		{
-			var con = new ExceptionConverter(new JsonSerializerOptions());
-			return con.Write(ex);
+			return ExceptionConverter.ToDict(ex);
 		}
 
 		public static Exception RestoreSerializedExceptionDictionary(Dictionary<string, string> dict)

@@ -59,7 +59,6 @@ namespace GoreRemoting.RpcMessaging
 			}
 			else
 				throw new NotImplementedException("unk type: " + pt);
-
 		}
 
 		public void Deserialize(Stack<object?> st)

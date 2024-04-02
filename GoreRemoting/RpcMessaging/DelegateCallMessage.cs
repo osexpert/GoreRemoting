@@ -3,7 +3,7 @@
 namespace GoreRemoting.RpcMessaging
 {
 
-	public class DelegateCallMessage : IGorializer
+	public class DelegateCallMessage : IMessage
 	{
 		public DelegateCallMessage()
 		{
@@ -22,6 +22,10 @@ namespace GoreRemoting.RpcMessaging
 		public object?[] Arguments { get; set; }
 
 		public bool OneWay { get; set; }
+
+		public MessageType MessageType => MessageType.DelegateCall;
+
+		public int CacheKey => Position;
 
 		public void Deserialize(GoreBinaryReader r)
 		{

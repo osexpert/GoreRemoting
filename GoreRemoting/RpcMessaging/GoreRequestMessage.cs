@@ -41,13 +41,14 @@ namespace GoreRemoting.RpcMessaging
 			MethodName = methodName;
 		}
 
-		public static GoreRequestMessage Deserialize(Stream s, RequestType mType, string serviceName, string methodName, MethodInfo method, ISerializerAdapter serializer, ICompressionProvider? compressor)
+		public static GoreRequestMessage Deserialize(IRemoting r, Stream s, RequestType mType, string serviceName, string methodName,
+			MethodInfo method, ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			GoreRequestMessage res;
 			if (mType == RequestType.DelegateResult)
-				res = new GoreRequestMessage(Gorializer.GoreDeserialize<DelegateResultMessage>(s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
+				res = new GoreRequestMessage(Gorializer.GoreDeserialize<DelegateResultMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
 			else if (mType == RequestType.MethodCall)
-				res = new GoreRequestMessage(Gorializer.GoreDeserialize<MethodCallMessage>(s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
+				res = new GoreRequestMessage(Gorializer.GoreDeserialize<MethodCallMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
 			else
 				throw new Exception();
 
@@ -55,12 +56,12 @@ namespace GoreRemoting.RpcMessaging
 			return res;
 		}
 
-		internal void Serialize(Stream s, MethodInfo method)
+		internal void Serialize(IRemoting r, Stream s, MethodInfo method)
 		{
 			if (RequestType == RequestType.DelegateResult)
-				Gorializer.GoreSerialize(s, method, DelegateResultMessage, Serializer, Compressor);
+				Gorializer.GoreSerialize(r, s, method, DelegateResultMessage, Serializer, Compressor);
 			else if (RequestType == RequestType.MethodCall)
-				Gorializer.GoreSerialize(s, method, MethodCallMessage, Serializer, Compressor);
+				Gorializer.GoreSerialize(r, s, method, MethodCallMessage, Serializer, Compressor);
 			else
 				throw new Exception();
 

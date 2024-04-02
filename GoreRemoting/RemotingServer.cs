@@ -16,13 +16,17 @@ using Nerdbank.Streams;
 namespace GoreRemoting
 {
 
-	public class RemotingServer
+	public class RemotingServer : IRemoting
 	{
 
 		MethodCallMessageBuilder MethodCallMessageBuilder = new();
 
 		//private ConcurrentDictionary<(Type, int), DelegateProxy> _delegateProxyCache = new();
 		ConcurrentDictionary<string, Type> _services = new();
+
+		public ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> _typesCache { get; } = new ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]>();
+
+		ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodCache = new ConcurrentDictionary<(string, string), MethodInfo>();
 
 		ServerConfig _config;
 
@@ -36,19 +40,50 @@ namespace GoreRemoting
 				);
 		}
 
+		private void SerializeResponse(GoreResponseMessage arg, SerializationContext sc)
+		{
+			try
+			{
+				using (var s = sc.GetBufferWriter().AsStream())
+				{
+					var bw = new GoreBinaryWriter(s);
+
+					bw.Write((byte)Constants.SerializationVersion); // version
+
+					bw.Write((byte)arg.ResponseType);
+
+					bw.Write(arg.Serializer.Name);
+					bw.Write(arg.Compressor?.EncodingName ?? string.Empty);
+					bw.Write(arg.ServiceName);
+					bw.Write(arg.MethodName);
+
+					MethodInfo method = GetServiceMethod(arg.ServiceName, arg.MethodName);
+
+					arg.Serialize(this, s, method);
+				}
+			}
+			finally
+			{
+				sc.Complete();
+			}
+		}
+
 		private GoreRequestMessage DeserializeRequest(DeserializationContext arg)
 		{
 			using var s = arg.PayloadAsReadOnlySequence().AsStream();
 
 			var br = new GoreBinaryReader(s);
+
 			byte version = br.ReadByte();
 			if (version != Constants.SerializationVersion)
 				throw new Exception("Unsupported version " + version);
+
+			var mType = (RequestType)br.ReadByte();
+
 			var serializerName = br.ReadString();
 			var compressorName = br.ReadString();
 			var serviceName = br.ReadString();
 			var methodName = br.ReadString();
-			var mType = (RequestType)br.ReadByte();
 
 			var serializer = _config.GetSerializerByName(serializerName);
 
@@ -60,7 +95,17 @@ namespace GoreRemoting
 
 			MethodInfo method = GetServiceMethod(serviceName, methodName);
 
-			return GoreRequestMessage.Deserialize(s, mType, serviceName, methodName, method, serializer, compressor);
+			return GoreRequestMessage.Deserialize(this, s, mType, serviceName, methodName, method, serializer, compressor);
+		}
+
+		private void SerializeRequest(GoreRequestMessage arg, SerializationContext sc)
+		{
+			throw new NotSupportedException();
+		}
+
+		private GoreResponseMessage DeserializeResponse(DeserializationContext arg)
+		{
+			throw new NotSupportedException();
 		}
 
 		private MethodInfo GetServiceMethod(string serviceName, string methodName)
@@ -87,55 +132,11 @@ namespace GoreRemoting
 			return method;
 		}
 
-		ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodCache = new ConcurrentDictionary<(string, string), MethodInfo>();
-
-		private void SerializeRequest(GoreRequestMessage arg, SerializationContext sc)
-		{
-			throw new NotSupportedException();
-		}
-
-		private GoreResponseMessage DeserializeResponse(DeserializationContext arg)
-		{
-			throw new NotSupportedException();
-		}
-
-		private void SerializeResponse(GoreResponseMessage arg, SerializationContext sc)
-		{
-			try
-			{
-				using (var s = sc.GetBufferWriter().AsStream())
-				{
-					var bw = new GoreBinaryWriter(s);
-					bw.Write((byte)Constants.SerializationVersion); // version
-					bw.Write(arg.Serializer.Name);
-					bw.Write(arg.Compressor?.EncodingName ?? string.Empty);
-					bw.Write(arg.ServiceName);
-					bw.Write(arg.MethodName);
-					bw.Write((byte)arg.ResponseType);
-
-					MethodInfo method = GetServiceMethod(arg.ServiceName, arg.MethodName);
-
-					arg.Serialize(s, method);
-				}
-			}
-			finally
-			{
-				sc.Complete();
-			}
-		}
-
-		private object GetService(string serviceName, /*MethodInfo mi,*/ ServerCallContext context)
+		private object GetService(string serviceName, ServerCallContext context)
 		{
 			if (!_services.TryGetValue(serviceName, out var serviceType))
 				throw new Exception("Service not registered: " + serviceName);
 
-			//			var gsa = new GetServiceArgs 
-			//			{ 
-			//				ServiceType = serviceType, 
-			////				Method = mi, 
-			//				GrpcContext = context,
-			////				ServiceName = serviceName
-			//			};
 			var service = _config.GetService(serviceType, context);
 			return service;
 		}
@@ -247,7 +248,6 @@ namespace GoreRemoting
 		{
 			var callMessage = request.MethodCallMessage;
 
-//			if (_config.RestoreCallContext)
 			CallContext.RestoreFromChangesSnapshot(callMessage.CallContextSnapshot);
 
 			var parameterTypes = request.Method.GetParameters().Select(p => p.ParameterType).ToArray();
@@ -298,7 +298,7 @@ namespace GoreRemoting
 						if (msg.Position != delegateCallMsg.Position)
 							throw new Exception("Incorrect result position");
 
-						if (msg.ReturnKind == DelegateResultType.Exception)// msg.Exception != null)
+						if (msg.IsException)
 							throw Gorializer.RestoreSerializedException(request.Serializer, msg.Value!);
 
 						if (msg.StreamingStatus == StreamingStatus.Active)
@@ -353,7 +353,7 @@ namespace GoreRemoting
 						if (msg.Position != delegateCallMsg.Position)
 							throw new Exception("Incorrect result position");
 
-						if (msg.ReturnKind == DelegateResultType.Exception)
+						if (msg.IsException)
 							throw Gorializer.RestoreSerializedException(request.Serializer, msg.Value!);
 
 						if (msg.StreamingStatus == StreamingStatus.Active)
@@ -426,7 +426,6 @@ namespace GoreRemoting
 							method: request.Method,
 							args: parameterValues,
 							returnValue: result
-							//emitCallContext: _config.EmitCallContext
 							);
 			}
 			else

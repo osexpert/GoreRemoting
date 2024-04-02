@@ -25,12 +25,12 @@ namespace GoreRemoting
 		/// <summary>
 		/// Gets or sets the value of the call context entry.
 		/// </summary>
-		public string? Value { get; set; }
+		public string Value { get; set; }
 
 		public void Deserialize(GoreBinaryReader r)
 		{
 			Name = r.ReadString();
-			Value = r.ReadNullableString();
+			Value = r.ReadString();
 		}
 
 		public void Deserialize(Stack<object?> st)
@@ -40,7 +40,7 @@ namespace GoreRemoting
 		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
 			w.Write(Name);
-			w.WriteNullableString(Value);
+			w.Write(Value);
 		}
 	}
 

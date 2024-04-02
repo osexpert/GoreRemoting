@@ -16,17 +16,18 @@ using System.Collections;
 using System.Xml.Linq;
 using System.Collections.Specialized;
 using System.Numerics;
+using System.Text.Encodings.Web;
 
 namespace GoreRemoting
 {
-	class ExceptionConverter
+	static class ExceptionConverter
 	{
-		JsonSerializerOptions _options;
-
-		internal ExceptionConverter(JsonSerializerOptions opt)
+		static JsonSerializerOptions _options = new JsonSerializerOptions
 		{
-			_options = opt;
-		}
+			Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+		};
+
+
 
 		const string StackTraceStringKey = "StackTraceString";
 		const string InnerExceptionStringKey = "InnerExceptionString";
@@ -45,13 +46,13 @@ namespace GoreRemoting
 
 		internal const string ClassNameKey = "ClassName";
 
-		public Exception Read(Dictionary<string, string> dict)
+		public static Exception ToException(Dictionary<string, string> dict)
 		{
 			SerializationInfo info = GetInfo(dict);
 			return Deserialize(info);
 		}
 
-		private SerializationInfo GetInfo(Dictionary<string, string> dict)
+		private static SerializationInfo GetInfo(Dictionary<string, string> dict)
 		{
 			SerializationInfo? info = new SerializationInfo(typeof(Exception), new JsonFormatterConverter(_options));
 
@@ -92,11 +93,12 @@ namespace GoreRemoting
 				else if (kv.Key == InnerExceptionKey)
 				{
 					// write null
-					info.AddValue(kv.Key, null);// JsonValue.Create((string?)null));
+					info.AddValue(kv.Key, null);
 				}
 				else if (kv.Key == StackTraceStringKey)
 				{
-					info.AddValue(kv.Key, null);// JsonValue.Create((string?)null));
+					// StackTraceStringKey now part of RemoteStackTraceStringKey, so null it here
+					info.AddValue(kv.Key, null);
 				}
 				else if (kv.Key == RemoteStackTraceStringKey)
 				{
@@ -111,7 +113,7 @@ namespace GoreRemoting
 			return info;
 		}
 
-		public Dictionary<string, string> Write(Exception value)
+		public static Dictionary<string, string> ToDict(Exception value)
 		{
 			Dictionary<string, string> dict = new Dictionary<string, string>();
 
@@ -180,7 +182,6 @@ namespace GoreRemoting
 
 				baseType = baseType.BaseType;
 			}
-			//while (ctor == null && runtimeTypeDoWhile != null);
 
 			if (ctor == null)
 				throw new NotSupportedException("Deserializing constructor (SerializationInfo, StreamingContext) not found in any base type (impossible)");
@@ -250,8 +251,6 @@ namespace GoreRemoting
 			return runtimeType;
 		}
 
-
-
 		internal static void Serialize(Exception exception, SerializationInfo info)
 		{
 			exception.GetObjectData(info, Context);
@@ -276,16 +275,14 @@ namespace GoreRemoting
 			}
 		}
 
-		internal Exception ReadRemoteInvocationException(Dictionary<string, string> dict)
+		internal static Exception ReadRemoteInvocationException(Dictionary<string, string> dict)
 		{
 			SerializationInfo info = GetInfo(dict);
 
 			return DeserializeRemoteInvocationException(
 				info
 				);
-
 		}
-
 	
 	}
 
@@ -338,7 +335,7 @@ namespace GoreRemoting
 				TypeCode.Int64 => formatterConverter.ToInt64(value),
 				TypeCode.SByte => formatterConverter.ToSByte(value),
 				TypeCode.Single => formatterConverter.ToSingle(value),
-				TypeCode.String => formatterConverter.ToString(value)!,
+				TypeCode.String => formatterConverter.ToString(value),
 				TypeCode.UInt16 => formatterConverter.ToUInt16(value),
 				TypeCode.UInt32 => formatterConverter.ToUInt32(value),
 				TypeCode.UInt64 => formatterConverter.ToUInt64(value),

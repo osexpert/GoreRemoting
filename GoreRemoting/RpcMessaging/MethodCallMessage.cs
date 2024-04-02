@@ -4,7 +4,7 @@
 	/// <summary>
 	/// Describes a method call as serializable message.
 	/// </summary>
-	public class MethodCallMessage : IGorializer
+	public class MethodCallMessage : IMessage
 	{
 
 		public MethodCallArgument[] Arguments { get; set; }
@@ -14,6 +14,9 @@
 		/// </summary>
 		public CallContextEntry[] CallContextSnapshot { get; set; }
 
+		public MessageType MessageType => MessageType.MethodCall;
+
+		public int CacheKey => 0;
 
 		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{

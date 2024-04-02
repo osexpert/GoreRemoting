@@ -103,7 +103,6 @@ namespace GoreRemoting.RpcMessaging
 			MethodInfo method,
 			object?[] args,
 			object? returnValue
-			//bool emitCallContext
 			)
 		{
 			var parameterInfos = method.GetParameters();
@@ -141,7 +140,6 @@ namespace GoreRemoting.RpcMessaging
 
 			message.OutArguments = outArguments.ToArray();
 
-//			if (emitCallContext)
 			message.CallContextSnapshot = CallContext.GetChangesSnapshot();
 
 			return message;

@@ -5,12 +5,13 @@
 		ResultValue = 1,
 		ResultVoid = 2,
 		Exception = 3,
+		Exception_dict_internal = 4,
 	}
 
 	/// <summary>
 	/// Serializable message that describes the result of a remote method call.
 	/// </summary>
-	public class MethodResultMessage : IGorializer
+	public class MethodResultMessage : IMessage
 	{
 		public MethodResultMessage()
 		{
@@ -33,65 +34,32 @@
 		/// </summary>
 		public MethodOutArgument[] OutArguments { get; set; }
 
-		public void Deserialize(GoreBinaryReader r)
-		{
-			ResultType = (ResultKind)r.ReadByte();
-
-			if (ResultType != ResultKind.Exception)
-			{
-				var n = r.ReadVarInt();
-				OutArguments = new MethodOutArgument[n];
-				for (int i = 0; i < n; i++)
-					OutArguments[i] = new MethodOutArgument(r);
-			}
-
-			var c = r.ReadVarInt();
-			CallContextSnapshot = new CallContextEntry[c];
-			for (int j = 0; j < c; j++)
-				CallContextSnapshot[j] = new CallContextEntry(r);
-		}
-
-		public void Deserialize(Stack<object?> st)
-		{
-			if (ResultType == ResultKind.Exception || ResultType == ResultKind.ResultValue)
-				Value = st.Pop();
-			else
-				Value = null;
-
-			if (ResultType != ResultKind.Exception)
-			{
-				foreach (var oa in OutArguments)
-					oa.Deserialize(st);
-			}
-
-			foreach (var cc in CallContextSnapshot)
-				cc.Deserialize(st);
-		}
-
 		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
-			w.Write((byte)ResultType);
+			var localType = ResultType;
 
-			if (ResultType == ResultKind.Exception)
+			IDictionary<string, string>? dict = null;
+
+			if (localType == ResultKind.Exception)
 			{
-				if (Value == null)
-					throw new Exception("Exception without value");
-
+				if (Value is IDictionary<string, string> d)
+				{
+					localType = ResultKind.Exception_dict_internal;
+					dict = d;
+				}
+				else
+				{
+					st.Push(Value);
+				}
+			}
+			else if (localType == ResultKind.ResultValue)
+			{
 				st.Push(Value);
 			}
-			else if (ResultType == ResultKind.ResultVoid)
-			{
-				if (Value != null)
-					throw new Exception("ResultVoid with value");
-			}
-			else if (ResultType == ResultKind.ResultValue)
-			{
-				st.Push(Value);
-			}
-			else
-				throw new Exception("Unknown resultType: " + ResultType);
 
-			if (ResultType != ResultKind.Exception)
+			w.Write((byte)localType);
+
+			if (localType == ResultKind.ResultValue || localType == ResultKind.ResultVoid)
 			{
 				if (OutArguments == null)
 					w.WriteVarInt(0);
@@ -111,12 +79,77 @@
 				foreach (var cc in CallContextSnapshot)
 					cc.Serialize(w, st);
 			}
+
+			if (localType == ResultKind.Exception_dict_internal)
+			{
+				w.WriteVarInt(dict.Count);
+				foreach (var kv in dict)
+				{
+					w.Write(kv.Key);
+					w.Write(kv.Value);
+				}
+			}
 		}
+
+		public void Deserialize(GoreBinaryReader r)
+		{
+			ResultType = (ResultKind)r.ReadByte();
+
+			if (ResultType == ResultKind.ResultValue || ResultType == ResultKind.ResultVoid)
+			{
+				var n = r.ReadVarInt();
+				OutArguments = new MethodOutArgument[n];
+				for (int i = 0; i < n; i++)
+					OutArguments[i] = new MethodOutArgument(r);
+			}
+
+			var c = r.ReadVarInt();
+			CallContextSnapshot = new CallContextEntry[c];
+			for (int j = 0; j < c; j++)
+				CallContextSnapshot[j] = new CallContextEntry(r);
+
+			if (ResultType == ResultKind.Exception_dict_internal)
+			{
+				var n = r.ReadVarInt();
+				Dictionary<string, string> dict = new(n);
+				for (int i = 0; i < n; i++)
+				{
+					var k = r.ReadString();
+					var v = r.ReadString();
+					dict.Add(k, v);
+				}
+
+				Value = dict;
+			}
+		}
+
+		public void Deserialize(Stack<object?> st)
+		{
+			if (ResultType == ResultKind.Exception || ResultType == ResultKind.ResultValue)
+				Value = st.Pop();
+
+			if (ResultType == ResultKind.ResultValue || ResultType == ResultKind.ResultVoid)
+			{
+				foreach (var oa in OutArguments)
+					oa.Deserialize(st);
+			}
+
+			foreach (var cc in CallContextSnapshot)
+				cc.Deserialize(st);
+		}
+
+		
 
 		/// <summary>
 		/// Gets or sets a snapshot of the call context that flows from server back to the client. 
 		/// </summary>
 		public CallContextEntry[] CallContextSnapshot { get; set; }
 
+		public MessageType MessageType => MessageType.MethodResult;
+
+		public int CacheKey => (int)ResultType;
+
+		public bool IsException => ResultType == ResultKind.Exception
+			|| ResultType == ResultKind.Exception_dict_internal;
 	}
 }
