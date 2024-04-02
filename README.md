@@ -47,28 +47,36 @@ This way migration from BinaryFormatter to eg. System.Text.Json can happen metho
 
 ### Exception handling
 Exceptions thrown are marshalled based on a setting in ExceptionSerialization: ExceptionStrategy.
-The default for all serializers (except BinaryFormatter) are ExceptionStrategy.UninitializedObject.
-BinaryFormatter has its own ExceptionStrategy setting (override) and its default is ExceptionStrategy.BinaryFormatterOrUninitializedObject.
+The default for all serializers (except BinaryFormatter) are ExceptionStrategy.Clone.
+BinaryFormatter has its own ExceptionStrategy setting (override) and its default is ExceptionStrategy.BinaryFormatter.
 
-### Exception strategies
+### Exception strategies (GoreRemoring)
 	public enum ExceptionStrategy
 	{
 		/// <summary>
-		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as UninitializedObject)
+		/// Same type as original, but some pieces may be missing (best effort).
+		/// Uses ISerializable.GetObjectData\ctor(SerializationInfo, StreamingContext).
 		/// </summary>
-		BinaryFormatterOrUninitializedObject = 1,
+		Clone = 1,
 		/// <summary>
-		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as RemoteInvocationException)
+		/// Always type RemoteInvocationException.
+		/// Uses ISerializable.GetObjectData\ctor(SerializationInfo, StreamingContext).
 		/// </summary>
-		BinaryFormatterOrRemoteInvocationException = 2,
+		RemoteInvocationException = 2
+	}
+
+### Exception strategies (BinaryFormatter)
+	public enum ExceptionStrategy
+	{
 		/// <summary>
-		/// Same type, with only Message, StackTrace and ClassName set (and PropertyData added to Data)
+		/// Use ExceptionSerialization.ExceptionStrategy setting
 		/// </summary>
-		UninitializedObject = 3,
+		Default = 0,
+
 		/// <summary>
-		/// Always type RemoteInvocationException, with only Message, StackTrace, ClassName and PropertyData set
+		/// BinaryFormatter used (if serializable, everything is preserved, else serialized as default)
 		/// </summary>
-		RemoteInvocationException = 4
+		BinaryFormatter = 3
 	}
 
 ## Compression

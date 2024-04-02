@@ -14,7 +14,7 @@ namespace ServerNet48
 		/// <returns></returns>
 		static void Main(string[] args)
 		{
-			Console.WriteLine("ServerNet48 example");
+			Console.WriteLine("NativeServerNet60 example");
 
 			var p = new Program();
 			p.Go();

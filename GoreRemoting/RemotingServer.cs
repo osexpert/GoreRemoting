@@ -16,7 +16,7 @@ using Nerdbank.Streams;
 namespace GoreRemoting
 {
 
-	public class RemotingServer : IRemoting
+	public class RemotingServer : IRemotingParty
 	{
 
 		MethodCallMessageBuilder MethodCallMessageBuilder = new();
@@ -24,7 +24,7 @@ namespace GoreRemoting
 		//private ConcurrentDictionary<(Type, int), DelegateProxy> _delegateProxyCache = new();
 		ConcurrentDictionary<string, Type> _services = new();
 
-		public ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> _typesCache { get; } = new ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]>();
+		public ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> TypesCache { get; } = new ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]>();
 
 		ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodCache = new ConcurrentDictionary<(string, string), MethodInfo>();
 
@@ -299,7 +299,7 @@ namespace GoreRemoting
 							throw new Exception("Incorrect result position");
 
 						if (msg.IsException)
-							throw Gorializer.RestoreSerializedException(request.Serializer, msg.Value!);
+							throw Goreializer.RestoreSerializedException(request.Serializer, msg.Value!);
 
 						if (msg.StreamingStatus == StreamingStatus.Active)
 							activeStreamingDelegatePosition = msg.Position;
@@ -354,7 +354,7 @@ namespace GoreRemoting
 							throw new Exception("Incorrect result position");
 
 						if (msg.IsException)
-							throw Gorializer.RestoreSerializedException(request.Serializer, msg.Value!);
+							throw Goreializer.RestoreSerializedException(request.Serializer, msg.Value!);
 
 						if (msg.StreamingStatus == StreamingStatus.Active)
 							activeStreamingDelegatePosition = msg.Position;
@@ -378,19 +378,19 @@ namespace GoreRemoting
 			object? result = null;
 			object? service = null;
 			Exception? ex2 = null;
-			ICallContext? callContext = null;
+			ICallScope? callScope = null;
 
 			try
 			{
 				service = GetService(request.ServiceName, /*method,*/ context);
 
-				callContext = _config.CreateCallContext?.Invoke();
-				callContext?.Start(context, request.ServiceName, request.MethodName, service, request.Method, parameterValues);
+				callScope = _config.CreateCallScope?.Invoke();
+				callScope?.Start(context, request.ServiceName, request.MethodName, service, request.Method, parameterValues);
 
 				result = request.Method.Invoke(service, parameterValues);
 				result = await TaskResultHelper.GetTaskResult(request.Method, result);
 
-				callContext?.Success(result);
+				callScope?.Success(result);
 			}
 			catch (Exception ex)
 			{
@@ -406,12 +406,12 @@ namespace GoreRemoting
 						ex2 = tie.InnerException;
 				}
 
-				callContext?.Failure(ex2);
+				callScope?.Failure(ex2);
 			}
 			finally
 			{
-				callContext?.Dispose();
-				callContext = null;
+				callScope?.Dispose();
+				callScope = null;
 			}
 
 			//			if (oneWay)
@@ -430,7 +430,7 @@ namespace GoreRemoting
 			}
 			else
 			{
-				var serEx = Gorializer.GetSerializableException(request.Serializer, ex2);
+				var serEx = Goreializer.GetSerializableException(request.Serializer, ex2);
 				resultMessage = new MethodResultMessage { Value = serEx, ResultType = ResultKind.Exception };
 			}
 

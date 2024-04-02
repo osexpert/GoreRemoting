@@ -4,7 +4,7 @@ using Grpc.Net.Compression;
 
 namespace GoreRemoting.RpcMessaging
 {
-	public class GoreResponseMessage : IGorializer
+	public class GoreResponseMessage : IGoreializable
 	{
 		internal string ServiceName { get; }
 		internal string MethodName { get; }
@@ -75,26 +75,26 @@ namespace GoreRemoting.RpcMessaging
 				throw new NotImplementedException();
 		}
 
-		internal static GoreResponseMessage Deserialize(IRemoting r, Stream s, ResponseType mType,
+		internal static GoreResponseMessage Deserialize(IRemotingParty r, Stream s, ResponseType mType,
 			string serviceName, string methodName, MethodInfo method,
 			ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			if (mType == ResponseType.MethodResult)
 				return new GoreResponseMessage(
-					Gorializer.GoreDeserialize<MethodResultMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
+					Goreializer.Deserialize<MethodResultMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
 			else if (mType == ResponseType.DelegateCall)
 				return new GoreResponseMessage(
-					Gorializer.GoreDeserialize<DelegateCallMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
+					Goreializer.Deserialize<DelegateCallMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
 			else
 				throw new Exception();
 		}
 
-		internal void Serialize(IRemoting r, Stream s, MethodInfo method)
+		internal void Serialize(IRemotingParty r, Stream s, MethodInfo method)
 		{
 			if (ResponseType == ResponseType.MethodResult)
-				Gorializer.GoreSerialize(r, s, method, MethodResult, Serializer, Compressor);
+				Goreializer.Serialize(r, s, method, MethodResult, Serializer, Compressor);
 			else if (ResponseType == ResponseType.DelegateCall)
-				Gorializer.GoreSerialize(r, s, method, DelegateCall, Serializer, Compressor);
+				Goreializer.Serialize(r, s, method, DelegateCall, Serializer, Compressor);
 			else
 				throw new Exception();
 		}

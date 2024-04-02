@@ -18,7 +18,7 @@
 		/// - include execption map in gorelizer
 		/// - move request type to top
 		/// </summary>
-		internal static readonly int SerializationVersion = 4;
+		internal static readonly byte SerializationVersion = 4;
 
 
 		//	public const string SerializerHeaderKey = "gore-serializer";

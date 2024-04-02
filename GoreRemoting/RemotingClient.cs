@@ -11,11 +11,11 @@ using Nerdbank.Streams;
 namespace GoreRemoting
 {
 
-	public class RemotingClient : IRemoting
+	public class RemotingClient : IRemotingParty
 	{
 		internal ClientConfig _config;
 		CallInvoker _callInvoker;
-		public ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> _typesCache { get; } = new ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]>();
+		public ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> TypesCache { get; } = new ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]>();
 
 		internal ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodLookup = new ConcurrentDictionary<(string, string), MethodInfo>();
 
@@ -205,9 +205,9 @@ namespace GoreRemoting
 #endif
 
 
-	public interface IRemoting
+	public interface IRemotingParty
 	{
-		 ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> _typesCache { get; }
+		 ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> TypesCache { get; }
 	}
 
 }

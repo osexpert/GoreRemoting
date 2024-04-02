@@ -1,9 +1,5 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 using Castle.DynamicProxy;
 using GoreRemoting.RemoteDelegates;
 using GoreRemoting.RpcMessaging;
@@ -57,8 +53,7 @@ namespace GoreRemoting
 
 			var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
 				targetMethod: targetMethod,
-				args: arguments//,
-				//emitCallContext: _client._config.EmitCallContext
+				args: arguments
 				);
 
 			var requestMsg = new GoreRequestMessage(callMessage, _serviceName, targetMethod.Name, serializer, compressor);
@@ -68,7 +63,7 @@ namespace GoreRemoting
 				new CallOptions(headers: headers, cancellationToken: cancel));
 
 			if (resultMessage.IsException)
-				throw Gorializer.RestoreSerializedException(serializer, resultMessage.Value!);
+				throw Goreializer.RestoreSerializedException(serializer, resultMessage.Value!);
 
 			var parameterInfos = targetMethod.GetParameters();
 
@@ -120,7 +115,7 @@ namespace GoreRemoting
 				new CallOptions(headers: headers, cancellationToken: cancel)).ConfigureAwait(false);
 
 			if (resultMessage.IsException)
-				throw Gorializer.RestoreSerializedException(serializer, resultMessage.Value!);
+				throw Goreializer.RestoreSerializedException(serializer, resultMessage.Value!);
 
 			// out|ref not possible with async
 
@@ -189,6 +184,9 @@ namespace GoreRemoting
 			int? streamingDelegatePosition)
 		{
 			// WEIRD BUT...callbackData also has serializer and compressor!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! This make no sense.
+			// It kind of make sense:
+			// callbackData.Serializer is the serializer used by who sent the message to us.
+			// serializer (the argument) is the serialized we will use when we send the message.
 
 			switch (callbackData.ResponseType)
 			{
@@ -238,7 +236,7 @@ namespace GoreRemoting
 								}
 								else
 								{
-									exception = Gorializer.GetSerializableException(serializer, ex2);
+									exception = Goreializer.GetSerializableException(serializer, ex2);
 								}
 							}
 						}

@@ -3,7 +3,7 @@
 	/// <summary>
 	/// Serializable message that describes an out parameter.
 	/// </summary>
-	public class MethodOutArgument : IGorializer
+	public class MethodOutArgument : IGoreializable
 	{
 		public MethodOutArgument()
 		{

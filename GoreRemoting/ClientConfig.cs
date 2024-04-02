@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using GoreRemoting.Serialization;
 using Grpc.Core;
@@ -23,9 +20,7 @@ namespace GoreRemoting
 
 		public ClientConfig()
 		{
-
 		}
-
 
 		public ClientConfig(params ISerializerAdapter[] serializers)
 		{
@@ -106,10 +101,6 @@ namespace GoreRemoting
 
 			return res;
 		}
-
-//		public bool EmitCallContext { get; set; } = true;
-
-	//	public bool RestoreCallContext { get; set; } = true;
 
 		//public ExceptionStrategy ExceptionStrategy => ExceptionStrategy.UninitializedObject;
 

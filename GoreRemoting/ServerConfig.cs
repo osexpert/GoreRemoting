@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Reflection;
 using GoreRemoting.Serialization;
 using Grpc.Core;
@@ -19,7 +17,7 @@ namespace GoreRemoting
 
 		public static readonly Func<Type, ServerCallContext, object> GetServiceDefault = (serviceType, context) => Activator.CreateInstance(serviceType);
 
-		public Func<ICallContext>? CreateCallContext { get; set; } = null;
+		public Func<ICallScope>? CreateCallScope { get; set; } = null;
 
 		private Dictionary<string, ISerializerAdapter> _serializers = new();
 
@@ -72,9 +70,6 @@ namespace GoreRemoting
 				_compressors.Add(compressor.EncodingName, compressor);
 		}
 
-
-
-
 		/// <summary>
 		/// Gets or sets the sweep interval for inactive sessions in seconds (No session sweeping if set to 0).
 		/// default: 1 minute
@@ -88,7 +83,7 @@ namespace GoreRemoting
 		public int MaximumSessionInactivityTimeSeconds { get; set; } = 60 * 5;
 	}
 
-	public interface ICallContext : IDisposable
+	public interface ICallScope : IDisposable
 	{
 		void Start(ServerCallContext context, string serviceName, string methodName, object service, MethodInfo method, object?[] parameterValues);
 

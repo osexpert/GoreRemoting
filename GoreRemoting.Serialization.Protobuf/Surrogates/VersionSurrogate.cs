@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using ProtoBuf;
 
-namespace GoreRemoting.Serialization.Protobuf
+namespace GoreRemoting.Serialization.Protobuf.Surrogates
 {
 	[ProtoContract]
 	class VersionSurrogate

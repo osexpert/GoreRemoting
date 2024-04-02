@@ -6,7 +6,7 @@ namespace GoreRemoting
 	/// Describes a single call context entry.
 	/// </summary>
 
-	public class CallContextEntry : IGorializer
+	public class CallContextEntry : IGoreializable
 	{
 		public CallContextEntry()
 		{

@@ -8,14 +8,14 @@ using Grpc.Net.Compression;
 
 namespace GoreRemoting
 {
-	public interface IGorializer
+	public interface IGoreializable
 	{
 		void Serialize(GoreBinaryWriter w, Stack<object?> st);
 		void Deserialize(GoreBinaryReader r);
 		void Deserialize(Stack<object?> st);
 	}
 
-	public interface IMessage : IGorializer
+	public interface IMessage : IGoreializable
 	{
 		MessageType MessageType { get; }
 
@@ -24,6 +24,7 @@ namespace GoreRemoting
 		/// </summary>
 		int CacheKey { get; }
 	}
+
 	public enum MessageType
 	{
 		MethodCall = 1,
@@ -32,10 +33,10 @@ namespace GoreRemoting
 		DelegateResult = 4,
 	}
 
-	internal class Gorializer
+	internal class Goreializer
 	{
 
-		public static void GoreSerialize(IRemoting r, Stream ms, MethodInfo method, IMessage msg, ISerializerAdapter serializer, ICompressionProvider? compressor)
+		public static void Serialize(IRemotingParty r, Stream ms, MethodInfo method, IMessage msg, ISerializerAdapter serializer, ICompressionProvider? compressor)
 		{
 			//using var ms = PooledMemoryStream.GetStream();
 
@@ -71,7 +72,7 @@ namespace GoreRemoting
 				return null;// new NonDisposablePassthruStream(ms);
 		}
 
-		public static T GoreDeserialize<T>(IRemoting r, Stream ms, MethodInfo method, ISerializerAdapter serializer, ICompressionProvider? compressor) 
+		public static T Deserialize<T>(IRemotingParty r, Stream ms, MethodInfo method, ISerializerAdapter serializer, ICompressionProvider? compressor) 
 			where T : IMessage, new()
 		{
 			var msg = new T();
@@ -99,22 +100,17 @@ namespace GoreRemoting
 			return msg;
 		}
 
-		
-
-		private static Type[] GetTypes(IRemoting r, MethodInfo method, IMessage msg, ISerializerAdapter serializer)
+		private static Type[] GetTypes(IRemotingParty r, MethodInfo method, IMessage msg, ISerializerAdapter serializer)
 		{
-			if (r._typesCache.TryGetValue((method, msg.MessageType, msg.CacheKey), out var types))
+			if (r.TypesCache.TryGetValue((method, msg.MessageType, msg.CacheKey), out var types))
 				return types;
 
 			types = GetTypesUncached(method, msg, serializer);
-			r._typesCache.TryAdd((method, msg.MessageType, msg.CacheKey), types);
+			r.TypesCache.TryAdd((method, msg.MessageType, msg.CacheKey), types);
 
 			return types;
 		}
 
-		/// <summary>
-		/// BUG: funker inte...cache key er mer komplisert....enn metode + type
-		/// </summary>
 		private static Type[] GetTypesUncached(MethodInfo method, IMessage msg, ISerializerAdapter serializer)
 		{
 			var param_s = method.GetParameters();
@@ -123,7 +119,7 @@ namespace GoreRemoting
 			{
 				if (mrm.ResultType == ResultKind.Exception)
 				{
-					return new Type[] { Gorializer.GetExceptionType(serializer) };
+					return new Type[] { Goreializer.GetExceptionType(serializer) };
 				}
 				else if (mrm.ResultType == ResultKind.Exception_dict_internal)
 				{
@@ -207,7 +203,7 @@ namespace GoreRemoting
 			{
 				if (drm.ReturnKind == DelegateResultType.Exception)
 				{
-					return new Type[] { Gorializer.GetExceptionType(serializer) };
+					return new Type[] { Goreializer.GetExceptionType(serializer) };
 				}
 				else if (drm.ReturnKind == DelegateResultType.Exception_dict_internal)
 				{
@@ -244,7 +240,6 @@ namespace GoreRemoting
 				return null;// new NonDisposablePassthruStream(ms);
 		}
 
-
 		private static Type GetExceptionType(ISerializerAdapter serializer)
 		{
 			if (serializer is IExceptionAdapter ea)
@@ -252,7 +247,6 @@ namespace GoreRemoting
 			else
 				return typeof(Dictionary<string, string>);
 		}
-
 
 		internal static Exception RestoreSerializedException(ISerializerAdapter serializer, object ex)
 		{

@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 
-namespace GoreRemoting
+namespace GoreRemoting.Serialization.BinaryFormatter
 {
 	public static class TypeShortener
 	{

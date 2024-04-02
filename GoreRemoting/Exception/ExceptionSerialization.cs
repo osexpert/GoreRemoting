@@ -1,23 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
-using System.Text.Json;
-using System.Xml;
-using System.Xml.Linq;
-using System.Xml.Schema;
-using GoreRemoting.Serialization;
-
 namespace GoreRemoting
 {
 
 	public static class ExceptionSerialization
 	{
-		public static ExceptionStrategy ExceptionStrategy => ExceptionStrategy.Keep;
+		public static ExceptionStrategy ExceptionStrategy => ExceptionStrategy.Clone;
 
 		public static Exception RestoreAsOriginalException(Dictionary<string, string> dict)
 		{
@@ -38,15 +27,12 @@ namespace GoreRemoting
 		{
 			return ExceptionStrategy switch
 			{
-				ExceptionStrategy.Keep => ExceptionSerialization.RestoreAsOriginalException(dict),
+				ExceptionStrategy.Clone => ExceptionSerialization.RestoreAsOriginalException(dict),
 				ExceptionStrategy.RemoteInvocationException => ExceptionSerialization.RestoreAsRemoteInvocationException(dict),
 				_ => throw new NotImplementedException()
 			};
 		}
 	}
-
-
-
 
 	//public class ExceptionData
 	//{
@@ -66,10 +52,12 @@ namespace GoreRemoting
 	{
 		/// <summary>
 		/// Same type as original, but some pieces may be missing (best effort).
+		/// Uses ISerializable.GetObjectData\ctor(SerializationInfo, StreamingContext).
 		/// </summary>
-		Keep = 1,
+		Clone = 1,
 		/// <summary>
 		/// Always type RemoteInvocationException.
+		/// Uses ISerializable.GetObjectData\ctor(SerializationInfo, StreamingContext).
 		/// </summary>
 		RemoteInvocationException = 2
 	}

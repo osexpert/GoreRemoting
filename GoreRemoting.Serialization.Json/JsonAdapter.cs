@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using GoreRemoting.Serialization.Json.ArgTypes;
@@ -18,11 +19,13 @@ namespace GoreRemoting.Serialization.Json
 			{
 				// Match default behaviour of BF, Messagepack, Memorypack, Protobuf.
 				IncludeFields = true,
+
 				ReferenceHandler = ReferenceHandler.Preserve,
 				Converters =
 				{
 					new TupleConverterFactory()
-				}
+				},
+				Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
 			};
 		}
 

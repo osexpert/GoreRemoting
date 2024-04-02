@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using GoreRemoting.Serialization.Protobuf.ArgTypes;
+using GoreRemoting.Serialization.Protobuf.Surrogates;
 using ProtoBuf;
 using ProtoBuf.Meta;
 

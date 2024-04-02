@@ -1,22 +1,14 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
-using System.Text.Json;
-using System.Diagnostics;
-using System.Reflection;
-using Nerdbank.Streams;
-using System.Runtime.CompilerServices;
-using System.Collections;
-using System.Xml.Linq;
-using System.Collections.Specialized;
-using System.Numerics;
 using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using Nerdbank.Streams;
 
 namespace GoreRemoting
 {
@@ -26,8 +18,6 @@ namespace GoreRemoting
 		{
 			Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
 		};
-
-
 
 		const string StackTraceStringKey = "StackTraceString";
 		const string InnerExceptionStringKey = "InnerExceptionString";
