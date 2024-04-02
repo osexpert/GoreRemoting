@@ -1,20 +1,7 @@
 Intern strings like vs-streamjsonrpc? For messagepack.
 
-Security?
-During desser, somehow validate that the types sent match the signature of the method called?
-If a method take object as arg, then its pointless off course, all will pass.
-It is not easy to reach the method sig\types in the code that desser (for MessagePack nor possible at all since it happens within the library).
-But I am not sure if this is a security problem. The only bad thing you can do is to serialize things that will fail to be used as argument
-for target method, but I guess it would be better to detect this before deserialize of the type,
-but it depends on, what bad thing can really happen by deserialize random types?
-For binary formatter it is bad, but this is because the way to creates the objects, using reflection to call ctors.
-Other serializers I don't think have these problems, so the harm you can do with them...I think it theoretical.
-Anyways...this is all based on BinaryFormatter and migrating away from it, so security is not the main point here.
-When all is migrated away from BinaryFormatter to some other formatter, then you could must easier switch the transport too.
-
 CallContext
 ResultContext? Maybe an idea to separate them, have a separate context that flows back to the client...
-
 
 session:
 
@@ -47,47 +34,6 @@ OnUnobservedException
 OnException
 OnClientTriggeredException
 
-
-    info.AddValue("ClassName", GetClassName(), typeof(string)); // Do not rename (binary serialization)
-            info.AddValue("Message", _message, typeof(string)); // Do not rename (binary serialization)
-            info.AddValue("Data", _data, typeof(IDictionary)); // Do not rename (binary serialization)
-            info.AddValue("InnerException", _innerException, typeof(Exception)); // Do not rename (binary serialization)
-            info.AddValue("HelpURL", _helpURL, typeof(string)); // Do not rename (binary serialization)
-            info.AddValue("StackTraceString", SerializationStackTraceString, typeof(string)); // Do not rename (binary serialization)
-            info.AddValue("RemoteStackTraceString", _remoteStackTraceString, typeof(string)); // Do not rename (binary serialization)
-            info.AddValue("RemoteStackIndex", 0, typeof(int)); // Do not rename (binary serialization)
-            info.AddValue("ExceptionMethod", null, typeof(string)); // Do not rename (binary serialization)
-            info.AddValue("HResult", _HResult); // Do not rename (binary serialization)
-            info.AddValue("Source", _source, typeof(string)); // Do not rename (binary serialization)
-            info.AddValue("WatsonBuckets", SerializationWatsonBuckets, typeof(byte[])); // Do not rename (binary serialization)
-        }
-       protected Exception(SerializationInfo info, StreamingContext context)
-        {
-            if (info == null)
-                throw new ArgumentNullException(nameof(info));
-
-            _message = info.GetString("Message"); // Do not rename (binary serialization)
-            _data = (IDictionary?)(info.GetValueNoThrow("Data", typeof(IDictionary))); // Do not rename (binary serialization)
-            _innerException = (Exception?)(info.GetValue("InnerException", typeof(Exception))); // Do not rename (binary serialization)
-            _helpURL = info.GetString("HelpURL"); // Do not rename (binary serialization)
-            _stackTraceString = info.GetString("StackTraceString"); // Do not rename (binary serialization)
-            _remoteStackTraceString = info.GetString("RemoteStackTraceString"); // Do not rename (binary serialization)
-            _HResult = info.GetInt32("HResult"); // Do not rename (binary serialization)
-            _source = info.GetString("Source"); // Do not rename (binary serialization)
-
-            RestoreRemoteStackTrace(info, context);
-        }
-        
-special ctor for exceptions?
-has to be serializable?
-Check this: StreamJsonRpc 
-
-security: check that types are of same types in service methods?
-so would loop methods with same name and same numer of args. Then check if types sent match those types,
-and only then deserialize to real type.
-BUT is this really a problem for json and memorypack etc? I dont think so...
-
-
 remote linq
 https://github.com/dotnet/csharplang/discussions/5555#discussioncomment-1852834
 https://github.com/6bee/Remote.Linq
@@ -96,8 +42,6 @@ callcontext vs headers \ trailers of grpc?
 
 meaning, could we make a GrpgCallHeaders static class, that works similar?
 and meaning, could we make a GrpgCallTrailers static class, that works similar?
-
-
 
 Use headers to tell what\if compression to use? Compress\compressor: Deflate, gzip, etc.
 

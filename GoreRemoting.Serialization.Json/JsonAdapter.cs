@@ -3,7 +3,9 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using GoreRemoting.Serialization.Json.ArgTypes;
+#if NET6_0_OR_GREATER
 using TupleAsJsonArray;
+#endif
 
 namespace GoreRemoting.Serialization.Json
 {
@@ -23,7 +25,9 @@ namespace GoreRemoting.Serialization.Json
 				ReferenceHandler = ReferenceHandler.Preserve,
 				Converters =
 				{
+#if NET6_0_OR_GREATER
 					new TupleConverterFactory()
+#endif
 				},
 				Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
 			};
