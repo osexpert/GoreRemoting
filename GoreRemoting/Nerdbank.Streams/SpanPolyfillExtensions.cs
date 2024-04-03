@@ -4,7 +4,7 @@
 #pragma warning disable AvoidAsyncSuffix // Avoid Async suffix
 #if !NETSTANDARD2_1_OR_GREATER
 
-namespace Nerdbank.Streams
+namespace GoreRemoting.Nerdbank.Streams
 {
 	using System;
 	using System.Buffers;

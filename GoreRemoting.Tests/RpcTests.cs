@@ -145,20 +145,37 @@ namespace GoreRemoting.Tests
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
-		public async Task ReturnNull(enSerializer ser)
+		public async Task ReturnNullWithLz4(enSerializer ser)
 		{
 			var serverConfig =
 				new ServerConfig(Serializers.GetSerializer(ser));
+			serverConfig.AddCompressor(new Lz4CompressionProvider());
 
 			await using var server = new NativeServer(9095, serverConfig);
 			server.RegisterService<ITestService, TestService>();
 			server.Start();
 
-			await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
+			var cliConf = new ClientConfig(Serializers.GetSerializer(ser));
+			cliConf.AddCompressor(new Lz4CompressionProvider());
+			await using var client = new NativeClient(9095, cliConf);
 
 			var proxy = client.CreateProxy<ITestService>();
 
+			var s0 = Stopwatch.StartNew();
 			var result = proxy.TestReturnNull();
+			s0.Stop();
+
+			var s = Stopwatch.StartNew();
+			var result2 = proxy.TestReturnNull();
+			s.Stop();
+
+			var s1 = Stopwatch.StartNew();
+			var result3 = proxy.Echo("f");
+			s1.Stop();
+
+			var s2 = Stopwatch.StartNew();
+			var result4 = proxy.Echo("h");
+			s2.Stop();
 
 			Assert.IsNull(result);
 		}
@@ -173,8 +190,7 @@ namespace GoreRemoting.Tests
 		[DataRow(enSerializer.Protobuf)]
 		public async Task Inherited_methods_should_be_called_correctly(enSerializer ser)
 		{
-			var serverConfig =
-				new ServerConfig(Serializers.GetSerializer(ser));
+			var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
 			await using var server = new NativeServer(9095, serverConfig);
 			server.RegisterService<ITestService, TestService>();
@@ -480,7 +496,7 @@ namespace GoreRemoting.Tests
 				ex = e;
 			}
 			Assert.AreEqual("Too late, result sent", ex!.Message);
-			Assert.AreEqual(15, ex.ToString().Split(Environment.NewLine).Length);
+			Assert.AreEqual(14, ex.ToString().Split(Environment.NewLine).Length);
 
 			Assert.IsFalse(serviceEventCalled);
 		}

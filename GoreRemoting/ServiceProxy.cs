@@ -10,28 +10,18 @@ using stakx.DynamicProxy;
 
 namespace GoreRemoting
 {
-	public class ServiceProxy<T> : IInterceptor // AsyncInterceptor
+	public class ServiceProxy<T> : AsyncInterceptor
 	{
 		RemotingClient _client;
 		string _serviceName;
-
-		AsyncInterceptor _aInterceptor;
-
+		
 		public ServiceProxy(RemotingClient client)
 		{
 			_client = client;
 			_serviceName = typeof(T).Name;
-			_aInterceptor = new(InterceptSync, InterceptAsync);
 		}
 
-		void IInterceptor.Intercept(IInvocation invocation)
-		{
-			var sin = new SyncInvocation(invocation.Method, invocation.Arguments);
-			_aInterceptor.Intercept(sin);
-			invocation.ReturnValue = sin.ReturnValue;
-		}
-
-		void InterceptSync(ISyncInvocation invocation)
+		protected override void Intercept(IInvocation invocation)
 		{
 			var args = invocation.Arguments;
 			var targetMethod = invocation.Method;
@@ -84,7 +74,7 @@ namespace GoreRemoting
 			CallContext.RestoreFromChangesSnapshot(resultMessage.CallContextSnapshot);
 		}
 
-		async ValueTask InterceptAsync(IAsyncInvocation invocation)
+		protected override async ValueTask InterceptAsync(IAsyncInvocation invocation)
 		{
 			var args = invocation.Arguments.ToArray();
 			var targetMethod = invocation.Method;
@@ -176,8 +166,6 @@ namespace GoreRemoting
 			// else check default
 			return _client._config.DefaultCompressor;
 		}
-
-
 
 		private async Task<MethodResultMessage?> HandleResponseAsync(ISerializerAdapter serializer, ICompressionProvider? compressor, GoreResponseMessage callbackData,
 			Func<GoreRequestMessage, Task> res, object?[] args,
@@ -369,7 +357,4 @@ namespace GoreRemoting
 			return true;
 		}
 	}
-
-
-
 }

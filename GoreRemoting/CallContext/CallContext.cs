@@ -1,8 +1,6 @@
 ﻿using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Threading;
 
 namespace GoreRemoting
 {
@@ -18,19 +16,19 @@ namespace GoreRemoting
 		};
 
 		// bool: true if changed
-		private static readonly ConcurrentDictionary<string, AsyncLocal<(string, bool)>> State =
-			new ConcurrentDictionary<string, AsyncLocal<(string, bool)>>();
+		private static readonly ConcurrentDictionary<string, AsyncLocal<string>> State =
+			new ConcurrentDictionary<string, AsyncLocal<string>>();
 
 		/// <summary>
 		/// Stores a given object and associates it with the specified name.
 		/// </summary>
 		/// <param name="name">The name with which to associate the new item in the call context.</param>
 		/// <param name="data">The object to store in the call context.</param>
-		private static void SetStringPrivate(string name, string? data) =>
-			State.GetOrAdd(name, _ => new AsyncLocal<(string, bool)>()).Value = (data, true);
+		private static void SetStringPrivate(string name, string data) =>
+			State.GetOrAdd(name, _ => new AsyncLocal<string>()).Value = data;
 
-		private static void SetStringNotChanged(string name, string data) =>
-			State.GetOrAdd(name, _ => new AsyncLocal<(string, bool)>()).Value = (data, false);
+		//private static void SetStringNotChanged(string name, string data) =>
+		//	State.GetOrAdd(name, _ => new AsyncLocal<string>()).Value = (data, false);
 
 		/// <summary>
 		/// Retrieves an object with the specified name from the <see cref="CallContext"/>.
@@ -38,7 +36,7 @@ namespace GoreRemoting
 		/// <param name="name">The name of the item in the call context.</param>
 		/// <returns>The object in the call context associated with the specified name, or <see langword="null"/> if not found.</returns>
 		private static string? GetStringPrivate(string name) =>
-			State.TryGetValue(name, out AsyncLocal<(string, bool)> data) ? data.Value.Item1 : null;//"null";
+			State.TryGetValue(name, out AsyncLocal<string> data) ? data.Value : null;//"null";
 
 	//	public static void RemoveData(string name) => State.TryRemove(name, out AsyncLocal<string> _);
 
@@ -74,18 +72,18 @@ namespace GoreRemoting
 		{
 			var stateSnaphsot = State.ToArray();
 
-			var stateSnaphsotChanged = stateSnaphsot.Where(en => en.Value.Value.Item2).ToArray();
+			var stateSnapshotNotNull = stateSnaphsot.Where(i => i.Value.Value != null).ToArray();
 
-			var result = new CallContextEntry[stateSnaphsotChanged.Length];
+			var result = new CallContextEntry[stateSnapshotNotNull.Length];
 
-			for (int i = 0; i < stateSnaphsotChanged.Length; i++)
+			for (int i = 0; i < stateSnapshotNotNull.Length; i++)
 			{
-				var entry = stateSnaphsotChanged[i];
+				var entry = stateSnapshotNotNull[i];
 
 				result[i] =	new CallContextEntry()
 				{
 					Name = entry.Key,
-					Value = entry.Value.Value.Item1
+					Value = entry.Value.Value
 				};
 			}
 
@@ -117,7 +115,7 @@ namespace GoreRemoting
 
 			foreach (var entry in entries)
 			{
-				SetStringNotChanged(entry.Name, entry.Value);
+				SetStringPrivate(entry.Name, entry.Value);
 			}
 		}
 	}

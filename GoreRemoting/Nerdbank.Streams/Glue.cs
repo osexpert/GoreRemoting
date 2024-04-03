@@ -1,7 +1,7 @@
 ﻿using System;
 
 
-namespace Nerdbank.Streams
+namespace GoreRemoting.Nerdbank.Streams
 {
 	internal interface IDisposableObservable
 	{

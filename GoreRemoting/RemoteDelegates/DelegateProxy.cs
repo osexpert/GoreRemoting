@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Reflection.Emit;
+using Castle.DynamicProxy;
 using stakx.DynamicProxy;
 
 namespace GoreRemoting.RemoteDelegates
@@ -7,17 +8,14 @@ namespace GoreRemoting.RemoteDelegates
 	/// <summary>
 	/// Proxy for intercepting calls on a specified delegate type. 
 	/// </summary>
-	public sealed class DelegateProxy //: IDelegateProxy
+	public sealed class DelegateProxy : AsyncInterceptor
 	{
 		private Func<MethodInfo, object?[], object?> _callInterceptionHandler;
 		private Func<MethodInfo, object?[], Task<object?>> _callInterceptionAsyncHandler;
 
-		AsyncInterceptor _aInterceptor;
-
 		static readonly MethodInfo _interceptMethod = typeof(DelegateProxy ).GetMethod(
-				name: nameof(DelegateProxy.Intercept),
+				name: nameof(DelegateProxy.DelegateTarget),
 			bindingAttr: BindingFlags.NonPublic | BindingFlags.InvokeMethod | BindingFlags.Instance);
-
 
 		/// <summary>
 		/// Creates a new instance of the DelegateProxy class.
@@ -41,18 +39,16 @@ namespace GoreRemoting.RemoteDelegates
 					delegateType: delegateType,
 					interceptMethod: _interceptMethod,
 					interceptor: this);
-
-			_aInterceptor = new AsyncInterceptor(InterceptSync, InterceptAsync);
 		}
 
-		void InterceptSync(ISyncInvocation invocation)
+		protected override void Intercept(IInvocation invocation)
 		{
 			var res = _callInterceptionHandler(invocation.Method, invocation.Arguments);
 			invocation.ReturnValue = res;
 			//CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
 		}
 
-		async ValueTask InterceptAsync(IAsyncInvocation invocation)
+		protected override async ValueTask InterceptAsync(IAsyncInvocation invocation)
 		{
 			var res = await _callInterceptionAsyncHandler(invocation.Method, invocation.Arguments.ToArray()).ConfigureAwait(false);
 			invocation.Result = res;
@@ -69,11 +65,39 @@ namespace GoreRemoting.RemoteDelegates
 		/// </summary>
 		/// <param name="args">Arguments passed to the proxied delegate by caller</param>
 		/// <returns>Return value provided by call interception handler</returns>
-		private object? Intercept(params object?[] args)
+		private object? DelegateTarget(params object?[] args)
 		{
-			var sin = new SyncInvocation(ProxiedDelegate.Method, args);
-			_aInterceptor.Intercept(sin);
+			var sin = new Invocation(ProxiedDelegate.Method, args);
+			((IInterceptor)this).Intercept(sin);
 			return sin.ReturnValue;
+		}
+
+		class Invocation : IInvocation
+		{
+			MethodInfo _method;
+			object?[] _args;
+
+			public Invocation(MethodInfo method, object?[] args)
+			{
+				_method = method;
+				_args = args;
+			}
+
+			public object?[] Arguments => _args;
+			public MethodInfo Method => _method;
+			public object? ReturnValue { get; set; }
+			public IInvocationProceedInfo CaptureProceedInfo() => null!;
+
+			public Type[] GenericArguments => throw new NotImplementedException();
+			public object InvocationTarget => throw new NotImplementedException();
+			public MethodInfo MethodInvocationTarget => throw new NotImplementedException();
+			public object Proxy => throw new NotImplementedException();
+			public Type TargetType => throw new NotImplementedException();
+			public object GetArgumentValue(int index) => throw new NotImplementedException();
+			public MethodInfo GetConcreteMethod() => throw new NotImplementedException();
+			public MethodInfo GetConcreteMethodInvocationTarget() => throw new NotImplementedException();
+			public void Proceed() => throw new NotImplementedException();
+			public void SetArgumentValue(int index, object value) => throw new NotImplementedException();
 		}
 
 		/// <summary>
@@ -119,7 +143,7 @@ namespace GoreRemoting.RemoteDelegates
 			// Create dynamic method for delegate call interception
 			var delegateProxyMethod =
 				new DynamicMethod(
-					name: nameof(Intercept),
+					name: interceptMethod.Name,
 					returnType: invokeMethod.ReturnType,
 					parameterTypes: parameterTypes,
 					owner: interceptorObjectType);

@@ -312,10 +312,10 @@ namespace GoreRemoting.Tests
 			if (ser == enSerializer.BinaryFormatter)
 			{
 				//	Assert.Equal(28, lines); // a failure to deserialize?? yes
-				Assert.AreEqual(8, lines); // task was cancelled, due too no result message
+				Assert.AreEqual(7, lines); // task was cancelled, due too no result message
 			}
 			else
-				Assert.AreEqual(20, lines);
+				Assert.AreEqual(19, lines);
 
 			// Most will fail because SerExMistake is private
 
@@ -351,10 +351,10 @@ namespace GoreRemoting.Tests
 			if (ser == enSerializer.BinaryFormatter)
 			{
 				//	Assert.Equal(28, lines2); // failure to desser
-				Assert.AreEqual(8, lines2); // failure to desser
+				Assert.AreEqual(7, lines2); // failure to desser
 			}
 			else
-				Assert.AreEqual(20, lines2);
+				Assert.AreEqual(19, lines2);
 
 			// Most will fail because SerExMistake is private
 
@@ -387,7 +387,7 @@ namespace GoreRemoting.Tests
 			//	Assert.Equal(28, lines3);
 			//else
 			{
-				Assert.AreEqual(9, lines3);
+				Assert.AreEqual(8, lines3);
 				//Assert.Equal("GoreRemoting.Tests.AsyncTests+SerExOk, GoreRemoting.Tests", ((SerExOk)e3).TypeName);
 			}
 
@@ -436,7 +436,7 @@ namespace GoreRemoting.Tests
 			//	Assert.Equal(28, lines3);
 			//else
 			{
-				Assert.AreEqual(21, lines4);
+				Assert.AreEqual(20, lines4);
 				//Assert.Equal("GoreRemoting.Tests.AsyncTests+SerExOk, GoreRemoting.Tests", ((SerExOk)e3).TypeName);
 			}
 
