@@ -19,6 +19,7 @@
     <PackageReleaseNotes></PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Company>osexpert</Company>      
+    <PackageReleaseNotes>See https://github.com/osexpert/GoreRemoting/blob/master/CHANGELOG.md for details</PackageReleaseNotes>
     
     <VersionPrefix>0.0.2</VersionPrefix>
     <PackageTags>remoting rpc grpc dotnet-remoting</PackageTags>

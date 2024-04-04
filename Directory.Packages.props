@@ -5,6 +5,7 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="AsyncReaderWriterLockSlim" Version="1.0.0" />
     <PackageVersion Include="Castle.Core" Version="5.1.1" />
     <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
     <PackageVersion Include="Nerdbank.Streams" Version="2.10.72" />

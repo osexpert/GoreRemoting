@@ -13,6 +13,7 @@
 
     <ItemGroup>
 <!--      <PackageReference Include="Nerdbank.Streams" Version="2.9.112" /> -->
+		<PackageReference Include="AsyncReaderWriterLockSlim" />
 		<PackageReference Include="Castle.Core" />
 		<PackageReference Include="Nullable" />
       <PackageReference Include="Grpc.Net.Common" />
