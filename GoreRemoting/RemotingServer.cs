@@ -237,6 +237,12 @@ namespace GoreRemoting
 				throw new Exception("Service already added: " + iface.Name);
 		}
 
+		class DuplexCallState
+		{
+			public bool ResultSent;
+			public int? ActiveStreamingDelegatePosition;
+		}
+
 		private async Task DuplexCall(
 			GoreRequestMessage request,
 			Func<Task<GoreRequestMessage>> req, Func<GoreResponseMessage, Task> reponse, ServerCallContext context)
@@ -249,124 +255,17 @@ namespace GoreRemoting
 
 			var parameterValues = callMessage.UnwrapParametersFromDeserializedMethodCallMessage();
 
-			bool resultSent = false;
+			DuplexCallState state = new();
+
 			var responseLock = new AsyncReaderWriterLockSlim();
 
-			int? activeStreamingDelegatePosition = null;
-
-			parameterValues = MapArguments(parameterValues, parameterTypes,
-			(method, delegateCallMsg) =>
-			{
-				var delegateCallResponseMsg = new GoreResponseMessage(delegateCallMsg, request.ServiceName, request.MethodName, request.Serializer, request.Compressor);
-
-				// send respose to client and client will call the delegate via DelegateProxy
-				// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
-				// These may seem to be 2 varianst of OneWay: 1 where we send and wait until sent, but do not care about result\exceptions.
-				// 2: we send and do not even wait for the sending to complete. (currently not implemented)
-				responseLock.EnterReadLock();
-				try
-				{
-					if (resultSent)
-						throw new Exception("Too late, result sent");
-
-					if (delegateCallMsg.Position == activeStreamingDelegatePosition)
-					{
-						// only recieve now that streaming is active
-					}
-					else
-					{
-						reponse(delegateCallResponseMsg).GetAwaiter().GetResult();
-					}
-
-					if (delegateCallMsg.OneWay)
-					{
-						// fire and forget. no result, not even exception
-						return null;
-					}
-					else
-					{
-						// we want result or exception
-						var reqMsg = req().GetAwaiter().GetResult();
-
-						var msg = reqMsg.DelegateResultMessage;
-
-						if (msg.Position != delegateCallMsg.Position)
-							throw new Exception("Incorrect result position");
-
-						if (msg.IsException)
-							throw Goreializer.RestoreSerializedException(request.Serializer, msg.Value!);
-
-						if (msg.StreamingStatus == StreamingStatus.Active)
-							activeStreamingDelegatePosition = msg.Position;
-						else if (msg.StreamingStatus == StreamingStatus.Done)
-							throw new StreamingDoneException();
-
-						return msg.Value;// request.Serializer.Deserialize(method.ReturnType, msg.Result);
-					}
-				}
-				finally
-				{
-					responseLock.ExitReadLock();
-				}
-			},
-			async (method, delegateCallMsg) =>
-			{
-				var delegateCallReponseMsg = new GoreResponseMessage(delegateCallMsg, request.ServiceName, request.MethodName, request.Serializer, request.Compressor);
-
-				// send respose to client and client will call the delegate via DelegateProxy
-				// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
-				// These may seem to be 2 varianst of OneWay: 1 where we send and wait until sent, but do not care about result\exceptions.
-				// 2: we send and do not even wait for the sending to complete. (currently not implemented)
-				await responseLock.EnterReadLockAsync().ConfigureAwait(false);
-				try
-				{
-					if (resultSent)
-						throw new Exception("Too late, result sent");
-
-					if (delegateCallMsg.Position == activeStreamingDelegatePosition)
-					{
-						// only recieve now that streaming is active
-					}
-					else
-					{
-						await reponse(delegateCallReponseMsg).ConfigureAwait(false);
-					}
-
-					// FIXME: Task, ValueTask etc? as well as void?
-					if (delegateCallMsg.OneWay)
-					{
-						// fire and forget. no result, not even exception
-						return null;
-					}
-					else
-					{
-						// we want result or exception
-						var reqMsg = await req().ConfigureAwait(false);
-
-						var msg = reqMsg.DelegateResultMessage;
-
-						if (msg.Position != delegateCallMsg.Position)
-							throw new Exception("Incorrect result position");
-
-						if (msg.IsException)
-							throw Goreializer.RestoreSerializedException(request.Serializer, msg.Value!);
-
-						if (msg.StreamingStatus == StreamingStatus.Active)
-							activeStreamingDelegatePosition = msg.Position;
-						else if (msg.StreamingStatus == StreamingStatus.Done)
-							throw new StreamingDoneException();
-
-						return msg.Value;
-					}
-				}
-				finally
-				{
-					responseLock.ExitReadLock();
-				}
-			},
-			context);
-
-
+			parameterValues = MapArguments(
+				parameterValues, 
+				parameterTypes,
+				(method, delegateCallMsg) => DelegateCall(request, req, reponse, delegateCallMsg, state, responseLock),
+				(method, delegateCallMsg) => DelegateCallAsync(request, req, reponse, delegateCallMsg, state, responseLock),
+				context
+				);
 
 			//var oneWay = false;// method.GetCustomAttribute<OneWayAttribute>() != null;
 
@@ -433,12 +332,132 @@ namespace GoreRemoting
 
 			// This will block new delegates and wait until existing ones have left. We then get exlusive lock and set the flag.
 			await responseLock.EnterWriteLockAsync().ConfigureAwait(false);
-			resultSent = true;
+			state.ResultSent = true;
 			responseLock.ExitWriteLock();
 
 			await reponse(responseMsg).ConfigureAwait(false);
 		}
 
+		private static object? DelegateCall(GoreRequestMessage request, 
+			Func<Task<GoreRequestMessage>> req, 
+			Func<GoreResponseMessage, Task> reponse, 
+			DelegateCallMessage delegateCallMsg, 
+			DuplexCallState state, 
+			AsyncReaderWriterLockSlim responseLock)
+		{
+			var delegateCallResponseMsg = new GoreResponseMessage(delegateCallMsg, request.ServiceName, request.MethodName, request.Serializer, request.Compressor);
+
+			// send respose to client and client will call the delegate via DelegateProxy
+			// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
+			// These may seem to be 2 varianst of OneWay: 1 where we send and wait until sent, but do not care about result\exceptions.
+			// 2: we send and do not even wait for the sending to complete. (currently not implemented)
+			responseLock.EnterReadLock();
+			try
+			{
+				if (state.ResultSent)
+					throw new Exception("Too late, result sent");
+
+				if (delegateCallMsg.Position == state.ActiveStreamingDelegatePosition)
+				{
+					// only recieve now that streaming is active
+				}
+				else
+				{
+					reponse(delegateCallResponseMsg).GetAwaiter().GetResult();
+				}
+
+				if (delegateCallMsg.OneWay)
+				{
+					// fire and forget. no result, not even exception
+					return null;
+				}
+				else
+				{
+					// we want result or exception
+					var reqMsg = req().GetAwaiter().GetResult();
+
+					var msg = reqMsg.DelegateResultMessage;
+
+					if (msg.Position != delegateCallMsg.Position)
+						throw new Exception("Incorrect result position");
+
+					if (msg.IsException)
+						throw Goreializer.RestoreSerializedException(request.Serializer, msg.Value!);
+
+					if (msg.StreamingStatus == StreamingStatus.Active)
+						state.ActiveStreamingDelegatePosition = msg.Position;
+					else if (msg.StreamingStatus == StreamingStatus.Done)
+						throw new StreamingDoneException();
+
+					return msg.Value;
+				}
+			}
+			finally
+			{
+				responseLock.ExitReadLock();
+			}
+		}
+
+		private static async Task<object?> DelegateCallAsync(GoreRequestMessage request,
+			Func<Task<GoreRequestMessage>> req,
+			Func<GoreResponseMessage, Task> reponse,
+			DelegateCallMessage delegateCallMsg,
+			DuplexCallState state,
+			AsyncReaderWriterLockSlim responseLock)
+		{
+			var delegateCallReponseMsg = new GoreResponseMessage(delegateCallMsg, request.ServiceName, request.MethodName, request.Serializer, request.Compressor);
+
+			// send respose to client and client will call the delegate via DelegateProxy
+			// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
+			// These may seem to be 2 varianst of OneWay: 1 where we send and wait until sent, but do not care about result\exceptions.
+			// 2: we send and do not even wait for the sending to complete. (currently not implemented)
+			await responseLock.EnterReadLockAsync().ConfigureAwait(false);
+			try
+			{
+				if (state.ResultSent)
+					throw new Exception("Too late, result sent");
+
+				if (delegateCallMsg.Position == state.ActiveStreamingDelegatePosition)
+				{
+					// only recieve now that streaming is active
+				}
+				else
+				{
+					await reponse(delegateCallReponseMsg).ConfigureAwait(false);
+				}
+
+				// FIXME: Task, ValueTask etc? as well as void?
+				if (delegateCallMsg.OneWay)
+				{
+					// fire and forget. no result, not even exception
+					return null;
+				}
+				else
+				{
+					// we want result or exception
+					var reqMsg = await req().ConfigureAwait(false);
+
+					var msg = reqMsg.DelegateResultMessage;
+
+					if (msg.Position != delegateCallMsg.Position)
+						throw new Exception("Incorrect result position");
+
+					if (msg.IsException)
+						throw Goreializer.RestoreSerializedException(request.Serializer, msg.Value!);
+
+					if (msg.StreamingStatus == StreamingStatus.Active)
+						state.ActiveStreamingDelegatePosition = msg.Position;
+					else if (msg.StreamingStatus == StreamingStatus.Done)
+						throw new StreamingDoneException();
+
+					return msg.Value;
+				}
+			}
+			finally
+			{
+				responseLock.ExitReadLock();
+			}
+		}
 
 		//public event EventHandler<Exception> OneWayException;
 		//internal void OnOneWayException(Exception ex)
@@ -446,11 +465,7 @@ namespace GoreRemoting
 		//	OneWayException?.Invoke(this, ex);
 		//}
 
-
 		public Method<GoreRequestMessage, GoreResponseMessage> DuplexCallDescriptor { get; }
-
-
-
 
 		/// <summary>
 		/// 
@@ -509,11 +524,5 @@ namespace GoreRemoting
 				requestMarshaller: marshallerReq,
 				responseMarshaller: marshallerRes);
 		}
-
-
 	}
-
-
-
-
 }

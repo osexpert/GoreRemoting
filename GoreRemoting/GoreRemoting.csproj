@@ -16,16 +16,16 @@
 		<PackageReference Include="AsyncReaderWriterLockSlim" />
 		<PackageReference Include="Castle.Core" />
 		<PackageReference Include="Nullable" />
-      <PackageReference Include="Grpc.Net.Common" />
-      <PackageReference Include="stakx.DynamicProxy.AsyncInterceptor" />
+		<PackageReference Include="Grpc.Net.Common" />
+		<PackageReference Include="stakx.DynamicProxy.AsyncInterceptor" />
 		<PackageReference Include="System.Text.Json" />
-      <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Condition="'$(TargetFramework)' == 'NETSTANDARD2.0'" /> 
+		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Condition="'$(TargetFramework)' == 'NETSTANDARD2.0'" /> 
 <!--      <PackageReference Include="Microsoft.CSharp" Version="4.7.0" /> -->
 		<PackageReference Include="Open.ChannelExtensions" Condition="'$(TargetFramework)' == 'NETSTANDARD2.0'" />
 		<!--	<PackageReference Include="System.Reflection.DispatchProxy" Version="4.7.1" Condition="'$(TargetFramework)' == 'NETSTANDARD2.0'" />-->
 	    <PackageReference Include="System.Reflection.Emit.Lightweight" />
 <!--	    <PackageReference Include="System.Runtime.Serialization.Formatters" Version="4.3.0" /> -->
-      <PackageReference Include="System.Threading.Channels" />
+		<PackageReference Include="System.Threading.Channels" />
 <!--		<PackageReference Include="System.Security.Principal.Windows" Version="4.7.0">  -->
 		
     </ItemGroup>

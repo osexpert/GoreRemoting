@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GoreRemoting\GoreRemoting.csproj" />
-	  <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" />
+	<!--  <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" /> -->
   </ItemGroup>
 
 </Project>

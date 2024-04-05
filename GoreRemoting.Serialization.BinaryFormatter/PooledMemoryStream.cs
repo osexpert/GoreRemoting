@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿#if false
+using System.IO;
 using Microsoft.IO;
 
 namespace GoreRemoting.Serialization.BinaryFormatter
@@ -10,3 +11,4 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		public static MemoryStream GetStream() => _manager.GetStream();
 	}
 }
+#endif
