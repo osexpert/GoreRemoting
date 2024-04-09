@@ -1,26 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using GoreRemoting;
 using GoreRemoting.Serialization.BinaryFormatter;
 using Grpc.Core;
 using ServerShared;
 
-namespace ServerNet48
+namespace NativeServerNet60
 {
 	internal class Program
 	{
 
 		/// <param name="args"></param>
 		/// <returns></returns>
-		static void Main(string[] args)
+		static Task Main(string[] args)
 		{
 			Console.WriteLine("NativeServerNet60 example");
 
 			var p = new Program();
-			p.Go();
+			var task = p.Go();
+
+			Console.WriteLine("Server running");
+
+			return task;
 		}
 
-		void Go()
+		Task Go()
 		{
 			var remServer = new RemotingServer(new ServerConfig(new BinaryFormatterAdapter())
 			{
@@ -46,10 +51,8 @@ namespace ServerNet48
 
 			server.Start();
 
-			Console.WriteLine("running");
-
 			// wait for shutdown
-			server.ShutdownTask.GetAwaiter().GetResult();
+			return server.ShutdownTask;
 		}
 
 

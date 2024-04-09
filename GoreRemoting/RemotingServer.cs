@@ -253,7 +253,7 @@ namespace GoreRemoting
 
 			var parameterTypes = request.Method.GetParameters().Select(p => p.ParameterType).ToArray();
 
-			var parameterValues = callMessage.UnwrapParametersFromDeserializedMethodCallMessage();
+			var parameterValues = callMessage.ParameterValues();
 
 			DuplexCallState state = new();
 
@@ -338,7 +338,7 @@ namespace GoreRemoting
 			await reponse(responseMsg).ConfigureAwait(false);
 		}
 
-		private static object? DelegateCall(GoreRequestMessage request, 
+		private object? DelegateCall(GoreRequestMessage request, 
 			Func<Task<GoreRequestMessage>> req, 
 			Func<GoreResponseMessage, Task> reponse, 
 			DelegateCallMessage delegateCallMsg, 
@@ -382,7 +382,7 @@ namespace GoreRemoting
 						throw new Exception("Incorrect result position");
 
 					if (msg.IsException)
-						throw Goreializer.RestoreSerializedException(request.Serializer, msg.Value!);
+						throw Goreializer.RestoreSerializedException(_config.ExceptionStrategy, request.Serializer, msg.Value!);
 
 					if (msg.StreamingStatus == StreamingStatus.Active)
 						state.ActiveStreamingDelegatePosition = msg.Position;
@@ -398,7 +398,7 @@ namespace GoreRemoting
 			}
 		}
 
-		private static async Task<object?> DelegateCallAsync(GoreRequestMessage request,
+		private async Task<object?> DelegateCallAsync(GoreRequestMessage request,
 			Func<Task<GoreRequestMessage>> req,
 			Func<GoreResponseMessage, Task> reponse,
 			DelegateCallMessage delegateCallMsg,
@@ -443,7 +443,7 @@ namespace GoreRemoting
 						throw new Exception("Incorrect result position");
 
 					if (msg.IsException)
-						throw Goreializer.RestoreSerializedException(request.Serializer, msg.Value!);
+						throw Goreializer.RestoreSerializedException(_config.ExceptionStrategy, request.Serializer, msg.Value!);
 
 					if (msg.StreamingStatus == StreamingStatus.Active)
 						state.ActiveStreamingDelegatePosition = msg.Position;

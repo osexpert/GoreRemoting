@@ -9,6 +9,8 @@ namespace ClientNet60
 	{
 		static void Main(string[] args)
 		{
+			Console.WriteLine("ClientNet60 example");
+
 			var p = new Program();
 			p.Go();
 		}
@@ -27,6 +29,17 @@ namespace ClientNet60
 
 			var cs = new ClientTest();
 			cs.Test(testServ);
+
+			//while (true)
+			//{
+			//	try
+			//	{
+			//		var k = testServ.Echo("lol");
+			//		var ff = testServ.EchoAsync("ff").GetAwaiter().GetResult();
+			//	}
+			//	catch { }
+			//}
+
 		}
 
 		Guid pSessID = Guid.NewGuid();

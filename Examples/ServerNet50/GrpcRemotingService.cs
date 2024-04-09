@@ -1,4 +1,4 @@
-﻿namespace ServerNet60
+﻿namespace ServerNet50
 {
 	internal class GoreRemotingService
 	{

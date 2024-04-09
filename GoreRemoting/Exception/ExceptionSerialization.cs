@@ -6,7 +6,7 @@ namespace GoreRemoting
 
 	public static class ExceptionSerialization
 	{
-		public static ExceptionStrategy ExceptionStrategy => ExceptionStrategy.Clone;
+//		public static ExceptionStrategy ExceptionStrategy => ExceptionStrategy.Clone;
 
 		public static Exception RestoreAsOriginalException(Dictionary<string, string> dict)
 		{
@@ -23,9 +23,9 @@ namespace GoreRemoting
 			return ExceptionConverter.ToDict(ex);
 		}
 
-		public static Exception RestoreSerializedExceptionDictionary(Dictionary<string, string> dict)
+		public static Exception RestoreSerializedExceptionDictionary(ExceptionStrategy exs, Dictionary<string, string> dict)
 		{
-			return ExceptionStrategy switch
+			return exs switch
 			{
 				ExceptionStrategy.Clone => ExceptionSerialization.RestoreAsOriginalException(dict),
 				ExceptionStrategy.RemoteInvocationException => ExceptionSerialization.RestoreAsRemoteInvocationException(dict),

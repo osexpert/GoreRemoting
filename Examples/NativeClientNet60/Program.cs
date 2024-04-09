@@ -4,12 +4,14 @@ using GoreRemoting;
 using GoreRemoting.Serialization.BinaryFormatter;
 using Grpc.Core;
 
-namespace ClientNet48
+namespace NativeClientNet60
 {
 	internal class Program
 	{
 		static void Main(string[] args)
 		{
+			Console.WriteLine("NativeClientNet60 example");
+
 			var p = new Program();
 			p.Go();
 		}
@@ -23,6 +25,16 @@ namespace ClientNet48
 				BeforeCall = BeforeBuildMethodCallMessage,
 			});
 			var testServ = c.CreateProxy<ITestService>();
+
+			//while (true)
+			//{
+			//	try
+			//	{
+			//		var k = testServ.Echo("lol");
+			//		var ff = testServ.EchoAsync("ff").GetAwaiter().GetResult();
+			//	}
+			//	catch { }
+			//}
 
 			var cs = new ClientTest();
 			cs.Test(testServ);

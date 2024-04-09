@@ -102,7 +102,7 @@ namespace GoreRemoting
 			return res;
 		}
 
-		//public ExceptionStrategy ExceptionStrategy => ExceptionStrategy.UninitializedObject;
+		public ExceptionStrategy ExceptionStrategy => ExceptionStrategy.Clone;
 
 		private Dictionary<Type, ICompressionProvider> _compressors = new();
 		private Dictionary<string, ICompressionProvider> _compressorsByName = new();

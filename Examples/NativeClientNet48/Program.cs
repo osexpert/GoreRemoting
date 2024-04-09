@@ -4,12 +4,14 @@ using GoreRemoting;
 using GoreRemoting.Serialization.BinaryFormatter;
 using Grpc.Core;
 
-namespace ClientNet48
+namespace NativeClientNet48
 {
 	internal class Program
 	{
 		static void Main(string[] args)
 		{
+			Console.WriteLine("NativeClientNet48 example");
+
 			var p = new Program();
 			p.Go();
 		}

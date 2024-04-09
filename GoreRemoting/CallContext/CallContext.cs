@@ -15,7 +15,6 @@ namespace GoreRemoting
 			Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
 		};
 
-		// bool: true if changed
 		private static readonly ConcurrentDictionary<string, AsyncLocal<string>> State =
 			new ConcurrentDictionary<string, AsyncLocal<string>>();
 
@@ -27,18 +26,13 @@ namespace GoreRemoting
 		private static void SetStringPrivate(string name, string data) =>
 			State.GetOrAdd(name, _ => new AsyncLocal<string>()).Value = data;
 
-		//private static void SetStringNotChanged(string name, string data) =>
-		//	State.GetOrAdd(name, _ => new AsyncLocal<string>()).Value = (data, false);
-
 		/// <summary>
 		/// Retrieves an object with the specified name from the <see cref="CallContext"/>.
 		/// </summary>
 		/// <param name="name">The name of the item in the call context.</param>
 		/// <returns>The object in the call context associated with the specified name, or <see langword="null"/> if not found.</returns>
 		private static string? GetStringPrivate(string name) =>
-			State.TryGetValue(name, out AsyncLocal<string> data) ? data.Value : null;//"null";
-
-	//	public static void RemoveData(string name) => State.TryRemove(name, out AsyncLocal<string> _);
+			State.TryGetValue(name, out AsyncLocal<string> data) ? data.Value : null;
 
 		public static T? GetValue<T>(string name)
 		{
@@ -46,21 +40,11 @@ namespace GoreRemoting
 			if (value == null)
 				return default;
 
-			//if (value == null)
-			//	return default;
-			//else if (typeof(T) == typeof(string))
-			//	return (T)(object)value;
-			//else
 			return JsonSerializer.Deserialize<T>(value, _opt);
 		}
 
 		public static void SetValue<T>(string name, T? value)
 		{
-			//if (value is null)
-			//	SetStringPrivate(name, null);
-			//else if (value is string s)
-			//	SetStringPrivate(name, s);
-			//else
 			SetStringPrivate(name, JsonSerializer.Serialize<T?>(value, _opt));
 		}
 
@@ -96,23 +80,6 @@ namespace GoreRemoting
 		/// <param name="entries">Call context entries</param>
 		internal static void RestoreFromChangesSnapshot(IEnumerable<CallContextEntry> entries)
 		{
-			// This logic is weird... Why set everything to null in this case???
-			// Also...will it ever be null?
-			// And if we have empty collection, suddenly the logic switch completely...to do nothing at all.
-			// This make no sense IMO.
-			//if (entries == null)
-			//{
-			//if (removeExisting)
-			//{
-			//	foreach (var entry in State)
-			//	{
-			//		//RemoveData(entry.Key);
-			//		//	SetData(entry.Key, null);
-			//	}
-			//}
-			//	return;
-			//}
-
 			foreach (var entry in entries)
 			{
 				SetStringPrivate(entry.Name, entry.Value);

@@ -28,6 +28,14 @@
 		/// </summary>
 		public object? OutValue { get; set; }
 
+		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
+		{
+			w.Write(ParameterName);
+			w.WriteVarInt(Position);
+
+			st.Push(OutValue);
+		}
+
 		public void Deserialize(GoreBinaryReader r)
 		{
 			ParameterName = r.ReadString();
@@ -37,14 +45,6 @@
 		public void Deserialize(Stack<object?> st)
 		{
 			OutValue = st.Pop();
-		}
-
-		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
-		{
-			w.Write(ParameterName);
-			w.WriteVarInt(Position);
-
-			st.Push(OutValue);
 		}
 	}
 }

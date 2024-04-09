@@ -55,5 +55,18 @@
 			foreach (var cc in CallContextSnapshot)
 				cc.Deserialize(st);
 		}
+
+		public object?[] ParameterValues()
+		{
+			var parameterValues = new object?[this.Arguments.Length];
+
+			for (int i = 0; i < this.Arguments.Length; i++)
+			{
+				var parameter = this.Arguments[i];
+				parameterValues[i] = parameter.Value;
+			}
+
+			return parameterValues;
+		}
 	}
 }

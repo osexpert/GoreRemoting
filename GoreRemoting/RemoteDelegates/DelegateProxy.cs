@@ -45,14 +45,12 @@ namespace GoreRemoting.RemoteDelegates
 		{
 			var res = _callInterceptionHandler(invocation.Method, invocation.Arguments);
 			invocation.ReturnValue = res;
-			//CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
 		}
 
 		protected override async ValueTask InterceptAsync(IAsyncInvocation invocation)
 		{
 			var res = await _callInterceptionAsyncHandler(invocation.Method, invocation.Arguments.ToArray()).ConfigureAwait(false);
 			invocation.Result = res;
-			//CallContext.RestoreFromSnapshot(resultMessage.CallContextSnapshot);
 		}
 
 		/// <summary>

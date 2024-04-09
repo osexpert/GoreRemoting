@@ -147,20 +147,20 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 			return ew;
 		}
 
-		public Exception RestoreSerializedException(object ex)
+		public Exception RestoreSerializedException(object ex, Func<Dictionary<string, string>, Exception> defaultHandler)
 		{
 			var ew = (ExceptionWrapper)ex;
 
 			if (ExceptionStrategy == ExceptionStrategy.Default)
 			{
-				return ExceptionSerialization.RestoreSerializedExceptionDictionary(ew.PropertyData);
+				return defaultHandler(ew.PropertyData);
 			}
 			else if (ExceptionStrategy == ExceptionStrategy.BinaryFormatter)
 			{
 				if (ew.BinaryFormatterData != null)
 					return RestoreAsBinaryFormatter(ew.BinaryFormatterData);
 				else
-					return ExceptionSerialization.RestoreSerializedExceptionDictionary(ew.PropertyData);
+					return defaultHandler(ew.PropertyData);
 			}
 			else
 				throw new NotImplementedException("strategy: " + ExceptionStrategy); ;

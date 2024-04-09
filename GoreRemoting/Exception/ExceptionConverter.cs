@@ -117,7 +117,7 @@ namespace GoreRemoting
 				{
 					// ignore, skip
 				}
-				if (element.Name == InnerExceptionKey)
+				else if (element.Name == InnerExceptionKey)
 				{
 					// write null
 					var str = JsonSerializer.Serialize<Exception?>(null, _options);

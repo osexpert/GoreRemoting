@@ -5,7 +5,7 @@ using GoreRemoting.RpcMessaging;
 using Grpc.AspNetCore.Server.Model;
 using Grpc.Core;
 
-namespace ServerNet60
+namespace ServerNet50
 {
 	internal class GoreRemotingMethodProvider : IServiceMethodProvider<GoreRemotingService>
 	{

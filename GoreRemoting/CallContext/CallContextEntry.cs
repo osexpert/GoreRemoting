@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace GoreRemoting
+﻿namespace GoreRemoting
 {
 	/// <summary>
 	/// Describes a single call context entry.

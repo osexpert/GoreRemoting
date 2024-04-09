@@ -1,11 +1,12 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace ServerNet60
+namespace ServerNet50
 {
 	internal class Program
 	{
@@ -18,9 +19,15 @@ namespace ServerNet60
 		/// </summary>
 		/// <param name="args"></param>
 		/// <returns></returns>
-		static async Task Main(string[] args)
+		static Task Main(string[] args)
 		{
-			CreateHostBuilder(args).Build().Run();
+			Console.WriteLine("ServerNet50 example");
+
+			var task = CreateHostBuilder(args).Build().RunAsync();
+
+			Console.WriteLine("Server running");
+
+			return task;
 		}
 
 		// Additional configuration is required to successfully run gRPC on macOS.
@@ -57,10 +64,6 @@ namespace ServerNet60
 						kestrel.AddServerHeader = false;
 					});
 				});
-
-
-
-
 	}
 
 }

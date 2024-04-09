@@ -248,12 +248,12 @@ namespace GoreRemoting
 				return typeof(Dictionary<string, string>);
 		}
 
-		internal static Exception RestoreSerializedException(ISerializerAdapter serializer, object ex)
+		internal static Exception RestoreSerializedException(ExceptionStrategy exs, ISerializerAdapter serializer, object ex)
 		{
 			if (serializer is IExceptionAdapter ea)
-				return ea.RestoreSerializedException(ex);
+				return ea.RestoreSerializedException(ex, dict => ExceptionSerialization.RestoreSerializedExceptionDictionary(exs, dict));
 			else
-				return ExceptionSerialization.RestoreSerializedExceptionDictionary((Dictionary<string, string>)ex);
+				return ExceptionSerialization.RestoreSerializedExceptionDictionary(exs, (Dictionary<string, string>)ex);
 		}
 
 		internal static object GetSerializableException(ISerializerAdapter serializer, Exception ex)

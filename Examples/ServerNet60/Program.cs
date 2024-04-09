@@ -86,11 +86,11 @@ namespace ServerNet60
 			app.MapGrpcService<GoreRemotingService>();
 			app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 
-			_ = app.RunAsync();
+			var task = app.RunAsync();
 
-			Console.WriteLine("running");
+			Console.WriteLine("Server running");
 
-			await Task.Delay(-1);
+			await task;// Task.Delay(-1);
 		}
 
 		public object CreateInstance(Type serviceType, ServerCallContext context)

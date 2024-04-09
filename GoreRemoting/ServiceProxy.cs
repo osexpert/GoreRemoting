@@ -53,7 +53,7 @@ namespace GoreRemoting
 				new CallOptions(headers: headers, cancellationToken: cancel));
 
 			if (resultMessage.IsException)
-				throw Goreializer.RestoreSerializedException(serializer, resultMessage.Value!);
+				throw Goreializer.RestoreSerializedException(_client._config.ExceptionStrategy, serializer, resultMessage.Value!);
 
 			var parameterInfos = targetMethod.GetParameters();
 
@@ -105,7 +105,7 @@ namespace GoreRemoting
 				new CallOptions(headers: headers, cancellationToken: cancel)).ConfigureAwait(false);
 
 			if (resultMessage.IsException)
-				throw Goreializer.RestoreSerializedException(serializer, resultMessage.Value!);
+				throw Goreializer.RestoreSerializedException(_client._config.ExceptionStrategy, serializer, resultMessage.Value!);
 
 			// out|ref not possible with async
 

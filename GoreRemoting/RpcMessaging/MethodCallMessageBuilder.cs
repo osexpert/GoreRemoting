@@ -16,7 +16,6 @@ namespace GoreRemoting.RpcMessaging
 		public MethodCallMessage BuildMethodCallMessage(
 			MethodInfo targetMethod,
 			object?[] args
-			//bool emitCallContext
 			)
 		{
 			if (targetMethod == null)
@@ -32,7 +31,6 @@ namespace GoreRemoting.RpcMessaging
 					).ToArray(),
 			};
 
-//			if (emitCallContext)
 			message.CallContextSnapshot = CallContext.GetChangesSnapshot();
 
 			return message;
