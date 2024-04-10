@@ -201,3 +201,6 @@ Unhandled exception. Grpc.Core.RpcException: Status(StatusCode="ResourceExhauste
 
 Example\ClientNet60 seems to work ok agains Example\ServerNet60 thou, so at least Microsoft comply with themself (but ignoring to comply with rest of the world).
 I am sure Microsoft eventually has to fold (Google has tons of already working http2\grpc stuff that they will not change to make grpc dotnet happy) but I still think it will take some years until this happens (by judging how fast my previous bug report was dismissed).
+
+Update: no, its not worse, just the same badness: https://github.com/grpc/grpc-dotnet/issues/2010#issuecomment-1374936841
+I just forgot:-)
