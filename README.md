@@ -188,6 +188,7 @@ If Grpc dotnet is mixed with Grpc native, the problem still exist.
 
 Update april 2024: seems like this has gotten worse since my last testing.
 Testing Example\NativeClientNet60 agains Example\ServerNet60 now consistently give ResourceExhausted\RST_STREAM:
+<pre>
 ...
 lol42I: 211
 lol42I: 212
@@ -196,6 +197,7 @@ Unhandled exception. Grpc.Core.RpcException: Status(StatusCode="ResourceExhauste
  ---> Grpc.Core.Internal.CoreErrorDetailException: {"created":"@1712779785.316000000","description":"Error received from peer ipv6:[::1]:5000","file":"..\..\..\src\core\lib\surface\call.cc","file_line":953,"grpc_message":"Received RST_STREAM with error code 11","grpc_status":8}
    --- End of inner exception stack trace ---
    at Grpc.Core.Internal.ClientResponseStream`2.MoveNext(CancellationToken token)
+</pre>
 
 Example\ClientNet60 seems to work ok agains Example\ServerNet60 thou, so at least Microsoft comply with themself (but ignoring to comply with rest of the world).
 I am sure Microsoft eventually has to fold (Google has tons of already working http2\grpc stuff that they will not change to make grpc dotnet happy) but I still think it will take some years until this happens (by judging how fast my previous bug report was dismissed).
