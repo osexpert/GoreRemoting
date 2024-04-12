@@ -197,9 +197,7 @@ namespace GoreRemoting
 
 						try
 						{
-							// FIXME: but we need to know if the delegate has a result or not???!!!
 							result = delegt.DynamicInvoke(delegateMsg.Arguments);
-
 							result = await TaskResultHelper.GetTaskResult(delegt.Method, result);
 						}
 						catch (Exception ex)

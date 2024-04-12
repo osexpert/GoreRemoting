@@ -3,8 +3,8 @@
 
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <LangVersion>Latest</LangVersion>
- 	<NoWarn>1701;1702;1591;1573</NoWarn>
- 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>1701;1702;1591;1573</NoWarn>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
 <!--
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)\keypair.key</AssemblyOriginatorKeyFile>
@@ -23,7 +23,7 @@
     
     <VersionPrefix>0.0.2</VersionPrefix>
     <PackageTags>remoting rpc grpc dotnet-remoting</PackageTags>
-    <Description>GRPC Remoting library for .NET Core and .NET Framework</Description>        
+    <Description>Grpc Remoting library for migration from .NET Remoting</Description>        
 		        
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
 		              
