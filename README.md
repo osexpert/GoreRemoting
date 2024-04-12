@@ -9,7 +9,6 @@ Services are always stateless\single call. If you need to store state, store in 
 You can send extra headers with every call from client to server, eg. a sessionId or a Token via BeforeMethodCall on client and CreateInstance on server (look in examples).
 Clients create proxies from service interfaces (typically in shared assembly).
 No support for MarshalByRef behaviour. Everything is by value.
-GoreRemoting does not use .proto files (Protobuf).
 Currently there is a limit of 20 method parameters. It is possible to increase it, possibly can increated to 30 if demand. But more than 30 won't happen.
 
 ## Callbacks from server to client
@@ -33,20 +32,13 @@ Does not support IProgress as argument.
 Has ProgressAdapter to adapt to IProgress providers\consumers via delegate.
 But using delegates arguments may be just as easy\easier.
 
-## Grpc implementations
-Can use both Grpc native and Grpc dotnet.
-But Grpc dotnet is only fully compatible with itself, so I would strongly discourage mixing Grpc dotnet server and Grpc native clients.
-Mixing Grpc native server and Grpc dotnet clients may work better.
-But best to not mix Grpc dotnet with anything else.
-Reason: under stress will get errors, specifically ENHANCE_YOUR_CALM
-
 ## Serializers
 Currently has serializers for BinaryFormatter, System.Text.Json, MessagePack, MemoryPack, Protobuf.
 Must set a default serializer. Can overide serializer per service\per method with SerializerAttribute.
 This way migration from BinaryFormatter to eg. System.Text.Json can happen method by method\service by service.
 
 ### Exception handling
-Exceptions thrown are marshalled based on a setting in ExceptionSerialization: ExceptionStrategy.
+Exceptions thrown are marshalled based on a setting in ClientConfig\ServerConfig: ExceptionStrategy.
 The default for all serializers (except BinaryFormatter) are ExceptionStrategy.Clone.
 BinaryFormatter has its own ExceptionStrategy setting (override) and its default is ExceptionStrategy.BinaryFormatter.
 
@@ -69,7 +61,7 @@ BinaryFormatter has its own ExceptionStrategy setting (override) and its default
 	public enum ExceptionStrategy
 	{
 		/// <summary>
-		/// Use ExceptionSerialization.ExceptionStrategy setting
+		/// Use ClientConfig\ServerConfig ExceptionStrategy setting
 		/// </summary>
 		Default = 0,
 
@@ -80,9 +72,9 @@ BinaryFormatter has its own ExceptionStrategy setting (override) and its default
 	}
 
 ## Compression
-Has compressor for Lz4 and can also use GzipCompressionProvider that already exist in Grpc dotnet.
+Has compressor for Lz4 and can also use GzipCompressionProvider that already exist in grpc-dotnet.
 Can set default compressor, and like for serializers, can overide per service\per method with CompressorAttribute.
-A NoCompressionProvider exist in case you want to use eg. Lz4 as default but want to ovveride some methods\services to not use compression.
+A NoCompressionProvider exist in case you want to use eg. Lz4 as default but want to override some methods\services to not use compression.
 
 ## Task\async
 Support Task\ValueTask in service methods result and in result from delegate arguments (but max one delegate with actual result).
@@ -138,11 +130,11 @@ SimpleRpc (gRPC)
 https://github.com/netcore-jroger/SimpleRpc
 
 ## Examples
-Client and Server in .NET Framework 4.8 using Grpc.Core native.
-Client and Server in .NET 6.0 using Grpc.Net managed.
+Client and Server in .NET Framework 4.8 using Grpc.Core.
+Client and Server in .NET 6.0 using grpc-dotnet.
 
 ## BinaryFormatter interop
-BinaryFormatter does not work well between .NET Framework and .NET bcause types are different,
+BinaryFormatter does not work well between .NET Framework and .NET because types are different,
 eg. string in .NET is "System.String,System.Private.CoreLib" while in .NET Framework "System.String,mscorlib"
 
 There exists hacks (links may not be relevant):
@@ -151,37 +143,42 @@ https://stackoverflow.com/questions/50190568/net-standard-4-7-1-could-not-load-s
 
 You will need to add some hacks yourself if using BinaryFormatter across .NET Framework and .NET
 
-PS: why won't this be a problem for all serializers?
-
 ## Performance
 Performance (1MB package size):
 The file copy test:
-.NET 4.8 server\client:  
+Grpc.Core .NET 4.8 server\client:  
 File sent to server and written by server: 18 seconds (why so slow?)  
 File read from server and written by client: 11 seconds  
 
-.NET 6.0 server\client:  
+grpc-dotnet .NET 6.0 server\client:  
 File sent to server and written by server: 31 seconds (oh noes...)  
 File read from server and written by client: 13 seconds  
 
 Update, when using StreamingFuncAttribute\StreamingDoneException (but also using smaller package size, 8KB instead of 1MB):
-.NET 6.0 native server\client: 
+Grpc.Core .NET 6.0 server\client: 
 File sent to server and written by server: 16 seconds (better)
 File read from server and written by client: 15 seconds
 
-.NET 6.0 dotnet server\client:
-File sent to server and written by server: 22 seconds (dotnet still slower than native)  
+grpc-dotnet .NET 6.0 server\client:
+File sent to server and written by server: 22 seconds (grpc-dotnet still slower than Grpc.Core)  
 File read from server and written by client: 23 seconds (faster before...)
 
-.NET 4.8 server\client:  
+Grpc.Core .NET 4.8 server\client:  
 File sent to server and written by server: 15 seconds
 File read from server and written by client: 15 seconds  
 
-Conclusion: StreamingFuncAttribute\StreamingDoneException does even out the numbers from and to, but Grpc dotnet is still slower.
+Conclusion: StreamingFuncAttribute\StreamingDoneException does even out the numbers from and to, but grpc-dotnet is still slower.
+
+## Grpc implementations
+Can use both Grpc.Core https://grpc.io/blog/grpc-csharp-future/ and grpc-dotnet https://github.com/grpc/grpc-dotnet.
+But grpc-dotnet is only fully compatible with itself, so I would discourage mixing grpc-dotnet server and Grpc.Core clients.
+Mixing Grpc.Core server and grpc-dotnet clients may work better.
+But best to not mix grpc-dotnet with anything else.
+Reason: under stress will get errors, specifically ENHANCE_YOUR_CALM
 
 ## grpc-dotnet problems
-When calling the grpc-dotnet server too fast(?), I get ENHANCE_YOUR_CALM\ResourceExhausted\RST_STREAM or similar:
+When calling the grpc-dotnet server too fast(?), I get ENHANCE_YOUR_CALM\RESOURCE_EXHAUSTED(ResourceExhausted)\RST_STREAM or similar:
 Bug filed: https://github.com/grpc/grpc-dotnet/issues/2010
 Workaround added: use a hangup sequence.
 But still, this only workaround the problem when grpc-dotnet is used as both server and client.
-If grpc-dotnet is mixed with grpc-native, the problem still exist, specially when using grpc-native client agains grpc-dotnet server.
+If grpc-dotnet is mixed with Grpc.Core, the problem still exist, specially when using Grpc.Core client agains grpc-dotnet server.

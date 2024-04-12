@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace ServerNet50
+namespace grpcdotnetServerNet50
 {
 	internal class Program
 	{

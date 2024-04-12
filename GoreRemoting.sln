@@ -11,19 +11,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoreRemoting.Tests.External
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{2833ECBF-B58A-4082-A992-74D27614427D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClientNet60", "Examples\ClientNet60\ClientNet60.csproj", "{E9070C51-A722-4DB3-8C79-806E0A56FA94}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "grpc-dotnetClientNet60", "Examples\grpc-dotnetClientNet60\grpc-dotnetClientNet60.csproj", "{E9070C51-A722-4DB3-8C79-806E0A56FA94}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerNet60", "Examples\ServerNet60\ServerNet60.csproj", "{B656C943-8AC7-4409-A1D0-E357B9F74832}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "grpc-dotnetServerNet60", "Examples\grpc-dotnetServerNet60\grpc-dotnetServerNet60.csproj", "{B656C943-8AC7-4409-A1D0-E357B9F74832}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NativeClientNet48", "Examples\NativeClientNet48\NativeClientNet48.csproj", "{0BFDE6B3-57F1-41C2-80A1-30ABA860D5FB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcCoreClientNet48", "Examples\GrpcCoreClientNet48\GrpcCoreClientNet48.csproj", "{0BFDE6B3-57F1-41C2-80A1-30ABA860D5FB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NativeServerNet48", "Examples\NativeServerNet48\NativeServerNet48.csproj", "{1C00575B-8A8A-4673-8EA0-A5DC29867FDD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcCoreServerNet48", "Examples\GrpcCoreServerNet48\GrpcCoreServerNet48.csproj", "{1C00575B-8A8A-4673-8EA0-A5DC29867FDD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NativeClientNet60", "Examples\NativeClientNet60\NativeClientNet60.csproj", "{F3A31369-BA06-475F-A68B-BC199C0196A3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcCoreClientNet60", "Examples\GrpcCoreClientNet60\GrpcCoreClientNet60.csproj", "{F3A31369-BA06-475F-A68B-BC199C0196A3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NativeServerNet60", "Examples\NativeServerNet60\NativeServerNet60.csproj", "{AC61BE74-CC83-4F00-ACC5-5A2371AFD31A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcCoreServerNet60", "Examples\GrpcCoreServerNet60\GrpcCoreServerNet60.csproj", "{AC61BE74-CC83-4F00-ACC5-5A2371AFD31A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerNet50", "Examples\ServerNet50\ServerNet50.csproj", "{8553CC7D-C8B9-4822-9BA8-4FD52E6EFFFD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "grpc-dotnetServerNet50", "Examples\grpc-dotnetServerNet50\grpc-dotnetServerNet50.csproj", "{8553CC7D-C8B9-4822-9BA8-4FD52E6EFFFD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoreRemoting.Serialization.BinaryFormatter", "GoreRemoting.Serialization.BinaryFormatter\GoreRemoting.Serialization.BinaryFormatter.csproj", "{AF1C2330-DA6E-4C34-83D8-B43E63F3B5DD}"
 EndProject

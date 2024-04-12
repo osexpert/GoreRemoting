@@ -1,4 +1,4 @@
-﻿namespace ServerNet50
+﻿namespace grpcdotnetServerNet60
 {
 	internal class GoreRemotingService
 	{

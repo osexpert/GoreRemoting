@@ -6,7 +6,7 @@ using GoreRemoting.Serialization.BinaryFormatter;
 using Grpc.Core;
 using ServerShared;
 
-namespace NativeServerNet48
+namespace GrpcCoreServerNet48
 {
 	internal class Program
 	{

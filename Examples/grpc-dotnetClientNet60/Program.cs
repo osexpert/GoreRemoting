@@ -3,7 +3,7 @@ using GoreRemoting;
 using GoreRemoting.Serialization.BinaryFormatter;
 using Grpc.Net.Client;
 
-namespace ClientNet60
+namespace grpcdotnetClientNet60
 {
 	internal class Program
 	{

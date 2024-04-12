@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using ServerShared;
 
-namespace ServerNet50
+namespace grpcdotnetServerNet50
 {
 	public class Startup
 	{

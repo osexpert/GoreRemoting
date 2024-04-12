@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using ServerShared;
 
-namespace ServerNet60
+namespace grpcdotnetServerNet60
 {
 	internal class Program
 	{

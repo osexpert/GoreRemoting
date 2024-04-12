@@ -1,9 +1,11 @@
-﻿using GoreRemoting;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using GoreRemoting;
 using GoreRemoting.RpcMessaging;
 using Grpc.AspNetCore.Server.Model;
 using Grpc.Core;
 
-namespace ServerNet60
+namespace grpcdotnetServerNet50
 {
 	internal class GoreRemotingMethodProvider : IServiceMethodProvider<GoreRemotingService>
 	{
@@ -16,10 +18,11 @@ namespace ServerNet60
 
 		public void OnServiceMethodDiscovery(ServiceMethodProviderContext<GoreRemotingService> context)
 		{
-			context.AddDuplexStreamingMethod(pServ.DuplexCallDescriptor, new List<object>(), DuplexCall);
+			context.AddDuplexStreamingMethod(pServ.DuplexCallDescriptor, new List<object>(), RpcCallBinaryFormatter);
 		}
 
-		Task DuplexCall(GoreRemotingService service, IAsyncStreamReader<GoreRequestMessage> input, IServerStreamWriter<GoreResponseMessage> output, ServerCallContext serverCallContext)
+		Task RpcCallBinaryFormatter(GoreRemotingService service, IAsyncStreamReader<GoreRequestMessage> input, IServerStreamWriter<GoreResponseMessage> output, ServerCallContext serverCallContext)
 			=> pServ.DuplexCall(input, output, serverCallContext);
+
 	}
 }
