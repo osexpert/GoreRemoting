@@ -325,7 +325,7 @@ namespace GoreRemoting
 			else
 			{
 				var serEx = Goreializer.GetSerializableException(request.Serializer, ex2);
-				resultMessage = new MethodResultMessage { Value = serEx, ResultType = ResultKind.Exception };
+				resultMessage = new MethodResultMessage { Value = serEx, ResultType = MethodResultType.Exception };
 			}
 
 			var responseMsg = new GoreResponseMessage(resultMessage, request.ServiceName, request.MethodName, request.Serializer, request.Compressor);

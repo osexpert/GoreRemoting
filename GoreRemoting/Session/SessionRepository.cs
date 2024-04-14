@@ -59,7 +59,7 @@ namespace GoreRemoting
 			var inactiveSessionIdList =
 				_sessions
 					.Where(item =>
-						DateTime.Now.Subtract(item.Value.LastActivityTimestamp).TotalSeconds > _maximumSessionInactivityTimeSeconds)
+						DateTime.UtcNow.Subtract(item.Value.LastActivityUtc).TotalSeconds > _maximumSessionInactivityTimeSeconds)
 					.Select(item => item.Key);
 
 			foreach (var inactiveSessionId in inactiveSessionIdList)

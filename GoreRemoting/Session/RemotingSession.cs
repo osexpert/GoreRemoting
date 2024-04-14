@@ -14,8 +14,9 @@ namespace GoreRemoting
 		private readonly ConcurrentDictionary<object, object> _properties = new();
 
 		private readonly Guid _sessionId;
-		private bool _isAuthenticated;
-		private DateTime _lastActivityTimestamp;
+//		private bool _isAuthenticated;
+		private DateTime _lastActivityUtc;
+		private DateTime _lastHearbeatUtc;
 
 		/// <summary>
 		/// Event: Fired before the session is disposed to do some clean up.
@@ -29,11 +30,19 @@ namespace GoreRemoting
 		internal RemotingSession(RemotingServer server)
 		{
 			_sessionId = Guid.NewGuid();
-			_lastActivityTimestamp = DateTime.Now;
-			_isAuthenticated = false;
+			_lastActivityUtc = DateTime.UtcNow;
+//			_isAuthenticated = false;
 
-			CreatedOn = DateTime.Now;
+			CreatedUtc = DateTime.UtcNow;
+
 			_server = server ?? throw new ArgumentNullException(nameof(server));
+		}
+
+		internal void UpdateLastActivity(bool isHeartbeat)
+		{
+			_lastActivityUtc = DateTime.UtcNow;
+			if (isHeartbeat)
+				_lastHearbeatUtc = _lastActivityUtc;
 		}
 
 		public T? GetProperty<T>(object key)
@@ -54,7 +63,7 @@ namespace GoreRemoting
 		/// <summary>
 		/// Gets the timestamp of the last activity of this session.
 		/// </summary>
-		public DateTime LastActivityTimestamp => _lastActivityTimestamp;
+		public DateTime LastActivityUtc => _lastActivityUtc;
 
 		/// <summary>
 		/// Gets this session's unique session ID.
@@ -64,12 +73,12 @@ namespace GoreRemoting
 		/// <summary>
 		/// Gets the timestamp when this session was created.
 		/// </summary>
-		public DateTime CreatedOn { get; }
+		public DateTime CreatedUtc { get; }
 
 		/// <summary>
 		/// Gets whether authentication was successful.
 		/// </summary>
-		public bool IsAuthenticated => _isAuthenticated;
+//		public bool IsAuthenticated => _isAuthenticated;
 
 
 

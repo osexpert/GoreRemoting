@@ -17,8 +17,10 @@
 		/// v4:
 		/// - include execption map in gorelizer
 		/// - move request type to top
+		/// v5:
+		/// - if only one type, no need to make generic Args (except for protobuf)
 		/// </summary>
-		internal static readonly byte SerializationVersion = 4;
+		internal static readonly byte SerializationVersion = 5;
 
 
 		//	public const string SerializerHeaderKey = "gore-serializer";

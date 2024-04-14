@@ -1,6 +1,4 @@
-﻿using System;
-using System.Text;
-using GoreRemoting.Serialization.MemoryPack.ArgTypes;
+﻿using GoreRemoting.Serialization.MemoryPack.ArgTypes;
 using MemoryPack;
 
 namespace GoreRemoting.Serialization.MemoryPack
@@ -13,19 +11,32 @@ namespace GoreRemoting.Serialization.MemoryPack
 
 		public void Serialize(Stream stream, object?[] graph, Type[] types)
 		{
-			var t = GetArgsType(types);
-			var args = (IArgs)Activator.CreateInstance(t);
-			args.Set(graph);
-			object o = args;
-
-			MemoryPackSerializer.SerializeAsync(t, stream, o, Options).GetAwaiter().GetResult();
+			if (types.Length > 1)
+			{
+				var t = GetArgsType(types);
+				var args = (IArgs)Activator.CreateInstance(t);
+				args.Set(graph);
+				object o = args;
+				MemoryPackSerializer.SerializeAsync(t, stream, o, Options).GetAwaiter().GetResult();
+			}
+			else
+			{
+				MemoryPackSerializer.SerializeAsync(types[0], stream, graph[0], Options).GetAwaiter().GetResult();
+			}
 		}
 
 		public object?[] Deserialize(Stream stream, Type[] types)
 		{
-			var t = GetArgsType(types);
-			var res = (IArgs)MemoryPackSerializer.DeserializeAsync(t, stream, Options).GetAwaiter().GetResult()!;
-			return res.Get();
+			if (types.Length > 1)
+			{
+				var t = GetArgsType(types);
+				var res = (IArgs)MemoryPackSerializer.DeserializeAsync(t, stream, Options).GetAwaiter().GetResult()!;
+				return res.Get();
+			}
+			else
+			{
+				return new[] { MemoryPackSerializer.DeserializeAsync(types[0], stream, Options).GetAwaiter().GetResult() };
+			}
 		}
 
 		private static Type GetArgsType(Type[] types)

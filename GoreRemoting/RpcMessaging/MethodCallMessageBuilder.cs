@@ -114,7 +114,7 @@ namespace GoreRemoting.RpcMessaging
 			{
 				// fixme: ctor
 				Value = returnValue,
-				ResultType = voidReturn ? ResultKind.ResultVoid : ResultKind.ResultValue
+				ResultType = voidReturn ? MethodResultType.ResultVoid : MethodResultType.ResultValue
 			};
 
 			var outArguments = new List<MethodOutArgument>();

@@ -117,11 +117,11 @@ namespace GoreRemoting
 
 			if (msg is MethodResultMessage mrm)
 			{
-				if (mrm.ResultType == ResultKind.Exception)
+				if (mrm.ResultType == MethodResultType.Exception)
 				{
 					return new Type[] { Goreializer.GetExceptionType(serializer) };
 				}
-				else if (mrm.ResultType == ResultKind.Exception_dict_internal)
+				else if (mrm.ResultType == MethodResultType.Exception_dict_internal)
 				{
 					return new Type[] { };
 				}
@@ -201,11 +201,11 @@ namespace GoreRemoting
 			}
 			else if (msg is DelegateResultMessage drm)
 			{
-				if (drm.ReturnKind == DelegateResultType.Exception)
+				if (drm.ResultType == DelegateResultType.Exception)
 				{
 					return new Type[] { Goreializer.GetExceptionType(serializer) };
 				}
-				else if (drm.ReturnKind == DelegateResultType.Exception_dict_internal)
+				else if (drm.ResultType == DelegateResultType.Exception_dict_internal)
 				{
 					return new Type[] { };
 				}

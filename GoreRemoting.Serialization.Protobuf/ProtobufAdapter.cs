@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using GoreRemoting.Serialization.Protobuf.ArgTypes;
+﻿using GoreRemoting.Serialization.Protobuf.ArgTypes;
 using GoreRemoting.Serialization.Protobuf.Surrogates;
 using ProtoBuf;
 using ProtoBuf.Meta;
@@ -35,7 +32,6 @@ namespace GoreRemoting.Serialization.Protobuf
 			var args = (IArgs)Activator.CreateInstance(t);
 			args.Set(graph);
 			object o = args;
-
 			Serializer.Serialize(stream, o);
 		}
 
@@ -45,7 +41,6 @@ namespace GoreRemoting.Serialization.Protobuf
 			var res = (IArgs)Serializer.Deserialize(t, stream);
 			return res.Get();
 		}
-
 
 		private static Type GetArgsType(Type[] types)
 		{

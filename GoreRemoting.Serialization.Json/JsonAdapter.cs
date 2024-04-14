@@ -1,5 +1,4 @@
-﻿using System.Text;
-using System.Text.Encodings.Web;
+﻿using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using GoreRemoting.Serialization.Json.ArgTypes;
@@ -60,13 +59,18 @@ namespace GoreRemoting.Serialization.Json
 				bw.Write(byteArray.Value);
 			}
 
-			Type t = GetArgsType(types);
-			var ins = (IArgs)Activator.CreateInstance(t)!;
-			ins.Set(objects);
-			// very strange...but this is required!
-			object o = ins;
-
-			JsonSerializer.Serialize(stream, o, Options);
+			if (types.Length > 1)
+			{
+				Type t = GetArgsType(types);
+				var ins = (IArgs)Activator.CreateInstance(t)!;
+				ins.Set(objects);
+				object o = ins;
+				JsonSerializer.Serialize(stream, o, Options);
+			}
+			else
+			{
+				JsonSerializer.Serialize(stream, objects[0], Options);
+			}
 		}
 
 		public object?[] Deserialize(Stream stream, Type[] types)
@@ -83,9 +87,18 @@ namespace GoreRemoting.Serialization.Json
 				byteArrays.Add(idx, bytes);
 			}
 
-			Type t = GetArgsType(types);
-			var objects = (IArgs)JsonSerializer.Deserialize(stream, t, Options)!;
-			var res = objects.Get();
+			object?[] res;
+
+			if (types.Length > 1)
+			{
+				Type t = GetArgsType(types);
+				var objects = (IArgs)JsonSerializer.Deserialize(stream, t, Options)!;
+				res = objects.Get();
+			}
+			else
+			{
+				res = new[] { JsonSerializer.Deserialize(stream, types[0], Options) };
+			}
 
 			foreach (var kv in byteArrays)
 				res[kv.Key] = kv.Value;

@@ -238,7 +238,7 @@ namespace GoreRemoting
 								Position = delegateMsg.Position,
 								ParameterName = delegateMsg.ParameterName,
 								Value = exception, 
-								ReturnKind = DelegateResultType.Exception 
+								ResultType = DelegateResultType.Exception 
 							};
 						else
 							msg = new DelegateResultMessage 
@@ -247,7 +247,7 @@ namespace GoreRemoting
 								ParameterName = delegateMsg.ParameterName,
 								Value = result, 
 								StreamingStatus = streamingStatus,
-								ReturnKind = DelegateResultType.ReturnValue
+								ResultType = DelegateResultType.ReturnValue
 							};
 
 						var requestMsg = new GoreRequestMessage(msg, callbackData.ServiceName, callbackData.MethodName, serializer, compressor);

@@ -1,6 +1,6 @@
 ﻿namespace GoreRemoting.RpcMessaging
 {
-	public enum ResultKind
+	public enum MethodResultType
 	{
 		ResultValue = 1,
 		ResultVoid = 2,
@@ -22,7 +22,7 @@
 			Deserialize(r);
 		}
 
-		public ResultKind ResultType;
+		public MethodResultType ResultType;
 
 		/// <summary>
 		/// Gets or sets the return value of the invoked method.
@@ -40,11 +40,11 @@
 
 			IDictionary<string, string>? dict = null;
 
-			if (localType == ResultKind.Exception)
+			if (localType == MethodResultType.Exception)
 			{
 				if (Value is IDictionary<string, string> d)
 				{
-					localType = ResultKind.Exception_dict_internal;
+					localType = MethodResultType.Exception_dict_internal;
 					dict = d;
 				}
 				else
@@ -52,14 +52,14 @@
 					st.Push(Value);
 				}
 			}
-			else if (localType == ResultKind.ResultValue)
+			else if (localType == MethodResultType.ResultValue)
 			{
 				st.Push(Value);
 			}
 
 			w.Write((byte)localType);
 
-			if (localType == ResultKind.ResultValue || localType == ResultKind.ResultVoid)
+			if (localType == MethodResultType.ResultValue || localType == MethodResultType.ResultVoid)
 			{
 				if (OutArguments == null)
 					w.WriteVarInt(0);
@@ -80,7 +80,7 @@
 					cc.Serialize(w, st);
 			}
 
-			if (localType == ResultKind.Exception_dict_internal)
+			if (localType == MethodResultType.Exception_dict_internal)
 			{
 				w.WriteVarInt(dict.Count);
 				foreach (var kv in dict)
@@ -93,9 +93,9 @@
 
 		public void Deserialize(GoreBinaryReader r)
 		{
-			ResultType = (ResultKind)r.ReadByte();
+			ResultType = (MethodResultType)r.ReadByte();
 
-			if (ResultType == ResultKind.ResultValue || ResultType == ResultKind.ResultVoid)
+			if (ResultType == MethodResultType.ResultValue || ResultType == MethodResultType.ResultVoid)
 			{
 				var n = r.ReadVarInt();
 				OutArguments = new MethodOutArgument[n];
@@ -108,7 +108,7 @@
 			for (int j = 0; j < c; j++)
 				CallContextSnapshot[j] = new CallContextEntry(r);
 
-			if (ResultType == ResultKind.Exception_dict_internal)
+			if (ResultType == MethodResultType.Exception_dict_internal)
 			{
 				var n = r.ReadVarInt();
 				Dictionary<string, string> dict = new(n);
@@ -125,10 +125,10 @@
 
 		public void Deserialize(Stack<object?> st)
 		{
-			if (ResultType == ResultKind.Exception || ResultType == ResultKind.ResultValue)
+			if (ResultType == MethodResultType.Exception || ResultType == MethodResultType.ResultValue)
 				Value = st.Pop();
 
-			if (ResultType == ResultKind.ResultValue || ResultType == ResultKind.ResultVoid)
+			if (ResultType == MethodResultType.ResultValue || ResultType == MethodResultType.ResultVoid)
 			{
 				foreach (var oa in OutArguments)
 					oa.Deserialize(st);
@@ -149,7 +149,7 @@
 
 		public int CacheKey => (int)ResultType;
 
-		public bool IsException => ResultType == ResultKind.Exception
-			|| ResultType == ResultKind.Exception_dict_internal;
+		public bool IsException => ResultType == MethodResultType.Exception
+			|| ResultType == MethodResultType.Exception_dict_internal;
 	}
 }

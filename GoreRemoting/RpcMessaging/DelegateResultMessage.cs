@@ -7,23 +7,23 @@
 
 		public object? Value { get; set; }
 
-		public DelegateResultType ReturnKind;
+		public DelegateResultType ResultType;
 
 		public StreamingStatus StreamingStatus { get; set; }
 
 		public MessageType MessageType => MessageType.DelegateResult;
 
-		public int CacheKey => (int)ReturnKind + (Position * 10);
+		public int CacheKey => (int)ResultType + (Position * 10);
 
-		public bool IsException => ReturnKind == DelegateResultType.Exception
-			|| ReturnKind == DelegateResultType.Exception_dict_internal;
+		public bool IsException => ResultType == DelegateResultType.Exception
+			|| ResultType == DelegateResultType.Exception_dict_internal;
 
 		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 		{
 			w.Write(ParameterName);
 			w.WriteVarInt(Position);
 
-			var localKind = ReturnKind;
+			var localKind = ResultType;
 
 			IDictionary<string, string>? dict = null;
 
@@ -64,13 +64,13 @@
 			ParameterName = r.ReadString();
 			Position = r.ReadVarInt();
 
-			ReturnKind = (DelegateResultType)r.ReadByte();
+			ResultType = (DelegateResultType)r.ReadByte();
 
-			if (ReturnKind == DelegateResultType.ReturnValue)
+			if (ResultType == DelegateResultType.ReturnValue)
 			{
 				StreamingStatus = (StreamingStatus)r.ReadByte();
 			}
-			else if (ReturnKind == DelegateResultType.Exception_dict_internal)
+			else if (ResultType == DelegateResultType.Exception_dict_internal)
 			{
 				var n = r.ReadVarInt();
 				Dictionary<string, string> dict = new(n);
@@ -86,7 +86,7 @@
 		}
 		public void Deserialize(Stack<object?> st)
 		{
-			if (ReturnKind == DelegateResultType.ReturnValue || ReturnKind == DelegateResultType.Exception)
+			if (ResultType == DelegateResultType.ReturnValue || ResultType == DelegateResultType.Exception)
 				Value = st.Pop();
 		}
 
