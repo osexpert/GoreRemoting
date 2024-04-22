@@ -19,7 +19,7 @@ namespace GoreRemoting
 		//private ConcurrentDictionary<(Type, int), DelegateProxy> _delegateProxyCache = new();
 		ConcurrentDictionary<string, Type> _services = new();
 
-		public ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> TypesCache { get; } = new ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]>();
+		ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> IRemotingParty.TypesCache { get; } = new ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]>();
 
 		ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodCache = new ConcurrentDictionary<(string, string), MethodInfo>();
 
@@ -29,7 +29,7 @@ namespace GoreRemoting
 		{
 			_config = config;
 
-			DuplexCallDescriptor = Descriptors.GetDuplexCall("DuplexCall",
+			DuplexCallDescriptor = Descriptors.GetDuplexCall(config.GrpcServiceName, "DuplexCall",
 				Marshallers.Create<GoreRequestMessage>(SerializeRequest, DeserializeRequest),
 				Marshallers.Create<GoreResponseMessage>(SerializeResponse, DeserializeResponse)
 				);
@@ -127,12 +127,12 @@ namespace GoreRemoting
 			return method;
 		}
 
-		private object GetService(string serviceName, ServerCallContext context)
+		private ServiceHandle GetService(string serviceName, ServerCallContext context)
 		{
 			if (!_services.TryGetValue(serviceName, out var serviceType))
 				throw new Exception("Service not registered: " + serviceName);
 
-			var service = _config.GetService(serviceType, context);
+			var service = _config.CreateService(serviceType, context);
 			return service;
 		}
 
@@ -270,13 +270,14 @@ namespace GoreRemoting
 			//var oneWay = false;// method.GetCustomAttribute<OneWayAttribute>() != null;
 
 			object? result = null;
-			object? service = null;
+			ServiceHandle? serviceHandle = null;
 			Exception? ex2 = null;
 			ICallScope? callScope = null;
 
 			try
 			{
-				service = GetService(request.ServiceName, /*method,*/ context);
+				serviceHandle = GetService(request.ServiceName, /*method,*/ context);
+				var service = serviceHandle.Value.Service;
 
 				callScope = _config.CreateCallScope?.Invoke();
 				callScope?.Start(context, request.ServiceName, request.MethodName, service, request.Method, parameterValues);
@@ -306,6 +307,9 @@ namespace GoreRemoting
 			{
 				callScope?.Dispose();
 				callScope = null;
+
+				if (serviceHandle != null)
+					await _config.ReleaseService(serviceHandle.Value);
 			}
 
 			//			if (oneWay)
@@ -459,21 +463,21 @@ namespace GoreRemoting
 			}
 		}
 
-		//public event EventHandler<Exception> OneWayException;
-		//internal void OnOneWayException(Exception ex)
-		//{
-		//	OneWayException?.Invoke(this, ex);
-		//}
+			//public event EventHandler<Exception> OneWayException;
+			//internal void OnOneWayException(Exception ex)
+			//{
+			//	OneWayException?.Invoke(this, ex);
+			//}
 
 		public Method<GoreRequestMessage, GoreResponseMessage> DuplexCallDescriptor { get; }
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="requestStream"></param>
-		/// <param name="responseStream"></param>
-		/// <param name="context"></param>
-		/// <returns></returns>
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <param name="requestStream"></param>
+			/// <param name="responseStream"></param>
+			/// <param name="context"></param>
+			/// <returns></returns>
 		public async Task DuplexCall(IAsyncStreamReader<GoreRequestMessage> requestStream,
 			IServerStreamWriter<GoreResponseMessage> responseStream, ServerCallContext context)
 		{
@@ -511,18 +515,21 @@ namespace GoreRemoting
 		/// <summary>
 		/// 
 		/// </summary>
-		/// <param name="name"></param>
+		/// <param name="serviceName"></param>
+		/// <param name="methodName"></param>
 		/// <returns></returns>
-		public static Method<GoreRequestMessage, GoreResponseMessage> GetDuplexCall(string name, Marshaller<GoreRequestMessage> marshallerReq,
+		public static Method<GoreRequestMessage, GoreResponseMessage> GetDuplexCall(string serviceName, string methodName, Marshaller<GoreRequestMessage> marshallerReq,
 			Marshaller<GoreResponseMessage> marshallerRes)
 
 		{
 			return new Method<GoreRequestMessage, GoreResponseMessage>(
 				type: MethodType.DuplexStreaming,
-				serviceName: "GoreRemoting",
-				name: name,
+				serviceName: serviceName,
+				name: methodName,
 				requestMarshaller: marshallerReq,
 				responseMarshaller: marshallerRes);
 		}
 	}
+
+
 }

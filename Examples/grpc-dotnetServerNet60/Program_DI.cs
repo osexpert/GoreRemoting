@@ -1,9 +1,17 @@
-﻿using GoreRemoting;
+﻿#define NET6_DI_TEST
+
+using System;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using GoreRemoting;
+using GoreRemoting.AspNetCore.Server;
 using GoreRemoting.Serialization.BinaryFormatter;
+using Grpc.AspNetCore.Server;
 using Grpc.AspNetCore.Server.Model;
 using Grpc.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,9 +19,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using ServerShared;
 
-namespace grpcdotnetServerNet60
+namespace grpcdotnetServerNet60_DI
 {
-	internal class Program
+	internal class Program_DI
 	{
 		/// <summary>
 		/// grpc-dotnet/perf/benchmarkapps/QpsWorker
@@ -24,38 +32,35 @@ namespace grpcdotnetServerNet60
 		/// </summary>
 		/// <param name="args"></param>
 		/// <returns></returns>
-		static async Task Main4(string[] args)
+		static async Task Main(string[] args)
 		{
 			Console.WriteLine("ServerNet60 example");
 
-			var p = new Program();
-
-			var server = new RemotingServer(new ServerConfig(new BinaryFormatterAdapter())
-			{
-				CreateService = p.CreateInstance,
-			});
-
-			server.RegisterService<ITestService, TestService>();
+			var p = new Program_DI();
 
 			var builder = WebApplication.CreateBuilder(args);
 
 			var services = builder.Services;
 
-			services.AddGrpc(o =>
+			services.AddGrpc(c =>
 			{
-				// Small performance benefit to not add catch-all routes to handle UNIMPLEMENTED for unknown services
-				o.IgnoreUnknownServices = true;
-				//o.MaxSendMessageSize
-				//o.MaxReceiveMessageSize
+				//	// Small performance benefit to not add catch-all routes to handle UNIMPLEMENTED for unknown services
+				c.IgnoreUnknownServices = true;
+				//	//o.MaxSendMessageSize
+				//	//o.MaxReceiveMessageSize
 			});
+
+			services.AddGoreRemoting<GoreRemotingService>(gore =>
+			{
+				gore.AddSerializer(new BinaryFormatterAdapter());
+				gore.CreateService = p.CreateInstance;
+			});
+
 			services.Configure<RouteOptions>(c =>
 			{
 				// Small performance benefit to skip checking for security metadata on endpoint
 				c.SuppressCheckForUnhandledSecurityMetadata = true;
 			});
-
-			services.AddSingleton<GoreRemotingService>();
-			services.TryAddEnumerable(ServiceDescriptor.Singleton(typeof(IServiceMethodProvider<GoreRemotingService>), new GoreRemotingMethodProvider(server)));
 
 			builder.WebHost.ConfigureKestrel(kestrel =>
 			{
@@ -83,7 +88,12 @@ namespace grpcdotnetServerNet60
 
 			var app = builder.Build();
 
-			app.MapGrpcService<GoreRemotingService>();
+			app.MapGoreRemotingServices<GoreRemotingService>(gore =>
+			{
+				gore.RegisterService<ITestService, TestService>();
+				gore.RegisterService<IOtherService, OtherService>();
+			});
+
 			app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 
 			var task = app.RunAsync();
@@ -93,15 +103,28 @@ namespace grpcdotnetServerNet60
 			await task;// Task.Delay(-1);
 		}
 
-		public ServiceHandle CreateInstance(Type serviceType, ServerCallContext context)
+		//private static readonly Lazy<ObjectFactory> _objectFactory = new Lazy<ObjectFactory>(static ()
+		//	=> ActivatorUtilities.CreateFactory(typeof(GoreRemotingService), new Type[] { typeof(Guid) }));
+
+		ConcurrentDictionary<Type, ObjectFactory> _factories = new();
+
+		ServiceHandle CreateInstance(Type serviceType, ServerCallContext context)
 		{
 			//Guid sessID = (Guid)CallContext.GetData("SessionId");
-			Guid sessID = Guid.Parse(context.RequestHeaders.GetValue(Constants.SessionIdHeaderKey)!);
+			Guid sessionId = Guid.Parse(context.RequestHeaders.GetValue(Constants.SessionIdHeaderKey)!);
 
-			Console.WriteLine("SessID: " + sessID);
+			Console.WriteLine("SessionId: " + sessionId);
 
-			return new(Activator.CreateInstance(serviceType, sessID) ?? throw new Exception("Can't create instance: " + serviceType), true);
+			var factory = _factories.GetOrAdd(serviceType, st => ActivatorUtilities.CreateFactory(st, new Type[] { typeof(Guid) }));
+
+			var service = factory(context.GetHttpContext().RequestServices, new object?[] { sessionId });// Array.Empty<object>());
+			return new(service, true);
+
+			//return service;
+		//		return Activator.CreateInstance(serviceType, sessID) ?? throw new Exception("Can't create instance: " + serviceType);
 		}
+
+	
 	}
 
 }

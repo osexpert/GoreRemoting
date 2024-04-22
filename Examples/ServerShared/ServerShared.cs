@@ -1,5 +1,3 @@
-
-
 using System;
 using System.Collections.Concurrent;
 using System.IO;
@@ -28,10 +26,17 @@ namespace ServerShared
 
 		private Guid pSessionID;
 
+#if NET6_DI_TEST
+		public TestService(RemotingServer<GoreRemotingService> s, Guid sessionID)
+		{
+			pSessionID = sessionID;
+		}
+#else
 		public TestService(Guid sessionID)
 		{
 			pSessionID = sessionID;
 		}
+#endif
 
 		public void TestProgress(Action<string> progress, Func<string, Task<string>> echo)
 		{
@@ -241,6 +246,23 @@ namespace ServerShared
 		public override void Write(byte[] buffer, int offset, int count)
 		{
 			throw new NotImplementedException();
+		}
+	}
+
+	interface IOtherService
+	{
+		string Get();
+	}
+
+	class OtherService : IOtherService
+	{
+		public OtherService(Guid sessid)
+		{
+			
+		}
+		public string Get()
+		{
+			return DateTime.Now.ToString();
 		}
 	}
 }

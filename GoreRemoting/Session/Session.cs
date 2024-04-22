@@ -7,7 +7,7 @@ namespace GoreRemoting
 	/// Implements a CoreRemoting session, which controls the CoreRemoting protocol on application layer at server side.
 	/// This is doing the RPC magic of CoreRemoting at server side.
 	/// </summary>
-	public class RemotingSession : IDisposable
+	public class Session : IDisposable
 	{
 		private readonly RemotingServer _server;
 
@@ -27,7 +27,7 @@ namespace GoreRemoting
 		/// Creates a new instance of the RemotingSession class.
 		/// </summary>
 		/// <param name="server">Server instance, that hosts this session</param>
-		internal RemotingSession(RemotingServer server)
+		internal Session(RemotingServer server)
 		{
 			_sessionId = Guid.NewGuid();
 			_lastActivityUtc = DateTime.UtcNow;

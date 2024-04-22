@@ -9,20 +9,20 @@ namespace grpcdotnetServerNet50
 {
 	internal class GoreRemotingMethodProvider : IServiceMethodProvider<GoreRemotingService>
 	{
-		RemotingServer pServ;
+		RemotingServer _server;
 
 		public GoreRemotingMethodProvider(RemotingServer server)
 		{
-			pServ = server;
+			_server = server;
 		}
 
 		public void OnServiceMethodDiscovery(ServiceMethodProviderContext<GoreRemotingService> context)
 		{
-			context.AddDuplexStreamingMethod(pServ.DuplexCallDescriptor, new List<object>(), RpcCallBinaryFormatter);
+			context.AddDuplexStreamingMethod(_server.DuplexCallDescriptor, new List<object>(), RpcCallBinaryFormatter);
 		}
 
 		Task RpcCallBinaryFormatter(GoreRemotingService service, IAsyncStreamReader<GoreRequestMessage> input, IServerStreamWriter<GoreResponseMessage> output, ServerCallContext serverCallContext)
-			=> pServ.DuplexCall(input, output, serverCallContext);
+			=> _server.DuplexCall(input, output, serverCallContext);
 
 	}
 }

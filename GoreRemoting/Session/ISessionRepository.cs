@@ -13,19 +13,19 @@ namespace GoreRemoting
 		/// </summary>
 		/// <param name="server">Server instance</param>
 		/// <returns>The newly created session</returns>
-		RemotingSession CreateSession(RemotingServer server);
+		Session CreateSession(RemotingServer server);
 
 		/// <summary>
 		/// Gets a specified session by its ID.
 		/// </summary>
 		/// <param name="sessionId">Session ID</param>
 		/// <returns>The session correlating to the specified session ID</returns>
-		RemotingSession GetSession(Guid sessionId);
+		Session GetSession(Guid sessionId);
 
 		/// <summary>
 		/// Gets a list of all sessions.
 		/// </summary>
-		IEnumerable<RemotingSession> Sessions { get; }
+		IEnumerable<Session> Sessions { get; }
 
 		/// <summary>
 		/// Removes a specified session by its ID.

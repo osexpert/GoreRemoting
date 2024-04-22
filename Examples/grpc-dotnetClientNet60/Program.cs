@@ -1,7 +1,9 @@
 ﻿using ClientShared;
 using GoreRemoting;
 using GoreRemoting.Serialization.BinaryFormatter;
+using Grpc.Core;
 using Grpc.Net.Client;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace grpcdotnetClientNet60
 {
@@ -26,9 +28,14 @@ namespace grpcdotnetClientNet60
 			});
 
 			var testServ = c.CreateProxy<ITestService>();
+			var otherTestServ = c.CreateProxy<IOtherService>();
+
+			var res = otherTestServ.Get();
 
 			var cs = new ClientTest();
 			cs.Test(testServ);
+
+			
 
 			//while (true)
 			//{

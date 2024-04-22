@@ -83,6 +83,9 @@ namespace GoreRemoting
 			{
 
 #if NETSTANDARD2_0
+
+
+
 				// Using Open.ChannelExtensions since ReadAllAsync not available in netstandard 2.0
 				// ValueTask confusion here...
 				var _ = await _channel.Reader.ReadAllAsync(cancellationToken, msg => new ValueTask(_stream.WriteAsync(msg))).ConfigureAwait(false);

@@ -38,7 +38,7 @@ namespace grpcdotnetServerNet50
 
 			services.AddSingleton<GoreRemotingService>();
 
-			var server = new RemotingServer(new ServerConfig(new BinaryFormatterAdapter()) { GetService = CreateInstance });
+			var server = new RemotingServer(new ServerConfig(new BinaryFormatterAdapter()) { CreateService = CreateInstance });
 
 			server.RegisterService<ITestService, TestService>();
 
@@ -46,14 +46,14 @@ namespace grpcdotnetServerNet50
 			services.TryAddEnumerable(ServiceDescriptor.Singleton(typeof(IServiceMethodProvider<GoreRemotingService>), new GoreRemotingMethodProvider(server)));
 		}
 
-		public object CreateInstance(Type serviceType, ServerCallContext context)
+		public ServiceHandle CreateInstance(Type serviceType, ServerCallContext context)
 		{
 			//Guid sessID = (Guid)CallContext.GetData("SessionId");
 			Guid sessID = Guid.Parse(context.RequestHeaders.GetValue(Constants.SessionIdHeaderKey)!);
 
 			Console.WriteLine("SessID: " + sessID);
 
-			return Activator.CreateInstance(serviceType, sessID);
+			return new(Activator.CreateInstance(serviceType, sessID), true);
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

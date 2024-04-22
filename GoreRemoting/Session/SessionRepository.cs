@@ -9,7 +9,7 @@ namespace GoreRemoting
 	/// </summary>
 	public class SessionRepository : ISessionRepository
 	{
-		private readonly ConcurrentDictionary<Guid, RemotingSession> _sessions;
+		private readonly ConcurrentDictionary<Guid, Session> _sessions;
 		private Timer? _inactiveSessionSweepTimer;
 		private readonly int _maximumSessionInactivityTimeSeconds;
 
@@ -20,7 +20,7 @@ namespace GoreRemoting
 		/// <param name="maximumSessionInactivityTimeSeconds">Maximum session inactivity time in minutes</param>
 		public SessionRepository(int inactiveSessionSweepIntervalSeconds, int maximumSessionInactivityTimeSeconds)
 		{
-			_sessions = new ConcurrentDictionary<Guid, RemotingSession>();
+			_sessions = new ConcurrentDictionary<Guid, Session>();
 
 			_maximumSessionInactivityTimeSeconds = maximumSessionInactivityTimeSeconds;
 
@@ -73,12 +73,12 @@ namespace GoreRemoting
 		/// </summary>
 		/// <param name="server">Server instance</param>
 		/// <returns>The newly created session</returns>
-		public RemotingSession CreateSession(RemotingServer server)
+		public Session CreateSession(RemotingServer server)
 		{
 			if (server == null)
 				throw new ArgumentException(nameof(server));
 
-			var session = new RemotingSession(server);
+			var session = new Session(server);
 
 			_sessions.TryAdd(session.SessionId, session);
 
@@ -91,7 +91,7 @@ namespace GoreRemoting
 		/// <param name="sessionId">Session ID</param>
 		/// <returns>The session correlating to the specified session ID</returns>
 		/// <exception cref="KeyNotFoundException">Thrown, if no session with the specified session ID is found</exception>
-		public RemotingSession GetSession(Guid sessionId)
+		public Session GetSession(Guid sessionId)
 		{
 			if (_sessions.TryGetValue(sessionId, out var session))
 				return session;
@@ -112,7 +112,7 @@ namespace GoreRemoting
 		/// <summary>
 		/// Gets a list of all sessions.
 		/// </summary>
-		public IEnumerable<RemotingSession> Sessions => _sessions.Values.ToArray();
+		public IEnumerable<Session> Sessions => _sessions.Values.ToArray();
 
 		/// <summary>
 		/// Frees managed resources.

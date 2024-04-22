@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\GoreRemoting.AspNetCore.Server\GoreRemoting.AspNetCore.Server.csproj" />
     <ProjectReference Include="..\..\GoreRemoting.Serialization.BinaryFormatter\GoreRemoting.Serialization.BinaryFormatter.csproj" />
     <ProjectReference Include="..\..\GoreRemoting\GoreRemoting.csproj" />
   </ItemGroup>

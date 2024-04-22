@@ -13,13 +13,31 @@ namespace GoreRemoting
 		/// <summary>
 		/// Set this to overide the default Activator.CreateInstance
 		/// </summary>
-		public Func<Type, ServerCallContext, object> GetService { get; set; } = GetServiceDefault;
+		public Func<Type, ServerCallContext, ServiceHandle> CreateService { get; set; } = CreateServiceDefault;
 
-		public static readonly Func<Type, ServerCallContext, object> GetServiceDefault = (serviceType, context) => Activator.CreateInstance(serviceType);
+		public Func<ServiceHandle, ValueTask> ReleaseService { get; set; } = ReleaseServiceDefault;
+
+		public static readonly Func<Type, ServerCallContext, ServiceHandle> CreateServiceDefault = (serviceType, context) => new(Activator.CreateInstance(serviceType), true);
+		public static readonly Func<ServiceHandle, ValueTask> ReleaseServiceDefault = (handle) => 
+		{
+			// https://github.com/grpc/grpc-dotnet/src/Grpc.AspNetCore.Server/Internal/DefaultGrpcServiceActivator.cs
+			if (handle.Created)
+			{
+				if (handle.Service is IAsyncDisposable asyncDisposableService)
+					return asyncDisposableService.DisposeAsync();
+
+				if (handle.Service is IDisposable disposableService)
+					disposableService.Dispose();
+			}
+			return default;
+		};
+
 
 		public Func<ICallScope>? CreateCallScope { get; set; } = null;
 
 		private Dictionary<string, ISerializerAdapter> _serializers = new();
+
+		public string GrpcServiceName { get; set; } = Constants.GrpcServiceName;
 
 		public ServerConfig()
 		{
@@ -92,4 +110,15 @@ namespace GoreRemoting
 
 	}
 
+	public struct ServiceHandle
+	{
+		public object Service { get; }
+		public bool Created { get; }
+
+		public ServiceHandle(object service, bool created)
+		{
+			this.Service = service;
+			this.Created = created;
+		}
+	}
 }

@@ -136,4 +136,9 @@ namespace ClientShared
 		void OtherFormatter();
 	}
 
+	public interface IOtherService
+	{
+		string Get();
+	}
+
 }

@@ -4,6 +4,7 @@ using GoreRemoting.Nerdbank.Streams;
 using GoreRemoting.RpcMessaging;
 using Grpc.Core;
 using Grpc.Net.Compression;
+using static GoreRemoting.RemotingClient;
 
 namespace GoreRemoting
 {
@@ -12,7 +13,7 @@ namespace GoreRemoting
 	{
 		internal ClientConfig _config;
 		CallInvoker _callInvoker;
-		public ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> TypesCache { get; } = new ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]>();
+		ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> IRemotingParty.TypesCache { get; } = new ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]>();
 
 		internal ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodLookup = new ConcurrentDictionary<(string, string), MethodInfo>();
 
@@ -22,7 +23,7 @@ namespace GoreRemoting
 			_config = config;
 			_callInvoker = callInvoker;
 
-			DuplexCallDescriptor = Descriptors.GetDuplexCall("DuplexCall",
+			DuplexCallDescriptor = Descriptors.GetDuplexCall(config.GrpcServiceName, "DuplexCall",
 				Marshallers.Create<GoreRequestMessage>(SerializeRequest, DeserializeRequest),
 				Marshallers.Create<GoreResponseMessage>(SerializeResponse, DeserializeResponse)
 				);
@@ -104,15 +105,20 @@ namespace GoreRemoting
 
 		public Method<GoreRequestMessage, GoreResponseMessage> DuplexCallDescriptor { get; }
 
+
 		private static readonly Castle.DynamicProxy.ProxyGenerator ProxyGenerator = new Castle.DynamicProxy.ProxyGenerator();
 
 		public T CreateProxy<T>()
 		{
-			var serviceProxyType = typeof(ServiceProxy<>).MakeGenericType(typeof(T));
+			var iface = typeof(T);
+			if (!iface.IsInterface)
+				throw new Exception($"{iface.Name} is not an interface");
+
+			var serviceProxyType = typeof(ServiceProxy<>).MakeGenericType(iface);
 			var serviceProxy = Activator.CreateInstance(serviceProxyType, this /* RemotingClient */);
 
 			var proxy = ProxyGenerator.CreateInterfaceProxyWithoutTarget(
-				interfaceToProxy: typeof(T),
+				interfaceToProxy: iface,
 				interceptor: (Castle.DynamicProxy.IInterceptor)serviceProxy);
 
 			return (T)proxy;
@@ -123,7 +129,7 @@ namespace GoreRemoting
 		internal MethodResultMessage Invoke(GoreRequestMessage req, Func<GoreResponseMessage, Func<GoreRequestMessage, Task>, Task<MethodResultMessage?>> reponseHandler, CallOptions callOpt)
 		{
 			if (req.RequestType != RequestType.MethodCall)
-				throw new Exception("not RequestType.MethodCall");
+				throw new Exception("RequestType is not RequestType.MethodCall");
 
 			using (var call = _callInvoker.AsyncDuplexStreamingCall(DuplexCallDescriptor, null, callOpt))
 			{

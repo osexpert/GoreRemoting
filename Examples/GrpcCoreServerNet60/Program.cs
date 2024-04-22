@@ -29,7 +29,7 @@ namespace GrpcCoreServerNet60
 		{
 			var remServer = new RemotingServer(new ServerConfig(new BinaryFormatterAdapter())
 			{
-				GetService = CreateInstance,
+				CreateService = CreateInstance,
 			});
 			remServer.RegisterService<ITestService, TestService>();
 
@@ -56,14 +56,14 @@ namespace GrpcCoreServerNet60
 		}
 
 
-		public object CreateInstance(Type serviceType, ServerCallContext context)
+		public ServiceHandle CreateInstance(Type serviceType, ServerCallContext context)
 		{
 			//Guid sessID = (Guid)CallContext.GetData("SessionId");
 			Guid sessID = Guid.Parse(context.RequestHeaders.GetValue(Constants.SessionIdHeaderKey));
 
 			Console.WriteLine("SessID: " + sessID);
 
-			return Activator.CreateInstance(serviceType, sessID);
+			return new(Activator.CreateInstance(serviceType, sessID), true);
 		}
 	}
 

@@ -7,6 +7,8 @@
 		public const string TokenHeaderKey = "gore-token";
 		public const string SessionIdHeaderKey = "gore-session-id";
 
+		public const string GrpcServiceName = "GoreRemoting";
+
 		/// <summary>
 		/// v2: 
 		/// - removed type name infos (security, now uses target method types)
