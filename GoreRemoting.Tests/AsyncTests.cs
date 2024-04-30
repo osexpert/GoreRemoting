@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using Castle.DynamicProxy;
 using GoreRemoting.Serialization;
 using GoreRemoting.Serialization.BinaryFormatter;
 using GoreRemoting.Serialization.Json;
@@ -13,6 +14,7 @@ using GoreRemoting.Serialization.Protobuf;
 using GoreRemoting.Tests.Tools;
 using Microsoft.Data.SqlClient;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json.Linq;
 
 namespace GoreRemoting.Tests
 {
@@ -176,7 +178,7 @@ namespace GoreRemoting.Tests
 
 			public void TestWithSqlException()
 			{
-				using var c = new SqlConnection("Data Source=(local)\\sql2014;Initial Catalog=master; Integrated Security=sspi;");
+				using var c = new SqlConnection("Data Source=();Initial Catalog=test; Integrated Security=sspi;");
 				c.Open();
 				var cm = new SqlCommand("select * from test", c);
 				cm.ExecuteNonQuery();
@@ -294,110 +296,72 @@ namespace GoreRemoting.Tests
 
 			var proxy = client.CreateProxy<IExceptionTest>();
 
-			Exception? e1 = null;
-			try
-			{
-				proxy.TestSerializedExMistakeAndPrivate();
-			}
-			catch (Exception e)
-			{
-				e1 = e;
-			}
 
-			//Assert.IsType<SerEx>(e1);
-			//Assert.Equal("The mess", e1.Message);
-
-			var lines = e1!.ToString().Split(Environment.NewLine).Length;
-			//Assert.Equal(9, lines);
+			Exception e;		
 			if (ser == enSerializer.BinaryFormatter)
 			{
-				//	Assert.Equal(28, lines); // a failure to deserialize?? yes
-				Assert.AreEqual(7, lines); // task was cancelled, due too no result message
-			}
-			else
-				Assert.AreEqual(19, lines);
+				e = Assert.ThrowsException<TaskCanceledException>(proxy.TestSerializedExMistakeAndPrivate);
+				Assert.AreEqual("A task was canceled.", e.Message);
+				Assert.IsNull(e.InnerException);
 
-			// Most will fail because SerExMistake is private
-
-			if (ser == enSerializer.BinaryFormatter)
-			{
-				Assert.IsTrue(e1 is TaskCanceledException);
+				AssertLines(e, new string[]
+				{
+					"System.Threading.Tasks.TaskCanceledException: A task was canceled.",
+					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
+				});
 			}
 			else
 			{
-				// because it can't find "Test"?
-				//Assert.IsType<SerializationException>(e1);
-				//Assert.IsTrue(e1 is SerExMistake);
-				Assert.IsTrue(e1 is TargetInvocationException);
-				//Assert.Equal(1, e1.Data.Count);
-			}
+				e = Assert.ThrowsException<TargetInvocationException>(proxy.TestSerializedExMistakeAndPrivate);
+				Assert.AreEqual("Exception has been thrown by the target of an invocation.", e.Message);
+				Assert.AreEqual("Member 'Test' was not found.", e.InnerException!.Message);
 
-			//Assert.Equal("test", e1.Test);
+				AssertLines(e, new string[]
+{
+				"System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation.",
+				" ---> System.Runtime.Serialization.SerializationException: Member 'Test' was not found.",
+				"   --- End of inner exception stack trace ---",
+				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
+});			}
 
-			Exception? e2 = null;
-			try
-			{
-				proxy.TestSerializedExMistake();
-			}
-			catch (Exception e)
-			{
-				e2 = e;
-			}
-
-			var lines2 = e2!.ToString().Split(Environment.NewLine).Length;
-
-			//Assert.Equal(9, lines2);
-
+			Exception e2;
 			if (ser == enSerializer.BinaryFormatter)
 			{
-				//	Assert.Equal(28, lines2); // failure to desser
-				Assert.AreEqual(7, lines2); // failure to desser
-			}
-			else
-				Assert.AreEqual(19, lines2);
+				e2 = Assert.ThrowsException<TaskCanceledException>(proxy.TestSerializedExMistake);
 
-			// Most will fail because SerExMistake is private
+				Assert.AreEqual("A task was canceled.", e2.Message);
+				Assert.IsNull(e2.InnerException);
 
-			if (ser == enSerializer.BinaryFormatter)
-			{
-				Assert.IsTrue(e2 is TaskCanceledException);
+				AssertLines(e, new string[]{
+					"System.Threading.Tasks.TaskCanceledException: A task was canceled.",
+					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
+				});
 			}
 			else
 			{
+				e2 = Assert.ThrowsException<TargetInvocationException>(proxy.TestSerializedExMistake);
+				Assert.AreEqual("Exception has been thrown by the target of an invocation.", e2.Message);
+				Assert.AreEqual("Member 'Test' was not found.", e2.InnerException!.Message);
 
-				// because it can't find "Test"?
-				//Assert.IsType<SerializationException>(e2);
-				//Assert.IsTrue(e2 is SerExMistakeNotPriv);
-				Assert.IsTrue(e2 is TargetInvocationException);
-				//	Assert.Equal(1, e2.Data.Count);
+				AssertLines(e2, new string[]{
+					"System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation.",
+					" ---> System.Runtime.Serialization.SerializationException: Member 'Test' was not found.",
+					"   --- End of inner exception stack trace ---",
+					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
+				});
 			}
 
-			Exception? e3 = null;
-			try
+			var e3 = Assert.ThrowsException<SerExOk>(proxy.TestSerializedOk);
+
+			Assert.AreEqual("The mess", e3.Message);
+			Assert.IsNull(e3.InnerException);
+
+			AssertLines(e3, new string[]
 			{
-				proxy.TestSerializedOk();
-			}
-			catch (Exception e)
-			{
-				e3 = e;
-			}
-
-			var lines3 = e3!.ToString().Split(Environment.NewLine).Length;
-			//if (ser == enSerializer.BinaryFormatter)
-			//	Assert.Equal(28, lines3);
-			//else
-			{
-				Assert.AreEqual(8, lines3);
-				//Assert.Equal("GoreRemoting.Tests.AsyncTests+SerExOk, GoreRemoting.Tests", ((SerExOk)e3).TypeName);
-			}
-
-			// Most will fail because SerExMistake is private
-
-			// because it can't find "Test"?
-			Assert.IsTrue(e3 is SerExOk);
-
-			//			Assert.Equal("tull", e3.Data["teste"]);
-			//Assert.Equal(1, e3.Data.Count);
+				"GoreRemoting.Tests.AsyncTests+SerExOk: The mess",
+				"--- End of stack trace from previous location ---",
+				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
+			});
 		}
 
 		[TestMethod]
@@ -418,37 +382,51 @@ namespace GoreRemoting.Tests
 
 			var proxy = client.CreateProxy<IExceptionTest>();
 
+			var e4 = Assert.ThrowsException<SerExOk>(proxy.TestWithInnerException);
 
-
-
-			Exception? e4 = null;
-			try
+			Assert.AreEqual("The mess", e4.Message);
+			if (ser == enSerializer.BinaryFormatter)
 			{
-				proxy.TestWithInnerException();
+				Assert.AreEqual("Format of the initialization string does not conform to specification starting at index 0.", e4.InnerException!.Message);
 			}
-			catch (Exception e)
+			else
 			{
-				e4 = e;
-			}
-
-			var lines4 = e4!.ToString().Split(Environment.NewLine).Length;
-			//if (ser == enSerializer.BinaryFormatter)
-			//	Assert.Equal(28, lines3);
-			//else
-			{
-				Assert.AreEqual(20, lines4);
-				//Assert.Equal("GoreRemoting.Tests.AsyncTests+SerExOk, GoreRemoting.Tests", ((SerExOk)e3).TypeName);
+				Assert.IsNull(e4.InnerException);
 			}
 
-			// Most will fail because SerExMistake is private
+			AssertLines(e4, new string[]{
+					"GoreRemoting.Tests.AsyncTests+SerExOk: The mess",
+					" ---> System.ArgumentException: Format of the initialization string does not conform to specification starting at index 0.",
+					"   --- End of inner exception stack trace ---",
+					"--- End of stack trace from previous location ---",
+					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)",
+			});
+		}
 
-			// because it can't find "Test"?
-			Assert.IsTrue(e4 is SerExOk);
+		private void AssertNotLine(Exception e4, string v)
+		{
+			var lines = e4.ToString().Split(Environment.NewLine);
+			Assert.IsFalse(lines.Contains(v));
+		}
 
-			//		Assert.Equal("tull", e4.Data["teste"]);
-			Assert.IsTrue(e4.Data.Count == 1);
+		private void AssertLines(Exception e, string[] strings)
+		{
+			var strings_list = strings.ToList();
 
-	
+			var lines = e.ToString().Split(Environment.NewLine);
+
+			foreach (var line in lines)
+			{
+				if (line == strings_list.First())
+				{
+					strings_list.RemoveAt(0);
+					if (!strings_list.Any())
+						break;
+					continue;
+				}
+			}
+
+			Assert.IsTrue(strings_list.Count == 0);
 		}
 
 		[TestMethod]
@@ -469,45 +447,27 @@ namespace GoreRemoting.Tests
 
 			var proxy = client.CreateProxy<IExceptionTest>();
 
+			var e4 = Assert.ThrowsException<SqlException>(proxy.TestWithSqlException);
 
+			Assert.AreEqual("A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)", e4.Message);
 
-
-			Exception? e4 = null;
-			try
+			if (ser == enSerializer.BinaryFormatter)
 			{
-				proxy.TestWithSqlException();
+				Assert.AreEqual("The network path was not found.", e4.InnerException!.Message);
 			}
-			catch (Exception e)
+			else
 			{
-				e4 = e;
+				Assert.IsNull(e4.InnerException);
 			}
 
-			//var lines4 = e4!.ToString().Split(Environment.NewLine).Length;
-			////if (ser == enSerializer.BinaryFormatter)
-			////	Assert.Equal(28, lines3);
-			////else
-			//{
-			//	Assert.AreEqual(21, lines4);
-			//	//Assert.Equal("GoreRemoting.Tests.AsyncTests+SerExOk, GoreRemoting.Tests", ((SerExOk)e3).TypeName);
-			//}
+			AssertLines(e4, new string[]{
+				"Microsoft.Data.SqlClient.SqlException (0x80131904): A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)",
+				" ---> System.ComponentModel.Win32Exception (53): The network path was not found.",
+				"--- End of stack trace from previous location ---",
+				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
+			});
 
-			//// Most will fail because SerExMistake is private
-
-			//// because it can't find "Test"?
-			//Assert.IsTrue(e4 is SerExOk);
-
-			////		Assert.Equal("tull", e4.Data["teste"]);
-			//Assert.IsTrue(e4.Data.Count == 1);
-
-			//Exception? e5 = null;
-			//try
-			//{
-			//	proxy.TestWithSqlException();
-			//}
-			//catch (Exception e)
-			//{
-			//	e5 = e;
-			//}
+			AssertNotLine(e4, "   --- End of inner exception stack trace ---");
 		}
 	}
 

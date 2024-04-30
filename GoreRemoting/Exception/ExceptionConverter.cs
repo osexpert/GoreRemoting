@@ -60,9 +60,13 @@ namespace GoreRemoting
 					fullStackTrace.Append(" ---> ");
 					fullStackTrace.Append(iesStr);
 					fullStackTrace.Append(Environment.NewLine);
-					fullStackTrace.Append("   ");
-					fullStackTrace.Append("--- End of inner exception stack trace ---");
-					fullStackTrace.Append(Environment.NewLine);
+					// End of...is only added if inner exception has a stack trace (not just a message)
+					if (iesStr.IndexOf("\n   at ") > 0)
+					{
+						fullStackTrace.Append("   ");
+						fullStackTrace.Append("--- End of inner exception stack trace ---");
+						fullStackTrace.Append(Environment.NewLine);
+					}
 				}
 			}
 

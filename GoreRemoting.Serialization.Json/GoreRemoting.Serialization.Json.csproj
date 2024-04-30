@@ -1,21 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	  <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
-	  <Authors>osexpert</Authors>
-	  <Copyright>2022 osexpert</Copyright>
-	  <Nullable>enable</Nullable>
-	  <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
+    <Authors>osexpert</Authors>
+    <Copyright>2022 osexpert</Copyright>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-
 
   <ItemGroup>
     <PackageReference Include="System.Text.Json" />
-	  <PackageReference Include="TupleAsJsonArray.Redux" Condition="'$(TargetFramework)' == 'net6.0'" />
+    <PackageReference Include="TupleAsJsonArray.Redux" Condition="'$(TargetFramework)' == 'net6.0'" />
   </ItemGroup>
 
   <ItemGroup>
-<!--    <ProjectReference Include="..\GoreRemoting.Serialization.BinaryFormatter\GoreRemoting.Serialization.BinaryFormatter.csproj" /> -->
     <ProjectReference Include="..\GoreRemoting\GoreRemoting.csproj" />
   </ItemGroup>
 

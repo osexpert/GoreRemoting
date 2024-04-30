@@ -1,32 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
+  </PropertyGroup>
 
-        <IsPackable>false</IsPackable>
-		<Nullable>enable</Nullable>
-		<ImplicitUsings>enable</ImplicitUsings>
-    </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Grpc.Core" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="MSTest.TestAdapter" />
+    <PackageReference Include="MSTest.TestFramework" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Grpc.Core" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" />
-		<PackageReference Include="Microsoft.Data.SqlClient" />
-		<PackageReference Include="MSTest.TestAdapter" />
-		<PackageReference Include="MSTest.TestFramework" />
-		
-        <PackageReference Include="coverlet.collector" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\GoreRemoting.Compression.Lz4\GoreRemoting.Compression.Lz4.csproj" />
-      <ProjectReference Include="..\GoreRemoting.Serialization.BinaryFormatter\GoreRemoting.Serialization.BinaryFormatter.csproj" />
-      <ProjectReference Include="..\GoreRemoting.Serialization.Json\GoreRemoting.Serialization.Json.csproj" />
-      <ProjectReference Include="..\GoreRemoting.Serialization.MemoryPack\GoreRemoting.Serialization.MemoryPack.csproj" />
-      <ProjectReference Include="..\GoreRemoting.Serialization.MessagePack\GoreRemoting.Serialization.MessagePack.csproj" />
-      <ProjectReference Include="..\GoreRemoting.Serialization.Protobuf\GoreRemoting.Serialization.Protobuf.csproj" />
-      <ProjectReference Include="..\GoreRemoting.Tests.ExternalTypes\GoreRemoting.Tests.ExternalTypes.csproj" />
-      <ProjectReference Include="..\GoreRemoting\GoreRemoting.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GoreRemoting.Compression.Lz4\GoreRemoting.Compression.Lz4.csproj" />
+    <ProjectReference Include="..\GoreRemoting.Serialization.BinaryFormatter\GoreRemoting.Serialization.BinaryFormatter.csproj" />
+    <ProjectReference Include="..\GoreRemoting.Serialization.Json\GoreRemoting.Serialization.Json.csproj" />
+    <ProjectReference Include="..\GoreRemoting.Serialization.MemoryPack\GoreRemoting.Serialization.MemoryPack.csproj" />
+    <ProjectReference Include="..\GoreRemoting.Serialization.MessagePack\GoreRemoting.Serialization.MessagePack.csproj" />
+    <ProjectReference Include="..\GoreRemoting.Serialization.Protobuf\GoreRemoting.Serialization.Protobuf.csproj" />
+    <ProjectReference Include="..\GoreRemoting.Tests.ExternalTypes\GoreRemoting.Tests.ExternalTypes.csproj" />
+    <ProjectReference Include="..\GoreRemoting\GoreRemoting.csproj" />
+  </ItemGroup>
 
 </Project>

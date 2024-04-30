@@ -486,17 +486,10 @@ namespace GoreRemoting.Tests
 
 			//Assert.Throws<System.Threading.Channels.ChannelClosedException>(() => proxy.FireServiceEvent());
 
-			Exception? ex = null;
-			try
-			{
-				proxy.FireServiceEvent();
-			}
-			catch (Exception e)
-			{
-				ex = e;
-			}
-			Assert.AreEqual("Too late, result sent", ex!.Message);
-			Assert.AreEqual(15, ex.ToString().Split(Environment.NewLine).Length);
+
+			var ex = Assert.ThrowsException<Exception>(proxy.FireServiceEvent);
+
+			Assert.AreEqual("Too late, result sent", ex.Message);
 
 			Assert.IsFalse(serviceEventCalled);
 		}

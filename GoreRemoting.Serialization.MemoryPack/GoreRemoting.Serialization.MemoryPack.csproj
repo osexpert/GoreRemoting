@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFrameworks>netstandard2.1;net7.0</TargetFrameworks>
 	  <Authors>osexpert</Authors>
 	  <Copyright>2022 osexpert</Copyright>
 	  <Nullable>enable</Nullable>
@@ -13,7 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-<!--    <ProjectReference Include="..\GoreRemoting.Serialization.BinaryFormatter\GoreRemoting.Serialization.BinaryFormatter.csproj" /> -->
     <ProjectReference Include="..\GoreRemoting\GoreRemoting.csproj" />
   </ItemGroup>
 

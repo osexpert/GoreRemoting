@@ -3,19 +3,19 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-	<IsPackable>false</IsPackable>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
-	<ItemGroup>
-		<Compile Include="..\ServerShared\ServerShared.cs" Link="ServerShared.cs" />
-	</ItemGroup>
-	
-	<ItemGroup>
-		<PackageReference Include="Grpc.AspNetCore.Server" VersionOverride="2.56.0" />
-	</ItemGroup>
-	
-	<ItemGroup>
-	  <ProjectReference Include="..\..\GoreRemoting.Serialization.BinaryFormatter\GoreRemoting.Serialization.BinaryFormatter.csproj" />
-	  <ProjectReference Include="..\..\GoreRemoting\GoreRemoting.csproj" />
-	</ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\ServerShared\ServerShared.cs" Link="ServerShared.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore.Server" VersionOverride="2.56.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\GoreRemoting.Serialization.BinaryFormatter\GoreRemoting.Serialization.BinaryFormatter.csproj" />
+    <ProjectReference Include="..\..\GoreRemoting\GoreRemoting.csproj" />
+  </ItemGroup>
 </Project>

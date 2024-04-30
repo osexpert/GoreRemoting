@@ -2,14 +2,13 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net60</TargetFramework>
-	<IsPackable>false</IsPackable>
+    <TargetFramework>net6.0</TargetFramework>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="..\ClientShared\ClientShared.cs" Link="ClientShared.cs" />
   </ItemGroup>
-
 
   <ItemGroup>
     <ProjectReference Include="..\..\GoreRemoting.Serialization.BinaryFormatter\GoreRemoting.Serialization.BinaryFormatter.csproj" />
@@ -20,6 +19,5 @@
   <ItemGroup>
     <PackageReference Include="Grpc.Core" />
   </ItemGroup>
-
 
 </Project>

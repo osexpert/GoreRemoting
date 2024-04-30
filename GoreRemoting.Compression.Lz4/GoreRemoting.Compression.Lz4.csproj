@@ -1,16 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-	<Authors>osexpert</Authors>
-	<Copyright>2022 osexpert</Copyright>
-	<Nullable>enable</Nullable>
-	  <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<Authors>osexpert</Authors>
+		<Copyright>2022 osexpert</Copyright>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Grpc.Net.Common" />
-    <PackageReference Include="K4os.Compression.LZ4.Streams" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Grpc.Net.Common" />
+		<PackageReference Include="K4os.Compression.LZ4.Streams" />
+	</ItemGroup>
 
 </Project>
