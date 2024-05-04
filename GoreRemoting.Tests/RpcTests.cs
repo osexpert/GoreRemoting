@@ -27,8 +27,10 @@ namespace GoreRemoting.Tests
 		//}
 
 		[TestMethod]
-//		[DataRow(enSerializer.BinaryFormatter)] FIXME: TimeOnly, DateOnly missing
+		//		[DataRow(enSerializer.BinaryFormatter)] FIXME: TimeOnly, DateOnly missing
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
@@ -52,13 +54,19 @@ namespace GoreRemoting.Tests
 			var don = DateOnly.FromDateTime(dt);
 			var en = TestEnum4.Test2;
 			var span = dt.TimeOfDay;
-			var echo = proxy.EchoMiscBasicTypes(dt, dto, g, to, don, en, span, null);
 
+#if NET6_0_OR_GREATER
+			var echo = proxy.EchoMiscBasicTypes(dt, dto, g, to, don, en, span, null);
+#else
+			var echo = proxy.EchoMiscBasicTypesNet48(dt, dto, g, en, span, null);
+#endif
 			Assert.AreEqual(dt, echo.dt);
 			Assert.AreEqual(dto, echo.off);
 			Assert.AreEqual(g, echo.g);
+#if NET6_0_OR_GREATER
 			Assert.AreEqual(to, echo.to);
 			Assert.AreEqual(don, echo.don);
+#endif
 			Assert.AreEqual(en, echo.enu);
 			Assert.AreEqual(span, echo.ts);
 			Assert.IsNull(echo.nullDto);
@@ -67,7 +75,9 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
@@ -95,7 +105,9 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
@@ -127,8 +139,10 @@ namespace GoreRemoting.Tests
 				Assert.AreEqual(1, result);
 			else if (ser == enSerializer.Json)
 				Assert.AreEqual(1, result);
+#if NET6_0_OR_GREATER
 			else if (ser == enSerializer.MemoryPack)
 				Assert.AreEqual(1, result);
+#endif
 			else if (ser == enSerializer.MessagePack)
 				Assert.AreEqual(4, result);
 			else if (ser == enSerializer.Protobuf)
@@ -141,7 +155,9 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
@@ -184,7 +200,9 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
@@ -214,11 +232,15 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter, false)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack, false)]
+#endif
 		[DataRow(enSerializer.Json, false)]
 		[DataRow(enSerializer.MessagePack, false)]
 		[DataRow(enSerializer.BinaryFormatter, true)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack, true)]
+#endif
 		[DataRow(enSerializer.Json, true)]
 		[DataRow(enSerializer.MessagePack, true)]
 		[DataRow(enSerializer.Protobuf, false)]
@@ -319,7 +341,9 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
@@ -410,7 +434,9 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
@@ -455,7 +481,9 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
@@ -496,7 +524,9 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
@@ -613,7 +643,9 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
@@ -682,7 +714,9 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
@@ -730,7 +764,9 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
@@ -846,7 +882,9 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
@@ -1017,7 +1055,9 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
@@ -1372,7 +1412,9 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]

@@ -34,7 +34,7 @@ namespace GoreRemoting.Tests.Tools
 			if (_server != null)
 				return new ValueTask(_server.ShutdownAsync());
 			else
-				return ValueTask.CompletedTask;
+				return default;
 		}
 
 		public void Start() => _server.Start();

@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace GoreRemoting
 {
-
-
-#if NETSTANDARD2_1
 	public static class AsyncEnumerableAdapter
 	{
 		public static IAsyncEnumerable<T> ClientConsume<T>(Func<Func<T, Task>, Task> dataSource, CancellationToken cancel = default)
@@ -36,6 +34,7 @@ namespace GoreRemoting
 
 			return channel.Reader.ReadAllAsync(cancel);
 		}
+
 
 		public static async Task ClientProduce<T>(IAsyncEnumerable<T> source, Func<Func<Task<(T, bool)>>, Task> dataProvider)
 		{
@@ -89,6 +88,5 @@ namespace GoreRemoting
 		}
 	}
 
-#endif
 
 }

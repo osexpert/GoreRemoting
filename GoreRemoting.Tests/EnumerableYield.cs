@@ -146,13 +146,15 @@ namespace GoreRemoting.Tests
 				throw new NotImplementedException();
 			}
 
+			static Random r = new Random();
+
 			public async Task TestCancel(Func<string, Task> outt, CancellationToken cancel)
 			{
 				while (true)
 				{
-					await outt(Random.Shared.Next().ToString());
-					await outt(Random.Shared.Next().ToString());
-					await outt(Random.Shared.Next().ToString());
+					await outt(r.Next().ToString());
+					await outt(r.Next().ToString());
+					await outt(r.Next().ToString());
 					await Task.Delay(1000000, cancel);
 				}
 			}
@@ -204,7 +206,9 @@ namespace GoreRemoting.Tests
 
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]

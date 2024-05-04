@@ -35,6 +35,10 @@ namespace GoreRemoting.Tests.Tools
 
 		(DateTime dt, DateTimeOffset off, Guid g, TimeOnly to, DateOnly don, TestEnum4 enu, TimeSpan ts, DateTimeOffset? nullDto) 
 			EchoMiscBasicTypes(DateTime dt, DateTimeOffset off, Guid g, TimeOnly to, DateOnly don, TestEnum4 enu, TimeSpan ts, DateTimeOffset? nullDto);
+
+		(DateTime dt, DateTimeOffset off, Guid g, TestEnum4 enu, TimeSpan ts, DateTimeOffset? nullDto)
+			EchoMiscBasicTypesNet48(DateTime dt, DateTimeOffset off, Guid g, TestEnum4 enu, TimeSpan ts, DateTimeOffset? nullDto);
+
 	}
 
 	public enum TestEnum4

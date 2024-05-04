@@ -25,7 +25,7 @@ namespace GoreRemoting.Tests.Tools
 			if (_channel != null)
 				return new ValueTask(_channel.ShutdownAsync());
 			else
-				return ValueTask.CompletedTask;
+				return default;
 		}
 	}
 

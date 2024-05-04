@@ -16,7 +16,7 @@
     <PackageReference Include="stakx.DynamicProxy.AsyncInterceptor" />
     <PackageReference Include="System.Text.Json" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
-    <PackageReference Include="Open.ChannelExtensions" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
+<!--    <PackageReference Include="Open.ChannelExtensions" Condition="'$(TargetFramework)' == 'netstandard2.0'" /> -->
     <PackageReference Include="System.Reflection.Emit.Lightweight" />
     <PackageReference Include="System.Threading.Channels" />
   </ItemGroup>

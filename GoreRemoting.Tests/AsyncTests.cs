@@ -8,13 +8,15 @@ using Castle.DynamicProxy;
 using GoreRemoting.Serialization;
 using GoreRemoting.Serialization.BinaryFormatter;
 using GoreRemoting.Serialization.Json;
+#if NET6_0_OR_GREATER
 using GoreRemoting.Serialization.MemoryPack;
+#endif
 using GoreRemoting.Serialization.MessagePack;
 using GoreRemoting.Serialization.Protobuf;
 using GoreRemoting.Tests.Tools;
 using Microsoft.Data.SqlClient;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json.Linq;
+
 
 namespace GoreRemoting.Tests
 {
@@ -65,7 +67,9 @@ namespace GoreRemoting.Tests
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
 		[DataRow(enSerializer.Json)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
 		public async Task AsyncMethods_should_work(enSerializer ser)
@@ -105,7 +109,9 @@ namespace GoreRemoting.Tests
 		//[Fact(Timeout = 15000)]
 		[TestMethod()]//Timeout = 15000)]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
@@ -281,7 +287,9 @@ namespace GoreRemoting.Tests
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
 		[DataRow(enSerializer.Json)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
 		public async Task ExceptionTests(enSerializer ser)
@@ -297,7 +305,7 @@ namespace GoreRemoting.Tests
 			var proxy = client.CreateProxy<IExceptionTest>();
 
 
-			Exception e;		
+			Exception e;
 			if (ser == enSerializer.BinaryFormatter)
 			{
 				e = Assert.ThrowsException<TaskCanceledException>(proxy.TestSerializedExMistakeAndPrivate);
@@ -317,12 +325,13 @@ namespace GoreRemoting.Tests
 				Assert.AreEqual("Member 'Test' was not found.", e.InnerException!.Message);
 
 				AssertLines(e, new string[]
-{
-				"System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation.",
-				" ---> System.Runtime.Serialization.SerializationException: Member 'Test' was not found.",
-				"   --- End of inner exception stack trace ---",
-				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
-});			}
+				{
+					"System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation.",
+					" ---> System.Runtime.Serialization.SerializationException: Member 'Test' was not found.",
+					"   --- End of inner exception stack trace ---",
+					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
+				});
+			}
 
 			Exception e2;
 			if (ser == enSerializer.BinaryFormatter)
@@ -332,7 +341,8 @@ namespace GoreRemoting.Tests
 				Assert.AreEqual("A task was canceled.", e2.Message);
 				Assert.IsNull(e2.InnerException);
 
-				AssertLines(e, new string[]{
+				AssertLines(e, new string[]
+				{
 					"System.Threading.Tasks.TaskCanceledException: A task was canceled.",
 					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
 				});
@@ -343,7 +353,8 @@ namespace GoreRemoting.Tests
 				Assert.AreEqual("Exception has been thrown by the target of an invocation.", e2.Message);
 				Assert.AreEqual("Member 'Test' was not found.", e2.InnerException!.Message);
 
-				AssertLines(e2, new string[]{
+				AssertLines(e2, new string[]
+				{
 					"System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation.",
 					" ---> System.Runtime.Serialization.SerializationException: Member 'Test' was not found.",
 					"   --- End of inner exception stack trace ---",
@@ -367,7 +378,9 @@ namespace GoreRemoting.Tests
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
 		[DataRow(enSerializer.Json)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
 		public async Task ExceptionTests_InnerEx(enSerializer ser)
@@ -405,7 +418,7 @@ namespace GoreRemoting.Tests
 
 		private void AssertNotLine(Exception e4, string v)
 		{
-			var lines = e4.ToString().Split(Environment.NewLine);
+			var lines = e4.ToString().Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
 			Assert.IsFalse(lines.Contains(v));
 		}
 
@@ -413,7 +426,11 @@ namespace GoreRemoting.Tests
 		{
 			var strings_list = strings.ToList();
 
-			var lines = e.ToString().Split(Environment.NewLine);
+			var estr = e.ToString();
+#if !NET6_0_OR_GREATER
+			estr = estr.Replace(" ---> ", Environment.NewLine + " ---> ");
+#endif
+			var lines = estr.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
 
 			foreach (var line in lines)
 			{
@@ -432,7 +449,9 @@ namespace GoreRemoting.Tests
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
 		[DataRow(enSerializer.Json)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
 		public async Task ExceptionTests_SqlException(enSerializer ser)
@@ -453,19 +472,34 @@ namespace GoreRemoting.Tests
 
 			if (ser == enSerializer.BinaryFormatter)
 			{
+#if NET6_0_OR_GREATER
 				Assert.AreEqual("The network path was not found.", e4.InnerException!.Message);
+#else
+				Assert.AreEqual("The network path was not found", e4.InnerException!.Message);
+#endif
 			}
 			else
 			{
 				Assert.IsNull(e4.InnerException);
 			}
 
-			AssertLines(e4, new string[]{
+#if NET6_0_OR_GREATER
+			AssertLines(e4, new string[]
+			{
 				"Microsoft.Data.SqlClient.SqlException (0x80131904): A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)",
 				" ---> System.ComponentModel.Win32Exception (53): The network path was not found.",
 				"--- End of stack trace from previous location ---",
 				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
 			});
+#else
+			AssertLines(e4, new string[]
+			{
+				"Microsoft.Data.SqlClient.SqlException (0x80131904): A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)",
+				" ---> System.ComponentModel.Win32Exception (0x80004005): The network path was not found", // no dot
+				"--- End of stack trace from previous location ---",
+				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
+			});
+#endif
 
 			AssertNotLine(e4, "   --- End of inner exception stack trace ---");
 		}
@@ -475,7 +509,9 @@ namespace GoreRemoting.Tests
 	public enum enSerializer
 	{
 		BinaryFormatter = 1,
+#if NET6_0_OR_GREATER
 		MemoryPack = 2,
+#endif
 		Json = 3,
 		MessagePack = 4,
 		Protobuf = 5
@@ -488,7 +524,9 @@ namespace GoreRemoting.Tests
 			return ser switch
 			{
 				enSerializer.BinaryFormatter => new BinaryFormatterAdapter(),
+#if NET6_0_OR_GREATER
 				enSerializer.MemoryPack => new MemoryPackAdapter(),
+#endif
 				enSerializer.Json => new JsonAdapter(),
 				enSerializer.MessagePack => new MessagePackAdapter(),
 				enSerializer.Protobuf => new ProtobufAdapter(),

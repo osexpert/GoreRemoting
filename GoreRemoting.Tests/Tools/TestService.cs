@@ -84,5 +84,10 @@ namespace GoreRemoting.Tests.Tools
 			return (dt, off, g, to, don, enu, ts, nullDto);
 		}
 
+		public (DateTime dt, DateTimeOffset off, Guid g, TestEnum4 enu, TimeSpan ts, DateTimeOffset? nullDto)
+			EchoMiscBasicTypesNet48(DateTime dt, DateTimeOffset off, Guid g, TestEnum4 enu, TimeSpan ts, DateTimeOffset? nullDto)
+		{
+			return (dt, off, g, enu, ts, nullDto);
+		}
 	}
 }

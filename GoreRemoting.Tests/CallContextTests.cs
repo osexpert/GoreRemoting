@@ -10,7 +10,9 @@ namespace GoreRemoting.Tests
 	{
 		[TestMethod]
 		[DataRow(enSerializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
 		[DataRow(enSerializer.MemoryPack)]
+#endif
 		[DataRow(enSerializer.Json)]
 		[DataRow(enSerializer.MessagePack)]
 		[DataRow(enSerializer.Protobuf)]
