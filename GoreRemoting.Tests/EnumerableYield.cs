@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using GoreRemoting.Tests.Tools;
@@ -92,7 +93,7 @@ namespace GoreRemoting.Tests
 
 			}
 
-			private async IAsyncEnumerable<string> Jild3Int(int x, CancellationToken cancel)
+			private async IAsyncEnumerable<string> Jild3Int(int x, [EnumeratorCancellation]CancellationToken cancel)
 			{
 				await Task.CompletedTask;
 				yield return "1";

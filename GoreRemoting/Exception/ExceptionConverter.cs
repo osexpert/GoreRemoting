@@ -386,13 +386,24 @@ namespace GoreRemoting
 			return element.ValueKind switch
 			{
 				JsonValueKind.String => element.GetString(),
-				JsonValueKind.Number => element.TryGetInt32(out int intValue) ? intValue : 
-					(element.TryGetInt64(out var int64Val) ? int64Val : element.ToString()),
+				JsonValueKind.Number => GetNumber(element),
 				JsonValueKind.True => true,
 				JsonValueKind.False => false,
 				JsonValueKind.Null => null,
 				_ => element.ToString() // throw new NotSupportedException(),
 			};
+		}
+
+		private static object GetNumber(JsonElement element)
+		{
+			if (element.TryGetInt32(out int intValue))
+				return intValue;
+			if (element.TryGetInt64(out long longValue))
+				return longValue;
+			if (element.TryGetDouble(out double doubleValue))
+				return doubleValue;
+
+			return element.ToString();
 		}
 	}
 

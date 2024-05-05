@@ -222,6 +222,7 @@ namespace GoreRemoting.Tests
 				Test = si.GetString("Test")!;
 			}
 
+			[Obsolete]
 			public override void GetObjectData(SerializationInfo info, StreamingContext context)
 			{
 				base.GetObjectData(info, context);
@@ -246,6 +247,7 @@ namespace GoreRemoting.Tests
 				Test = si.GetString("Test")!;
 			}
 
+			[Obsolete]
 			public override void GetObjectData(SerializationInfo info, StreamingContext context)
 			{
 				base.GetObjectData(info, context);
@@ -276,6 +278,7 @@ namespace GoreRemoting.Tests
 				Test = si.GetString("test")!;
 			}
 
+			[Obsolete]
 			public override void GetObjectData(SerializationInfo info, StreamingContext context)
 			{
 				base.GetObjectData(info, context);
