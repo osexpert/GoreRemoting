@@ -51,7 +51,11 @@ namespace GoreRemoting
 			}
 			else
 			{
-				return Channel.CreateBounded<TT>(queueLength.Value);
+				return Channel.CreateBounded<TT>(new BoundedChannelOptions(queueLength.Value)
+				{
+					SingleWriter = false,
+					SingleReader = true
+				});
 			}
 		}
 
@@ -71,7 +75,7 @@ namespace GoreRemoting
 		/// </summary>
 		public Task CompleteAsync()
 		{
-			_channel.Writer.TryComplete(); // was Complete(). Not sure what is most correct.
+			_channel.Writer.TryComplete(); // or Complete()?
 			return _consumer;
 		}
 
@@ -81,14 +85,26 @@ namespace GoreRemoting
 			{
 				await foreach (var message in _channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
 				{
+#if NETSTANDARD2_1_OR_GREATER
+					await _stream.WriteAsync(message, cancellationToken).ConfigureAwait(false);
+#else
 					await _stream.WriteAsync(message).ConfigureAwait(false);
+#endif
 				}
 			}
 			catch (Exception e)
 			{
 				// could get a hang here, if we could not serialize the response (crash within the serializer itself)...during delegate callbacks.
+				// Sounds similar to this: https://github.com/dotnet/runtime/issues/26235#issuecomment-436281070
+				// So this only seem to happen with a bounded channel, where someone may be blocking on _channel.Writer.WriteAsync.
+				// Completing the writer, in this case, will "cancel" the _channel.Writer.WriteAsync,
+				// and it will not hang:
+				// "If calling ChannelWriter<T>.Complete(Exception) will fault the channel immediately,
+				// leading to pending WriteAsync calls to throw with the exception, then that's a perfectly acceptable solution."
+				// This should have been mentioned in the docs IMO...
+
 				// this seems to fix it...
-				_channel.Writer.TryComplete(e); // or Complete()? Who knows.
+				_channel.Writer.TryComplete(e); // or Complete(e)?
 				throw;
 			}
 		}
