@@ -1,4 +1,45 @@
 # GoreRemoting
+
+		public interface IService
+		{
+			Task<string> EchoAsync(string s);
+		}
+		public class Service : IService
+		{
+			public async Task<string> EchoAsync(string s)
+			{
+				await Task.Delay(10);
+				return s;
+			}
+		}
+  		public Task Server()
+		{
+			var remServer = new RemotingServer(new ServerConfig(new BinaryFormatterAdapter());
+			remServer.RegisterService<IService, Service>();
+
+			var server = new Grpc.Core.Server()
+			{
+				Services =
+				{
+					ServerServiceDefinition.CreateBuilder()
+						.AddMethod(remServer.DuplexCallDescriptor, remServer.DuplexCall)
+						.Build()
+				}
+			};
+			server.Ports.Add("0.0.0.0", 5000, ServerCredentials.Insecure);
+			server.Start();
+			// wait for shutdown
+			return server.ShutdownTask;
+		}
+  		public async Task Client()
+		{
+			var channel = new Channel("localhost", 5000, ChannelCredentials.Insecure);
+			var client = new RemotingClient(channel.CreateCallInvoker(), new ClientConfig(new BinaryFormatterAdapter()));
+			var proxy = client.CreateProxy<IService>();
+
+			var echo = await proxy.EchoAsync("Hello world!");
+		}
+  
 GoreRemoting is based on CoreRemoting
 https://github.com/theRainbird/CoreRemoting  
 
