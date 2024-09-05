@@ -43,5 +43,43 @@ namespace GoreRemoting
 				return valueTask.AsTask().GetAwaiter().GetResult();
 			}
 		}
+
+		public static void Discard(this ValueTask valueTask)
+		{
+			if (valueTask.IsCompleted)
+			{
+				if (valueTask.IsCompletedSuccessfully)
+				{
+					// noop
+				}
+				else
+				{
+					valueTask.GetAwaiter().GetResult();
+				}
+			}
+			else
+			{
+				_ = valueTask.AsTask();
+			}
+		}
+
+		public static void Discard<T>(this ValueTask<T> valueTask)
+		{
+			if (valueTask.IsCompleted)
+			{
+				if (valueTask.IsCompletedSuccessfully)
+				{
+					// noop
+				}
+				else
+				{
+					_ = valueTask.GetAwaiter().GetResult();
+				}
+			}
+			else
+			{
+				_ = valueTask.AsTask();
+			}
+		}
 	}
 }
