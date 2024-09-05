@@ -14,16 +14,16 @@ namespace GoreRemoting
 	public class RemotingServer : IRemotingParty
 	{
 
-		MethodCallMessageBuilder MethodCallMessageBuilder = new();
+		readonly MethodCallMessageBuilder MethodCallMessageBuilder = new();
 
 		//private ConcurrentDictionary<(Type, int), DelegateProxy> _delegateProxyCache = new();
-		ConcurrentDictionary<string, Type> _services = new();
+		readonly ConcurrentDictionary<string, Type> _services = new();
 
 		ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> IRemotingParty.TypesCache { get; } = new ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]>();
 
-		ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodCache = new ConcurrentDictionary<(string, string), MethodInfo>();
+		readonly ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodCache = new();
 
-		ServerConfig _config;
+		readonly ServerConfig _config;
 
 		public RemotingServer(ServerConfig config)
 		{

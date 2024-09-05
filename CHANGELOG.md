@@ -1,7 +1,10 @@
-## 0.0.3 (next)
+## 0.0.3
 * Use nuget stakx.DynamicProxy.AsyncInterceptor instead of copying the code
 * Use nuget AsyncReaderWriterLockSlim instead of copying the code
 * Remove change detect logic from CallContext again
+* Fix some messages/warnings
+* Update some nugets to latest version
+* Change to use MinimalJsonEncoder to make the json smallest possible
 
 ## 0.0.2
 * Not compatible with 0.0.1, not in code and not on the wire. So breaking.

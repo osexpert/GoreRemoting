@@ -17,11 +17,11 @@ namespace GoreRemoting.Serialization.MemoryPack
 				var args = (IArgs)Activator.CreateInstance(t);
 				args.Set(graph);
 				object o = args;
-				MemoryPackSerializer.SerializeAsync(t, stream, o, Options).GetAwaiter().GetResult();
+				MemoryPackSerializer.SerializeAsync(t, stream, o, Options).GetResult();
 			}
 			else
 			{
-				MemoryPackSerializer.SerializeAsync(types[0], stream, graph[0], Options).GetAwaiter().GetResult();
+				MemoryPackSerializer.SerializeAsync(types[0], stream, graph[0], Options).GetResult();
 			}
 		}
 
@@ -30,12 +30,12 @@ namespace GoreRemoting.Serialization.MemoryPack
 			if (types.Length > 1)
 			{
 				var t = GetArgsType(types);
-				var res = (IArgs)MemoryPackSerializer.DeserializeAsync(t, stream, Options).GetAwaiter().GetResult()!;
+				var res = (IArgs)MemoryPackSerializer.DeserializeAsync(t, stream, Options).GetResult()!;
 				return res.Get();
 			}
 			else
 			{
-				return new[] { MemoryPackSerializer.DeserializeAsync(types[0], stream, Options).GetAwaiter().GetResult() };
+				return new[] { MemoryPackSerializer.DeserializeAsync(types[0], stream, Options).GetResult() };
 			}
 		}
 

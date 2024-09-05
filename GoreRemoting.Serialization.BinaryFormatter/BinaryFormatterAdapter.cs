@@ -22,7 +22,6 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		/// <summary>
 		/// Creates a new instance of the BinarySerializerAdapter class.
 		/// </summary>
-		[SuppressMessage("ReSharper", "UnusedMember.Global")]
 #if NETSTANDARD2_1_OR_GREATER
 		public BinaryFormatterAdapter(bool netCore = true)
 #else
@@ -255,14 +254,9 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		//}
 	}
 
-	public class BinarySerializerOptions
+	public class BinarySerializerOptions(bool netCore)
 	{
-		public bool NetCore { get; }
-
-		public BinarySerializerOptions(bool netCore)
-		{
-			NetCore = netCore;
-		}
+		public bool NetCore { get; } = netCore;
 
 		public BinarySerializerConfig? Config { get; set; } = null;
 

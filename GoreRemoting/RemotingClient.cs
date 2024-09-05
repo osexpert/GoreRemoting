@@ -11,11 +11,11 @@ namespace GoreRemoting
 
 	public class RemotingClient : IRemotingParty
 	{
-		internal ClientConfig _config;
-		CallInvoker _callInvoker;
+		internal readonly ClientConfig _config;
+		readonly CallInvoker _callInvoker;
 		ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> IRemotingParty.TypesCache { get; } = new ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]>();
 
-		internal ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodLookup = new ConcurrentDictionary<(string, string), MethodInfo>();
+		internal ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodLookup = new();
 
 
 		public RemotingClient(CallInvoker callInvoker, ClientConfig config)
@@ -106,7 +106,7 @@ namespace GoreRemoting
 		public Method<GoreRequestMessage, GoreResponseMessage> DuplexCallDescriptor { get; }
 
 
-		private static readonly Castle.DynamicProxy.ProxyGenerator ProxyGenerator = new Castle.DynamicProxy.ProxyGenerator();
+		private static readonly Castle.DynamicProxy.ProxyGenerator ProxyGenerator = new();
 
 		public T CreateProxy<T>()
 		{

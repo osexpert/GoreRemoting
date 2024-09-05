@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="Grpc.Core" />
-    <PackageReference Include="Open.ChannelExtensions" />
+<!--    <PackageReference Include="Open.ChannelExtensions" /> -->
     <PackageReference Include="System.Security.Principal.Windows" />
   </ItemGroup>
 

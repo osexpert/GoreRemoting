@@ -1,5 +1,5 @@
 REM set myKey=
-set ver=0.0.2
+set ver=0.0.3
 
 nuget push bin\Packages\Release\NuGet\GoreRemoting.%ver%.nupkg -src https://api.nuget.org/v3/index.json -ApiKey %myKey%
 nuget push bin\Packages\Release\NuGet\GoreRemoting.Compression.Lz4.%ver%.nupkg -src https://api.nuget.org/v3/index.json -ApiKey %myKey%

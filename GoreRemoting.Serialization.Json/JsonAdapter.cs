@@ -1,6 +1,7 @@
 ﻿using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ExtremeJsonEncoders;
 using GoreRemoting.Serialization.Json.ArgTypes;
 #if NET6_0_OR_GREATER
 using TupleAsJsonArray;
@@ -28,7 +29,7 @@ namespace GoreRemoting.Serialization.Json
 					new TupleConverterFactory()
 #endif
 				},
-				Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+				Encoder = MinimalJsonEncoder.Shared
 			};
 		}
 

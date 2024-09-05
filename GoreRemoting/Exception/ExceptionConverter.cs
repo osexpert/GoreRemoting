@@ -14,7 +14,7 @@ namespace GoreRemoting
 {
 	static class ExceptionConverter
 	{
-		static JsonSerializerOptions _options = new JsonSerializerOptions
+		static readonly JsonSerializerOptions _options = new()
 		{
 			Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
 		};
@@ -44,7 +44,7 @@ namespace GoreRemoting
 
 		private static SerializationInfo GetInfo(Dictionary<string, string> dict)
 		{
-			SerializationInfo? info = new SerializationInfo(typeof(Exception), new JsonFormatterConverter(_options));
+			SerializationInfo? info = new(typeof(Exception), new JsonFormatterConverter(_options));
 
 			var fullStackTrace = new StringBuilder();
 
@@ -109,9 +109,9 @@ namespace GoreRemoting
 
 		public static Dictionary<string, string> ToDict(Exception value)
 		{
-			Dictionary<string, string> dict = new Dictionary<string, string>();
+			Dictionary<string, string> dict = new();
 
-			SerializationInfo info = new SerializationInfo(value.GetType(), new JsonFormatterConverter(_options));
+			SerializationInfo info = new(value.GetType(), new JsonFormatterConverter(_options));
 
 			Serialize(value, info);
 
@@ -137,10 +137,9 @@ namespace GoreRemoting
 			return dict;
 		}
 
-
 		private static readonly Type[] DeserializingConstructorParameterTypes = new Type[] { typeof(SerializationInfo), typeof(StreamingContext) };
 
-		private static StreamingContext Context => new StreamingContext(StreamingContextStates.Remoting);
+		private static StreamingContext Context => new(StreamingContextStates.Remoting);
 
 		internal static Exception Deserialize(SerializationInfo info)
 		{
@@ -185,6 +184,7 @@ namespace GoreRemoting
 #else
 			var res = (Exception)FormatterServices.GetUninitializedObject(runtimeType);
 #endif
+			// TODO: Support a derived exception that crash in its deserializing exception? And/or ignore that invoke fails?
 			ctor.Invoke(res, new object[] { info, Context });
 			return res;
 		}

@@ -23,25 +23,22 @@ namespace GoreRemoting
 	{
 		private readonly IServerStreamWriter<T> _stream;
 		private readonly Task _consumer;
-
 		private readonly Channel<T> _channel;
-
 
 		public StreamResponseQueue(
 			IServerStreamWriter<T> stream,
-			int? queueLength,
+			int? queueLimit = null,
 			CancellationToken cancellationToken = default
 		)
 		{
-			_channel = CreateChannel<T>(queueLength);
-
+			_channel = CreateChannel<T>(queueLimit);
 			_stream = stream;
 			_consumer = Consume(cancellationToken);
 		}
 
-		private static Channel<TT> CreateChannel<TT>(int? queueLength)
+		private static Channel<TT> CreateChannel<TT>(int? queueLimit)
 		{
-			if (queueLength == null)
+			if (queueLimit == null)
 			{
 				return Channel.CreateUnbounded<TT>(new UnboundedChannelOptions
 				{
@@ -51,7 +48,7 @@ namespace GoreRemoting
 			}
 			else
 			{
-				return Channel.CreateBounded<TT>(new BoundedChannelOptions(queueLength.Value)
+				return Channel.CreateBounded<TT>(new BoundedChannelOptions(queueLimit.Value)
 				{
 					SingleWriter = false,
 					SingleReader = true

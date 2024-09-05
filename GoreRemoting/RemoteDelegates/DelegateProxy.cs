@@ -11,7 +11,7 @@ namespace GoreRemoting.RemoteDelegates
 	public sealed class DelegateProxy : AsyncInterceptor
 	{
 		private Func<MethodInfo, object?[], object?> _callInterceptionHandler;
-		private Func<MethodInfo, object?[], Task<object?>> _callInterceptionAsyncHandler;
+		private readonly Func<MethodInfo, object?[], Task<object?>> _callInterceptionAsyncHandler;
 
 		static readonly MethodInfo _interceptMethod = typeof(DelegateProxy ).GetMethod(
 				name: nameof(DelegateProxy.DelegateTarget),
@@ -70,16 +70,10 @@ namespace GoreRemoting.RemoteDelegates
 			return sin.ReturnValue;
 		}
 
-		class Invocation : IInvocation
+		class Invocation(MethodInfo method, object?[] args) : IInvocation
 		{
-			MethodInfo _method;
-			object?[] _args;
-
-			public Invocation(MethodInfo method, object?[] args)
-			{
-				_method = method;
-				_args = args;
-			}
+			readonly MethodInfo _method = method;
+			readonly object?[] _args = args;
 
 			public object?[] Arguments => _args;
 			public MethodInfo Method => _method;
