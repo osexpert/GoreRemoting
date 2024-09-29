@@ -318,7 +318,7 @@ namespace GoreRemoting.Tests
 				AssertLines(e, new string[]
 				{
 					"System.Threading.Tasks.TaskCanceledException: A task was canceled.",
-					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters) in /_/src/TestFramework/TestFramework/Assertions/Assert.ThrowsException.cs:line 180"
+					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
 				});
 			}
 			else
@@ -332,7 +332,7 @@ namespace GoreRemoting.Tests
 					"System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation.",
 					" ---> System.Runtime.Serialization.SerializationException: Member 'Test' was not found.",
 					"   --- End of inner exception stack trace ---",
-					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters) in /_/src/TestFramework/TestFramework/Assertions/Assert.ThrowsException.cs:line 180"
+					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
 				});
 			}
 
@@ -347,7 +347,7 @@ namespace GoreRemoting.Tests
 				AssertLines(e, new string[]
 				{
 					"System.Threading.Tasks.TaskCanceledException: A task was canceled.",
-					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters) in /_/src/TestFramework/TestFramework/Assertions/Assert.ThrowsException.cs:line 180"
+					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
 				});
 			}
 			else
@@ -361,7 +361,7 @@ namespace GoreRemoting.Tests
 					"System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation.",
 					" ---> System.Runtime.Serialization.SerializationException: Member 'Test' was not found.",
 					"   --- End of inner exception stack trace ---",
-					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters) in /_/src/TestFramework/TestFramework/Assertions/Assert.ThrowsException.cs:line 180"
+					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
 				});
 			}
 
@@ -374,7 +374,7 @@ namespace GoreRemoting.Tests
 			{
 				"GoreRemoting.Tests.AsyncTests+SerExOk: The mess",
 				"--- End of stack trace from previous location ---",
-				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters) in /_/src/TestFramework/TestFramework/Assertions/Assert.ThrowsException.cs:line 180"
+				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
 			});
 		}
 
@@ -415,7 +415,7 @@ namespace GoreRemoting.Tests
 					" ---> System.ArgumentException: Format of the initialization string does not conform to specification starting at index 0.",
 					"   --- End of inner exception stack trace ---",
 					"--- End of stack trace from previous location ---",
-					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters) in /_/src/TestFramework/TestFramework/Assertions/Assert.ThrowsException.cs:line 180",
+					"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)",
 			});
 		}
 
@@ -437,7 +437,7 @@ namespace GoreRemoting.Tests
 
 			foreach (var line in lines)
 			{
-				if (line == strings_list.First())
+				if (line.StartsWith(strings_list.First()))
 				{
 					strings_list.RemoveAt(0);
 					if (!strings_list.Any())
@@ -492,7 +492,7 @@ namespace GoreRemoting.Tests
 				"Microsoft.Data.SqlClient.SqlException (0x80131904): A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)",
 				" ---> System.ComponentModel.Win32Exception (53): The network path was not found.",
 				"--- End of stack trace from previous location ---",
-				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters) in /_/src/TestFramework/TestFramework/Assertions/Assert.ThrowsException.cs:line 180"
+				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
 			});
 #else
 			AssertLines(e4, new string[]
@@ -500,7 +500,7 @@ namespace GoreRemoting.Tests
 				"Microsoft.Data.SqlClient.SqlException (0x80131904): A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)",
 				" ---> System.ComponentModel.Win32Exception (0x80004005): The network path was not found", // no dot
 				"--- End of stack trace from previous location ---",
-				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters) in /_/src/TestFramework/TestFramework/Assertions/Assert.ThrowsException.cs:line 180"
+				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
 			});
 #endif
 
