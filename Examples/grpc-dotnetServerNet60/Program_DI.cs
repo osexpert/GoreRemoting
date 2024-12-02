@@ -1,4 +1,6 @@
-﻿#define NET6_DI_TEST
+﻿#if false
+
+#define NET6_DI_TEST
 
 using System;
 using System.Collections.Concurrent;
@@ -128,3 +130,4 @@ namespace grpcdotnetServerNet60_DI
 	}
 
 }
+#endif

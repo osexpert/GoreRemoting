@@ -1,4 +1,5 @@
-﻿using GoreRemoting;
+﻿using System.Collections.Concurrent;
+using GoreRemoting;
 using GoreRemoting.Serialization.BinaryFormatter;
 using Grpc.AspNetCore.Server.Model;
 using Grpc.Core;
@@ -24,7 +25,7 @@ namespace grpcdotnetServerNet60
 		/// </summary>
 		/// <param name="args"></param>
 		/// <returns></returns>
-		static async Task Main4(string[] args)
+		static async Task Main(string[] args)
 		{
 			Console.WriteLine("ServerNet60 example");
 
@@ -36,6 +37,7 @@ namespace grpcdotnetServerNet60
 			});
 
 			server.RegisterService<ITestService, TestService>();
+			server.RegisterService<IOtherService, OtherService>();
 
 			var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +55,8 @@ namespace grpcdotnetServerNet60
 				// Small performance benefit to skip checking for security metadata on endpoint
 				c.SuppressCheckForUnhandledSecurityMetadata = true;
 			});
+
+			services.AddSingleton<IDITest>(new DITest());
 
 			services.AddSingleton<GoreRemotingService>();
 			services.TryAddEnumerable(ServiceDescriptor.Singleton(typeof(IServiceMethodProvider<GoreRemotingService>), new GoreRemotingMethodProvider(server)));
@@ -93,14 +97,36 @@ namespace grpcdotnetServerNet60
 			await task;// Task.Delay(-1);
 		}
 
-		public ServiceHandle CreateInstance(Type serviceType, ServerCallContext context)
+		//public ServiceHandle CreateInstance(Type serviceType, ServerCallContext context)
+		//{
+		//	//Guid sessID = (Guid)CallContext.GetData("SessionId");
+		//	Guid sessID = Guid.Parse(context.RequestHeaders.GetValue(Constants.SessionIdHeaderKey)!);
+
+		//	Console.WriteLine("SessID: " + sessID);
+
+		//	// TODO: make the service work with DI
+		//	return new(Activator.CreateInstance(serviceType, sessID) ?? throw new Exception("Can't create instance: " + serviceType), true);
+		//}
+
+		//private static readonly Lazy<ObjectFactory> _objectFactory = new Lazy<ObjectFactory>(static ()
+		//	=> ActivatorUtilities.CreateFactory(typeof(GoreRemotingService), new Type[] { typeof(Guid) }));
+
+		ConcurrentDictionary<Type, ObjectFactory> _factories = new();
+
+		ServiceHandle CreateInstance(Type serviceType, ServerCallContext context)
 		{
 			//Guid sessID = (Guid)CallContext.GetData("SessionId");
-			Guid sessID = Guid.Parse(context.RequestHeaders.GetValue(Constants.SessionIdHeaderKey)!);
+			Guid sessionId = Guid.Parse(context.RequestHeaders.GetValue(Constants.SessionIdHeaderKey)!);
 
-			Console.WriteLine("SessID: " + sessID);
+			Console.WriteLine("SessionId: " + sessionId);
 
-			return new(Activator.CreateInstance(serviceType, sessID) ?? throw new Exception("Can't create instance: " + serviceType), true);
+			var factory = _factories.GetOrAdd(serviceType, st => ActivatorUtilities.CreateFactory(st, new Type[] { typeof(Guid) }));
+
+			var service = factory(context.GetHttpContext().RequestServices, new object?[] { sessionId });// Array.Empty<object>());
+			return new(service, true);
+
+			//return service;
+			//		return Activator.CreateInstance(serviceType, sessID) ?? throw new Exception("Can't create instance: " + serviceType);
 		}
 	}
 

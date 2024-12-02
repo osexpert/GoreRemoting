@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿#if false
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http;
 using System.Reflection;
 using GoreRemoting.RpcMessaging;
@@ -92,3 +93,4 @@ namespace GoreRemoting.AspNetCore.Server
 	}
 
 }
+#endif

@@ -20,23 +20,37 @@ namespace ServerShared
 		void SendFile(string file, [StreamingFunc] Func<int, (byte[], int)> read, Action<string> progress);
 	}
 
+	interface IDITest
+	{
+		string Echo(string str);
+	}
+	class DITest : IDITest
+	{
+		public string Echo(string str)
+		{
+			return "Echo: " + str;
+		}
+	}
+
 	class TestService : ITestService
 	{
 		static ConcurrentDictionary<Guid, MessageGetters> pMessageGetters = new ConcurrentDictionary<Guid, MessageGetters>();
 
 		private Guid pSessionID;
 
-#if NET6_DI_TEST
-		public TestService(RemotingServer<GoreRemotingService> s, Guid sessionID)
+//#if NET6_DI_TEST
+		public TestService(IDITest test, Guid sessionID)
 		{
+			var res = test.Echo("test");
+
 			pSessionID = sessionID;
 		}
-#else
-		public TestService(Guid sessionID)
-		{
-			pSessionID = sessionID;
-		}
-#endif
+//#else
+//		public TestService(Guid sessionID)
+//		{
+//			pSessionID = sessionID;
+//		}
+//#endif
 
 		public void TestProgress(Action<string> progress, Func<string, Task<string>> echo)
 		{
