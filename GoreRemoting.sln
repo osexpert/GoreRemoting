@@ -35,10 +35,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoreRemoting.Serialization.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoreRemoting.Serialization.Protobuf", "GoreRemoting.Serialization.Protobuf\GoreRemoting.Serialization.Protobuf.csproj", "{5C7E2E07-5390-4505-BD83-ED9CB86BC891}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoreRemoting.AspNetCore.Server", "GoreRemoting.AspNetCore.Server\GoreRemoting.AspNetCore.Server.csproj", "{C1FD532E-3D86-487B-911D-0E29094710B4}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoreRemoting.ClientFactory", "GoreRemoting.ClientFactory\GoreRemoting.ClientFactory.csproj", "{75D4BB9E-97CF-49C8-80AD-F94381D17C4F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -105,14 +101,6 @@ Global
 		{5C7E2E07-5390-4505-BD83-ED9CB86BC891}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C7E2E07-5390-4505-BD83-ED9CB86BC891}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C7E2E07-5390-4505-BD83-ED9CB86BC891}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C1FD532E-3D86-487B-911D-0E29094710B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C1FD532E-3D86-487B-911D-0E29094710B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C1FD532E-3D86-487B-911D-0E29094710B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C1FD532E-3D86-487B-911D-0E29094710B4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{75D4BB9E-97CF-49C8-80AD-F94381D17C4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{75D4BB9E-97CF-49C8-80AD-F94381D17C4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{75D4BB9E-97CF-49C8-80AD-F94381D17C4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{75D4BB9E-97CF-49C8-80AD-F94381D17C4F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
