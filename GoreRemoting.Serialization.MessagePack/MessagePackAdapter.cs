@@ -10,13 +10,19 @@ namespace GoreRemoting.Serialization.MessagePack
 
 		public MessagePackSerializerOptions? Options { get; set; } = CreateDefaultOptions();
 
-		private static MessagePackSerializerOptions CreateDefaultOptions()
+		public static MessagePackSerializerOptions CreateDefaultOptions()
 		{
-			return new MessagePackSerializerOptions(
-				CompositeResolver.Create(
-					NativeDateTimeResolver.Instance,
-					MessagePackSerializerOptions.Standard.Resolver)
-					);
+			return CreateDefaultOptions(new IFormatterResolver[]
+			{
+				NativeDateTimeResolver.Instance,
+				StandardResolver.Instance
+			});
+		}
+
+		public static MessagePackSerializerOptions CreateDefaultOptions(params IFormatterResolver[] resolvers)
+		{
+			var compositeResolver = CompositeResolver.Create(resolvers);
+			return MessagePackSerializerOptions.Standard.WithResolver(new DedupingResolver(compositeResolver));
 		}
 
 		public void Serialize(Stream stream, object?[] graph, Type[] types)
@@ -77,7 +83,6 @@ namespace GoreRemoting.Serialization.MessagePack
 			};
 			return type;
 		}
-
 	}
 
 }

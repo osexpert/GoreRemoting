@@ -144,7 +144,7 @@ namespace GoreRemoting.Tests
 				Assert.AreEqual(1, result);
 #endif
 			else if (ser == enSerializer.MessagePack)
-				Assert.AreEqual(4, result);
+				Assert.AreEqual(1, result);
 			else if (ser == enSerializer.Protobuf)
 				Assert.AreEqual(4, result);
 			else
