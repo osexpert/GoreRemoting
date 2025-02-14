@@ -13,9 +13,17 @@ namespace GoreRemoting.Serialization.Json
 	{
 		public string Name => "Json";
 
-		public JsonSerializerOptions Options { get; } = CreateDefaultOptions();
+		public JsonSerializerOptions Options { get; }
 
-		private static JsonSerializerOptions CreateDefaultOptions()
+		public JsonAdapter() : this(CreateDefaultOptions())
+		{ }
+
+		public JsonAdapter(JsonSerializerOptions options)
+		{
+			Options = options;			
+		}
+
+		public static JsonSerializerOptions CreateDefaultOptions()
 		{
 			return new JsonSerializerOptions()
 			{

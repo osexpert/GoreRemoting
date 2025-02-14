@@ -7,14 +7,22 @@ namespace GoreRemoting.Serialization.MemoryPack
 	{
 		public string Name => "MemoryPack";
 
-		public MemoryPackSerializerOptions? Options { get; set; }
+		public MemoryPackSerializerOptions? Options { get; }
+
+		public MemoryPackAdapter() : this(null)
+		{ }
+
+		public MemoryPackAdapter(MemoryPackSerializerOptions? options)
+		{
+			Options = options;
+		}
 
 		public void Serialize(Stream stream, object?[] graph, Type[] types)
 		{
 			if (types.Length > 1)
 			{
 				var t = GetArgsType(types);
-				var args = (IArgs)Activator.CreateInstance(t);
+				var args = (IArgs)(Activator.CreateInstance(t) ?? throw new Exception($"Activator.CreateInstance returned null for type {t}"));
 				args.Set(graph);
 				object o = args;
 				MemoryPackSerializer.SerializeAsync(t, stream, o, Options).GetResult();

@@ -28,12 +28,17 @@ namespace GoreRemoting.Serialization.BinaryFormatter
 		public BinaryFormatterAdapter(bool netCore = false)
 #endif
 		{
-			Options = GetOptions(netCore);
+			Options = CreateDefaultOptions(netCore);
+		}
+
+		public BinaryFormatterAdapter(BinarySerializerOptions options)
+		{
+			Options = options;
 		}
 
 		public ExceptionStrategy ExceptionStrategy { get; set; } = ExceptionStrategy.BinaryFormatter;
 
-		private static BinarySerializerOptions GetOptions(bool netCore)
+		public static BinarySerializerOptions CreateDefaultOptions(bool netCore)
 		{
 			var opt = new BinarySerializerOptions(netCore);
 

@@ -11,19 +11,50 @@ namespace GoreRemoting.Serialization.Protobuf
 
 		private static object _lock = new();
 
-		public ProtobufAdapter(bool addSurrogates = true)
-		{
-			if (addSurrogates)
-			{
-				lock (_lock)
-				{
-					if (!RuntimeTypeModel.Default.IsDefined(typeof(Version)))
-						RuntimeTypeModel.Default.Add(typeof(Version), false).SetSurrogate(typeof(VersionSurrogate));
+		public ProtobufAdapter() : this(GetDefaultSurrogates())
+		{ }
 
-					if (!RuntimeTypeModel.Default.IsDefined(typeof(DateTimeOffset)))
-						RuntimeTypeModel.Default.Add(typeof(DateTimeOffset), false).SetSurrogate(typeof(DateTimeOffsetSurrogate));
+		public ProtobufAdapter(IEnumerable<Surrogate>? surrogates)
+		{
+			if (surrogates != null && surrogates.Any())
+			{
+				foreach (var surrogate in surrogates)
+				{
+					lock (_lock)
+					{
+						if (!RuntimeTypeModel.Default.IsDefined(surrogate.Type))
+							RuntimeTypeModel.Default.Add(surrogate.Type, false).SetSurrogate(surrogate.SurrogateType);
+					}
 				}
 			}
+		}
+
+		public class Surrogate
+		{
+			/// <summary>
+			/// The type handled by the [ProtoConverter]'s
+			/// </summary>
+			public Type Type { get; private set; }
+
+			/// <summary>
+			/// The class that has a [ProtoContract]
+			/// </summary>
+			public Type SurrogateType { get; private set; }
+
+			public Surrogate(Type type, Type surrogateType)
+			{
+				Type = type;
+				SurrogateType = surrogateType;
+			}
+		}
+
+		public static Surrogate[] GetDefaultSurrogates()
+		{
+			return
+			[
+				new Surrogate(typeof(Version), typeof(VersionSurrogate)),
+				new Surrogate(typeof(DateTimeOffset), typeof(DateTimeOffsetSurrogate))
+			];
 		}
 
 		public void Serialize(Stream stream, object?[] graph, Type[] types)

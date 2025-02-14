@@ -8,15 +8,28 @@ namespace GoreRemoting.Serialization.MessagePack
 	{
 		public string Name => "MessagePack";
 
-		public MessagePackSerializerOptions? Options { get; set; } = CreateDefaultOptions();
+		public MessagePackSerializerOptions? Options { get; }
+
+		public MessagePackAdapter() : this(CreateDefaultOptions())
+		{ }
+
+		public MessagePackAdapter(MessagePackSerializerOptions? options)
+		{
+			Options = options;
+		}
 
 		public static MessagePackSerializerOptions CreateDefaultOptions()
 		{
-			return CreateDefaultOptions(new IFormatterResolver[]
+			return CreateDefaultOptions(GetDefaultResolvers());
+		}
+
+		public static IFormatterResolver[] GetDefaultResolvers()
+		{
+			return new IFormatterResolver[]
 			{
 				NativeDateTimeResolver.Instance,
 				StandardResolver.Instance
-			});
+			};
 		}
 
 		public static MessagePackSerializerOptions CreateDefaultOptions(params IFormatterResolver[] resolvers)
