@@ -1,164 +1,163 @@
 ﻿using System.Reflection;
 
-namespace GoreRemoting.RpcMessaging
+namespace GoreRemoting.RpcMessaging;
+
+/// <summary>
+/// Method call message builder component.
+/// </summary>
+public class MethodCallMessageBuilder //: IMethodCallMessageBuilder
 {
 	/// <summary>
-	/// Method call message builder component.
+	/// Builds a new method call message.
 	/// </summary>
-	public class MethodCallMessageBuilder //: IMethodCallMessageBuilder
+	/// <param name="targetMethod">Target method information</param>
+	/// <param name="args">Array of arguments, which should passed a parameters</param>
+	/// <returns>The created method call message</returns>
+	public MethodCallMessage BuildMethodCallMessage(
+		MethodInfo targetMethod,
+		object?[] args
+		)
 	{
-		/// <summary>
-		/// Builds a new method call message.
-		/// </summary>
-		/// <param name="targetMethod">Target method information</param>
-		/// <param name="args">Array of arguments, which should passed a parameters</param>
-		/// <returns>The created method call message</returns>
-		public MethodCallMessage BuildMethodCallMessage(
-			MethodInfo targetMethod,
-			object?[] args
-			)
+		if (targetMethod == null)
+			throw new ArgumentNullException(nameof(targetMethod));
+
+		//args ??= new object[0];
+
+		var message = new MethodCallMessage()
 		{
-			if (targetMethod == null)
-				throw new ArgumentNullException(nameof(targetMethod));
+			Arguments = BuildMethodParameterInfos(
+				targetMethod,
+				 args
+				).ToArray(),
+		};
 
-			//args ??= new object[0];
+		message.CallContextSnapshot = CallContext.GetChangesSnapshot();
 
-			var message = new MethodCallMessage()
-			{
-				Arguments = BuildMethodParameterInfos(
-					targetMethod,
-					 args
-					).ToArray(),
-			};
+		return message;
+	}
 
-			message.CallContextSnapshot = CallContext.GetChangesSnapshot();
+	/// <summary>
+	/// Builds method call parameter messages from arguments for a specified target method.
+	/// </summary>
+	/// <param name="targetMethod">Target method information</param>
+	/// <param name="args">Array of arguments, which should passed a parameters</param>
+	/// <returns>Enumerable of method call parameter messages</returns>
+	public IEnumerable<MethodCallArgument> BuildMethodParameterInfos(
+		MethodInfo targetMethod,
+		object?[] args
+		)
+	{
+		var parameterInfos = targetMethod.GetParameters();
 
-			return message;
-		}
+		// TODO: throw if more args than params?
+		if (args.Length != parameterInfos.Length)
+			throw new Exception("args vs params count mismatch");
 
-		/// <summary>
-		/// Builds method call parameter messages from arguments for a specified target method.
-		/// </summary>
-		/// <param name="targetMethod">Target method information</param>
-		/// <param name="args">Array of arguments, which should passed a parameters</param>
-		/// <returns>Enumerable of method call parameter messages</returns>
-		public IEnumerable<MethodCallArgument> BuildMethodParameterInfos(
-			MethodInfo targetMethod,
-			object?[] args
-			)
+		for (var i = 0; i < parameterInfos.Length; i++)
 		{
-			var parameterInfos = targetMethod.GetParameters();
+			var arg = args[i];
+			var parameterInfo = parameterInfos[i];
 
-			// TODO: throw if more args than params?
-			if (args.Length != parameterInfos.Length)
-				throw new Exception("args vs params count mismatch");
+			if (parameterInfo.IsRefParameterForReal())
+				throw new NotSupportedException("ref parameter not supported");
 
-			for (var i = 0; i < parameterInfos.Length; i++)
-			{
-				var arg = args[i];
-				var parameterInfo = parameterInfos[i];
+			//var useParamArray =
+			//	args.Length > parameterInfos.Length && // more args than params? not possible...unless...BSON?
+			//	i == parameterInfos.Length - 1 &&
+			//	parameterInfos[i].GetCustomAttribute<ParamArrayAttribute>() != null;
 
-				if (parameterInfo.IsRefParameterForReal())
-					throw new NotSupportedException("ref parameter not supported");
+			//var paramArrayValues = new List<object>();
 
-				//var useParamArray =
-				//	args.Length > parameterInfos.Length && // more args than params? not possible...unless...BSON?
-				//	i == parameterInfos.Length - 1 &&
-				//	parameterInfos[i].GetCustomAttribute<ParamArrayAttribute>() != null;
+			//if (useParamArray)
+			//{
+			//	// will never happen for binary formatter?
+			//	for (var j = i; j < args.Length; j++)
+			//	{
+			//		paramArrayValues.Add(args[j]);
+			//	}
+			//}
 
-				//var paramArrayValues = new List<object>();
+			//object parameterValue =	useParamArray ? paramArrayValues.ToArray() : arg;
 
-				//if (useParamArray)
-				//{
-				//	// will never happen for binary formatter?
-				//	for (var j = i; j < args.Length; j++)
-				//	{
-				//		paramArrayValues.Add(args[j]);
-				//	}
-				//}
-
-				//object parameterValue =	useParamArray ? paramArrayValues.ToArray() : arg;
-
-				yield return
-					new MethodCallArgument()
-					{
-						Position = i,
-						ParameterName = parameterInfo.Name,
-						Value = arg,
-						IsOut = parameterInfo.IsOutParameterForReal()
-					};
-			}
-		}
-
-		/// <summary>
-		/// Builds a new method call result message.
-		/// </summary>
-		/// <param name="method">Method information of the called method</param>
-		/// <param name="args">Arguments</param>
-		/// <param name="returnValue">Returned return value</param>
-		/// <returns>Method call result message</returns>
-		public MethodResultMessage BuildMethodCallResultMessage(
-			MethodInfo method,
-			object?[] args,
-			object? returnValue
-			)
-		{
-			var parameterInfos = method.GetParameters();
-
-			bool voidReturn = 
-				method.ReturnType == typeof(void)
-				|| method.ReturnType == typeof(Task) 
-				|| method.ReturnType == typeof(ValueTask);
-
-			var message = new MethodResultMessage()
-			{
-				// fixme: ctor
-				Value = returnValue,
-				ResultType = voidReturn ? MethodResultType.ResultVoid : MethodResultType.ResultValue
-			};
-
-			var outArguments = new List<MethodOutArgument>();
-
-			for (var i = 0; i < args.Length; i++)
-			{
-				var arg = args[i];
-				var parameterInfo = parameterInfos[i];
-
-				if (parameterInfo.IsOutParameterForReal())
+			yield return
+				new MethodCallArgument()
 				{
-					outArguments.Add(
-						new MethodOutArgument()
-						{
-							ParameterName = parameterInfo.Name,
-							Position = i,
-							OutValue = arg // NOT
-						});
-				}
+					Position = i,
+					ParameterName = parameterInfo.Name,
+					Value = arg,
+					IsOut = parameterInfo.IsOutParameterForReal()
+				};
+		}
+	}
+
+	/// <summary>
+	/// Builds a new method call result message.
+	/// </summary>
+	/// <param name="method">Method information of the called method</param>
+	/// <param name="args">Arguments</param>
+	/// <param name="returnValue">Returned return value</param>
+	/// <returns>Method call result message</returns>
+	public MethodResultMessage BuildMethodCallResultMessage(
+		MethodInfo method,
+		object?[] args,
+		object? returnValue
+		)
+	{
+		var parameterInfos = method.GetParameters();
+
+		bool voidReturn = 
+			method.ReturnType == typeof(void)
+			|| method.ReturnType == typeof(Task) 
+			|| method.ReturnType == typeof(ValueTask);
+
+		var message = new MethodResultMessage()
+		{
+			// fixme: ctor
+			Value = returnValue,
+			ResultType = voidReturn ? MethodResultType.ResultVoid : MethodResultType.ResultValue
+		};
+
+		var outArguments = new List<MethodOutArgument>();
+
+		for (var i = 0; i < args.Length; i++)
+		{
+			var arg = args[i];
+			var parameterInfo = parameterInfos[i];
+
+			if (parameterInfo.IsOutParameterForReal())
+			{
+				outArguments.Add(
+					new MethodOutArgument()
+					{
+						ParameterName = parameterInfo.Name,
+						Position = i,
+						OutValue = arg // NOT
+					});
 			}
-
-			message.OutArguments = outArguments.ToArray();
-
-			message.CallContextSnapshot = CallContext.GetChangesSnapshot();
-
-			return message;
 		}
 
+		message.OutArguments = outArguments.ToArray();
+
+		message.CallContextSnapshot = CallContext.GetChangesSnapshot();
+
+		return message;
 	}
 
-	public static class ParameterInfoExtensions
-	{
-		/// <summary>
-		/// https://stackoverflow.com/a/38110036/2671330
-		/// </summary>
-		/// <param name="pi"></param>
-		/// <returns></returns>
-		public static bool IsRefParameterForReal(this ParameterInfo pi) => pi.ParameterType.IsByRef && !pi.IsOut;
+}
 
-		/// <summary>
-		/// https://stackoverflow.com/a/38110036/2671330
-		/// </summary>
-		/// <param name="pi"></param>
-		/// <returns></returns>
-		public static bool IsOutParameterForReal(this ParameterInfo pi) => pi.ParameterType.IsByRef && pi.IsOut;
-	}
+public static class ParameterInfoExtensions
+{
+	/// <summary>
+	/// https://stackoverflow.com/a/38110036/2671330
+	/// </summary>
+	/// <param name="pi"></param>
+	/// <returns></returns>
+	public static bool IsRefParameterForReal(this ParameterInfo pi) => pi.ParameterType.IsByRef && !pi.IsOut;
+
+	/// <summary>
+	/// https://stackoverflow.com/a/38110036/2671330
+	/// </summary>
+	/// <param name="pi"></param>
+	/// <returns></returns>
+	public static bool IsOutParameterForReal(this ParameterInfo pi) => pi.ParameterType.IsByRef && pi.IsOut;
 }

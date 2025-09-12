@@ -1,7 +1,6 @@
-namespace GoreRemoting.Tests.Tools
+namespace GoreRemoting.Tests.Tools;
+
+public interface IFactoryService
 {
-	public interface IFactoryService
-	{
-		ITestService GetTestService();
-	}
+	ITestService GetTestService();
 }

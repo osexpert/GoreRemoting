@@ -1,35 +1,33 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 
-namespace GoreRemoting
-{
+namespace GoreRemoting;
+
 #if NETSTANDARD2_0
-	public static class ChannelReaderExtensions
+public static class ChannelReaderExtensions
+{
+	//
+	// Summary:
+	//     Creates an System.Collections.Generic.IAsyncEnumerable`1 that enables reading
+	//     all of the data from the channel.
+	//
+	// Parameters:
+	//   cancellationToken:
+	//     The cancellation token to use to cancel the enumeration. If data is immediately
+	//     ready for reading, then that data may be yielded even after cancellation has
+	//     been requested.
+	//
+	// Returns:
+	//     The created async enumerable.
+	public static async IAsyncEnumerable<T> ReadAllAsync<T>(this ChannelReader<T> cr, [EnumeratorCancellation] CancellationToken cancellationToken = default(CancellationToken))
 	{
-		//
-		// Summary:
-		//     Creates an System.Collections.Generic.IAsyncEnumerable`1 that enables reading
-		//     all of the data from the channel.
-		//
-		// Parameters:
-		//   cancellationToken:
-		//     The cancellation token to use to cancel the enumeration. If data is immediately
-		//     ready for reading, then that data may be yielded even after cancellation has
-		//     been requested.
-		//
-		// Returns:
-		//     The created async enumerable.
-		public static async IAsyncEnumerable<T> ReadAllAsync<T>(this ChannelReader<T> cr, [EnumeratorCancellation] CancellationToken cancellationToken = default(CancellationToken))
+		while (await cr.WaitToReadAsync(cancellationToken).ConfigureAwait(continueOnCapturedContext: false))
 		{
-			while (await cr.WaitToReadAsync(cancellationToken).ConfigureAwait(continueOnCapturedContext: false))
+			while (cr.TryRead(out T item))
 			{
-				T item;
-				while (cr.TryRead(out item))
-				{
-					yield return item;
-				}
+				yield return item;
 			}
 		}
 	}
-#endif
 }
+#endif

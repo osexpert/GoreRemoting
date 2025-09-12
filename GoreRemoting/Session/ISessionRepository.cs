@@ -1,36 +1,35 @@
 using System;
 using System.Collections.Generic;
 
-namespace GoreRemoting
+namespace GoreRemoting;
+
+/// <summary>
+/// Interface to be implemented by CoreRemoting session repository classes.
+/// </summary>
+public interface ISessionRepository : IDisposable
 {
 	/// <summary>
-	/// Interface to be implemented by CoreRemoting session repository classes.
+	/// Creates a new session.
 	/// </summary>
-	public interface ISessionRepository : IDisposable
-	{
-		/// <summary>
-		/// Creates a new session.
-		/// </summary>
-		/// <param name="server">Server instance</param>
-		/// <returns>The newly created session</returns>
-		Session CreateSession(RemotingServer server);
+	/// <param name="server">Server instance</param>
+	/// <returns>The newly created session</returns>
+	Session CreateSession(RemotingServer server);
 
-		/// <summary>
-		/// Gets a specified session by its ID.
-		/// </summary>
-		/// <param name="sessionId">Session ID</param>
-		/// <returns>The session correlating to the specified session ID</returns>
-		Session GetSession(Guid sessionId);
+	/// <summary>
+	/// Gets a specified session by its ID.
+	/// </summary>
+	/// <param name="sessionId">Session ID</param>
+	/// <returns>The session correlating to the specified session ID</returns>
+	Session GetSession(Guid sessionId);
 
-		/// <summary>
-		/// Gets a list of all sessions.
-		/// </summary>
-		IEnumerable<Session> Sessions { get; }
+	/// <summary>
+	/// Gets a list of all sessions.
+	/// </summary>
+	IEnumerable<Session> Sessions { get; }
 
-		/// <summary>
-		/// Removes a specified session by its ID.
-		/// </summary>
-		/// <param name="sessionId">Session ID</param>
-		void RemoveSession(Guid sessionId);
-	}
+	/// <summary>
+	/// Removes a specified session by its ID.
+	/// </summary>
+	/// <param name="sessionId">Session ID</param>
+	void RemoveSession(Guid sessionId);
 }

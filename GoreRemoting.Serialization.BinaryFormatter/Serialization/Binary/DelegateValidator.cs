@@ -5,80 +5,79 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace GoreRemoting.Serialization.BinaryFormatter
+namespace GoreRemoting.Serialization.BinaryFormatter;
+
+using System;
+using System.Collections.Generic;
+
+/// <summary>
+/// Blacklist-based delegate validator.
+/// </summary>
+public class DelegateValidator : IDelegateValidator
 {
-	using System;
-	using System.Collections.Generic;
+	/// <summary>
+	/// The default blacklist of the namespaces.
+	/// </summary>
+	private static readonly string[] DefaultBlacklistedNamespaces = new[]
+	{
+		"System.IO",
+		"System.Diagnostics",
+		"System.Management",
+		"System.Reflection",
+		"System.Configuration",
+		"System.Security",
+		"System.Web",
+		"System.ServiceModel",
+		"System.Activities",
+		"System.Workflow",
+	};
 
 	/// <summary>
-	/// Blacklist-based delegate validator.
+	/// Initializes a new instance of the <see cref="DelegateValidator"/> class.
 	/// </summary>
-	public class DelegateValidator : IDelegateValidator
+	/// <param name="blacklistedNamespaces">Namespace blacklist.</param>
+	public DelegateValidator(params string[] blacklistedNamespaces)
 	{
-		/// <summary>
-		/// The default blacklist of the namespaces.
-		/// </summary>
-		private static readonly string[] DefaultBlacklistedNamespaces = new[]
+		if (blacklistedNamespaces == null || blacklistedNamespaces.Length == 0)
 		{
-			"System.IO",
-			"System.Diagnostics",
-			"System.Management",
-			"System.Reflection",
-			"System.Configuration",
-			"System.Security",
-			"System.Web",
-			"System.ServiceModel",
-			"System.Activities",
-			"System.Workflow",
-		};
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="DelegateValidator"/> class.
-		/// </summary>
-		/// <param name="blacklistedNamespaces">Namespace blacklist.</param>
-		public DelegateValidator(params string[] blacklistedNamespaces)
-		{
-			if (blacklistedNamespaces == null || blacklistedNamespaces.Length == 0)
-			{
-				blacklistedNamespaces = DefaultBlacklistedNamespaces;
-			}
-
-			BlacklistedNamespaces = new HashSet<string>(blacklistedNamespaces, StringComparer.OrdinalIgnoreCase);
+			blacklistedNamespaces = DefaultBlacklistedNamespaces;
 		}
 
-		/// <summary>
-		/// Gets or sets the default <see cref="IDelegateValidator"/> instance.
-		/// </summary>
-		public static IDelegateValidator Default { get; set; } = new DelegateValidator();
+		BlacklistedNamespaces = new HashSet<string>(blacklistedNamespaces, StringComparer.OrdinalIgnoreCase);
+	}
 
-		private HashSet<string> BlacklistedNamespaces { get; }
+	/// <summary>
+	/// Gets or sets the default <see cref="IDelegateValidator"/> instance.
+	/// </summary>
+	public static IDelegateValidator Default { get; set; } = new DelegateValidator();
 
-		/// <summary>
-		/// Validates the given delegates.
-		/// Throws exceptions for methods defined in the blacklisted namespaces.
-		/// </summary>
-		/// <param name="del">The delegate to validate.</param>
-		[SuppressMessage("ReSharper", "PossibleNullReferenceException")]
-		public void ValidateDelegate(Delegate del)
+	private HashSet<string> BlacklistedNamespaces { get; }
+
+	/// <summary>
+	/// Validates the given delegates.
+	/// Throws exceptions for methods defined in the blacklisted namespaces.
+	/// </summary>
+	/// <param name="del">The delegate to validate.</param>
+	[SuppressMessage("ReSharper", "PossibleNullReferenceException")]
+	public void ValidateDelegate(Delegate del)
+	{
+		if (del == null)
 		{
-			if (del == null)
+			return;
+		}
+
+		foreach (var d in del.GetInvocationList())
+		{
+			if (d == null)
 			{
-				return;
+				continue;
 			}
 
-			foreach (var d in del.GetInvocationList())
+			var type = d.Method.DeclaringType;
+			if (BlacklistedNamespaces.Contains(type.Namespace))
 			{
-				if (d == null)
-				{
-					continue;
-				}
-
-				var type = d.Method.DeclaringType;
-				if (BlacklistedNamespaces.Contains(type.Namespace))
-				{
-					var msg = $"Deserializing delegates for {type.FullName} may be unsafe.";
-					throw new UnsafeDeserializationException(msg);
-				}
+				var msg = $"Deserializing delegates for {type.FullName} may be unsafe.";
+				throw new UnsafeDeserializationException(msg);
 			}
 		}
 	}

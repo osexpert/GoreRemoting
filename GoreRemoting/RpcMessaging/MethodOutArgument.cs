@@ -1,50 +1,49 @@
-﻿namespace GoreRemoting.RpcMessaging
+﻿namespace GoreRemoting.RpcMessaging;
+
+/// <summary>
+/// Serializable message that describes an out parameter.
+/// </summary>
+public class MethodOutArgument : IGoreializable
 {
-	/// <summary>
-	/// Serializable message that describes an out parameter.
-	/// </summary>
-	public class MethodOutArgument : IGoreializable
+	public MethodOutArgument()
 	{
-		public MethodOutArgument()
-		{
-		}
+	}
 
-		public MethodOutArgument(GoreBinaryReader r)
-		{
-			Deserialize(r);
-		}
+	public MethodOutArgument(GoreBinaryReader r)
+	{
+		Deserialize(r);
+	}
 
-		/// <summary>
-		/// Gets or sets the name of the parameter.
-		/// </summary>
-		public string ParameterName { get; set; }
+	/// <summary>
+	/// Gets or sets the name of the parameter.
+	/// </summary>
+	public string ParameterName { get; set; }
 
 
-		public int Position { get; set; }
+	public int Position { get; set; }
 
 
-		/// <summary>
-		/// Gets or sets the out value of the parameter.
-		/// </summary>
-		public object? OutValue { get; set; }
+	/// <summary>
+	/// Gets or sets the out value of the parameter.
+	/// </summary>
+	public object? OutValue { get; set; }
 
-		public void Serialize(GoreBinaryWriter w, Stack<object?> st)
-		{
-			w.Write(ParameterName);
-			w.WriteVarInt(Position);
+	public void Serialize(GoreBinaryWriter w, Stack<object?> st)
+	{
+		w.Write(ParameterName);
+		w.WriteVarInt(Position);
 
-			st.Push(OutValue);
-		}
+		st.Push(OutValue);
+	}
 
-		public void Deserialize(GoreBinaryReader r)
-		{
-			ParameterName = r.ReadString();
-			Position = r.ReadVarInt();
-		}
+	public void Deserialize(GoreBinaryReader r)
+	{
+		ParameterName = r.ReadString();
+		Position = r.ReadVarInt();
+	}
 
-		public void Deserialize(Stack<object?> st)
-		{
-			OutValue = st.Pop();
-		}
+	public void Deserialize(Stack<object?> st)
+	{
+		OutValue = st.Pop();
 	}
 }

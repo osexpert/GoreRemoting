@@ -5,18 +5,17 @@ using MemoryPack;
 #endif
 using ProtoBuf;
 
-namespace GoreRemoting.Tests.ExternalTypes
-{
-	[DataContract]
-	[Serializable]
+namespace GoreRemoting.Tests.ExternalTypes;
+
+[DataContract]
+[Serializable]
 #if NET6_0_OR_GREATER
-	[MemoryPackable]
+[MemoryPackable]
 #endif
-	[ProtoContract]
-	public partial class DataClass
-	{
-		[DataMember]
-		[ProtoMember(1)]
-		public int Value { get; set; }
-	}
+[ProtoContract]
+public partial class DataClass
+{
+	[DataMember]
+	[ProtoMember(1)]
+	public int Value { get; set; }
 }

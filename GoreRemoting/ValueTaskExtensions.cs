@@ -1,85 +1,80 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace GoreRemoting;
 
-namespace GoreRemoting
+public static class ValueTaskExtensions
 {
-	public static class ValueTaskExtensions
+	public static void GetResult(this ValueTask valueTask)
 	{
-		public static void GetResult(this ValueTask valueTask)
+		if (valueTask.IsCompleted)
 		{
-			if (valueTask.IsCompleted)
+			if (valueTask.IsCompletedSuccessfully)
 			{
-				if (valueTask.IsCompletedSuccessfully)
-				{
-					// noop
-				}
-				else
-				{
-					valueTask.GetAwaiter().GetResult();
-				}
+				// noop
 			}
 			else
 			{
-				valueTask.AsTask().GetAwaiter().GetResult();
+				valueTask.GetAwaiter().GetResult();
 			}
 		}
-
-		public static T GetResult<T>(this ValueTask<T> valueTask)
+		else
 		{
-			if (valueTask.IsCompleted)
+			valueTask.AsTask().GetAwaiter().GetResult();
+		}
+	}
+
+	public static T GetResult<T>(this ValueTask<T> valueTask)
+	{
+		if (valueTask.IsCompleted)
+		{
+			if (valueTask.IsCompletedSuccessfully)
 			{
-				if (valueTask.IsCompletedSuccessfully)
-				{
-					return valueTask.Result;
-				}
-				else
-				{
-					return valueTask.GetAwaiter().GetResult();
-				}
+				return valueTask.Result;
 			}
 			else
 			{
-				return valueTask.AsTask().GetAwaiter().GetResult();
+				return valueTask.GetAwaiter().GetResult();
 			}
 		}
-
-		public static void Discard(this ValueTask valueTask)
+		else
 		{
-			if (valueTask.IsCompleted)
+			return valueTask.AsTask().GetAwaiter().GetResult();
+		}
+	}
+
+	public static void Discard(this ValueTask valueTask)
+	{
+		if (valueTask.IsCompleted)
+		{
+			if (valueTask.IsCompletedSuccessfully)
 			{
-				if (valueTask.IsCompletedSuccessfully)
-				{
-					// noop
-				}
-				else
-				{
-					valueTask.GetAwaiter().GetResult();
-				}
+				// noop
 			}
 			else
 			{
-				_ = valueTask.AsTask();
+				valueTask.GetAwaiter().GetResult();
 			}
 		}
-
-		public static void Discard<T>(this ValueTask<T> valueTask)
+		else
 		{
-			if (valueTask.IsCompleted)
+			_ = valueTask.AsTask();
+		}
+	}
+
+	public static void Discard<T>(this ValueTask<T> valueTask)
+	{
+		if (valueTask.IsCompleted)
+		{
+			if (valueTask.IsCompletedSuccessfully)
 			{
-				if (valueTask.IsCompletedSuccessfully)
-				{
-					// noop
-				}
-				else
-				{
-					_ = valueTask.GetAwaiter().GetResult();
-				}
+				// noop
 			}
 			else
 			{
-				_ = valueTask.AsTask();
+				_ = valueTask.GetAwaiter().GetResult();
 			}
+		}
+		else
+		{
+			_ = valueTask.AsTask();
 		}
 	}
 }

@@ -1,17 +1,13 @@
-﻿using System;
+﻿namespace GoreRemoting;
 
-namespace GoreRemoting
+[System.AttributeUsage(System.AttributeTargets.Parameter)]
+public class StreamingFuncAttribute : Attribute
 {
-	[System.AttributeUsage(System.AttributeTargets.Parameter)]
-	public class StreamingFuncAttribute : Attribute
-	{
-		public StreamingFuncAttribute()
-		{
-		}
-	}
-
-	public class StreamingDoneException : Exception
+	public StreamingFuncAttribute()
 	{
 	}
+}
 
+public class StreamingDoneException : Exception
+{
 }

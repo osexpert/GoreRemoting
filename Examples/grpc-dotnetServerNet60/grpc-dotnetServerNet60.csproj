@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <DefineConstants>NET6_DI_TEST</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

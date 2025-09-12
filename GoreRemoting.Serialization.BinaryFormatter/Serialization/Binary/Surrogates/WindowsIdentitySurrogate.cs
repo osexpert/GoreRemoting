@@ -5,89 +5,88 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace GoreRemoting.Serialization.BinaryFormatter
+namespace GoreRemoting.Serialization.BinaryFormatter;
+
+using System;
+using System.IO;
+using System.Reflection;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.Permissions;
+using System.Security.Principal;
+
+/// <summary>
+/// Deserialization surrogate for the WindowsIdentity class.
+/// </summary>
+internal class WindowsIdentitySurrogate : ISurrogate
 {
-	using System;
-	using System.IO;
-	using System.Reflection;
-	using System.Runtime.Serialization;
-	using System.Runtime.Serialization.Formatters.Binary;
-	using System.Security.Permissions;
-	using System.Security.Principal;
+	BinarySerializerOptions _options;
 
-	/// <summary>
-	/// Deserialization surrogate for the WindowsIdentity class.
-	/// </summary>
-	internal class WindowsIdentitySurrogate : ISurrogate
+	public WindowsIdentitySurrogate(BinarySerializerOptions options)
 	{
-		BinarySerializerOptions _options;
+		_options = options;
+	}
 
-		public WindowsIdentitySurrogate(BinarySerializerOptions options)
+	private static ConstructorInfo Constructor { get; } = typeof(WindowsIdentity).GetConstructor(
+		BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public,
+		null,
+		new[] { typeof(SerializationInfo), typeof(StreamingContext) },
+		null);
+
+	public bool Handles(Type type, StreamingContext context)
+	{
+		bool handles = type == typeof(WindowsIdentity);
+		return handles;
+	}
+
+	/// <inheritdoc cref="ISerializationSurrogate" />
+	[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
+	[SuppressMessage("ReSharper", "PossibleNullReferenceException")]
+	public void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
+	{
+		var ds = (ISerializable)obj;
+		ds.GetObjectData(info, context);
+	}
+
+	/// <inheritdoc cref="ISerializationSurrogate" />
+	[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
+	public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
+	{
+		Validate(info, context);
+
+		// discard obj
+		var result = Constructor.Invoke(new object[] { info, context });
+		return result;
+	}
+
+	[SuppressMessage("ReSharper", "UnusedParameter.Local")]
+	private void Validate(SerializationInfo info, StreamingContext context)
+	{
+		// check the serialized data using a guarded BinaryFormatter
+		var fmt = new BinaryFormatter().Safe(_options);
+
+		var e = info.GetEnumerator();
+		while (e.MoveNext())
 		{
-			_options = options;
-		}
-
-		private static ConstructorInfo Constructor { get; } = typeof(WindowsIdentity).GetConstructor(
-			BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public,
-			null,
-			new[] { typeof(SerializationInfo), typeof(StreamingContext) },
-			null);
-
-		public bool Handles(Type type, StreamingContext context)
-		{
-			bool handles = type == typeof(WindowsIdentity);
-			return handles;
-		}
-
-		/// <inheritdoc cref="ISerializationSurrogate" />
-		[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
-		[SuppressMessage("ReSharper", "PossibleNullReferenceException")]
-		public void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
-		{
-			var ds = (ISerializable)obj;
-			ds.GetObjectData(info, context);
-		}
-
-		/// <inheritdoc cref="ISerializationSurrogate" />
-		[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
-		public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
-		{
-			Validate(info, context);
-
-			// discard obj
-			var result = Constructor.Invoke(new object[] { info, context });
-			return result;
-		}
-
-		[SuppressMessage("ReSharper", "UnusedParameter.Local")]
-		private void Validate(SerializationInfo info, StreamingContext context)
-		{
-			// check the serialized data using a guarded BinaryFormatter
-			var fmt = new BinaryFormatter().Safe(_options);
-
-			var e = info.GetEnumerator();
-			while (e.MoveNext())
+			switch (e.Name)
 			{
-				switch (e.Name)
-				{
-					case "System.Security.ClaimsIdentity.actor":
-					case "System.Security.ClaimsIdentity.claims":
-					case "System.Security.ClaimsIdentity.bootstrapContext":
-						var base64 = info.GetString(e.Name);
-						if (string.IsNullOrEmpty(base64))
-						{
-							continue;
-						}
+				case "System.Security.ClaimsIdentity.actor":
+				case "System.Security.ClaimsIdentity.claims":
+				case "System.Security.ClaimsIdentity.bootstrapContext":
+					var base64 = info.GetString(e.Name);
+					if (string.IsNullOrEmpty(base64))
+					{
+						continue;
+					}
 
-						// safe BinaryFormatter will throw on malicious payload
-						var buffer = Convert.FromBase64String(base64);
-						using (var ms = new MemoryStream(buffer))
-						{
-							fmt.Deserialize(ms);
-						}
+					// safe BinaryFormatter will throw on malicious payload
+					var buffer = Convert.FromBase64String(base64);
+					using (var ms = new MemoryStream(buffer))
+					{
+						fmt.Deserialize(ms);
+					}
 
-						break;
-				}
+					break;
 			}
 		}
 	}

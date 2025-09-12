@@ -3,23 +3,22 @@ using System.IO.Compression;
 using Grpc.Net.Compression;
 using K4os.Compression.LZ4.Streams;
 
-namespace GoreRemoting.Compression.Lz4
+namespace GoreRemoting.Compression.Lz4;
+
+/// <summary>
+/// https://github.com/grpc/grpc-dotnet/blob/master/src/Grpc.Net.Common/Compression/GzipCompressionProvider.cs
+/// </summary>
+public class Lz4CompressionProvider : ICompressionProvider
 {
-	/// <summary>
-	/// https://github.com/grpc/grpc-dotnet/blob/master/src/Grpc.Net.Common/Compression/GzipCompressionProvider.cs
-	/// </summary>
-	public class Lz4CompressionProvider : ICompressionProvider
+	public string EncodingName => "lz4";
+
+	public Stream CreateCompressionStream(Stream stream, CompressionLevel? compressionLevel)
 	{
-		public string EncodingName => "lz4";
+		return LZ4Stream.Encode(stream, leaveOpen: true);
+	}
 
-		public Stream CreateCompressionStream(Stream stream, CompressionLevel? compressionLevel)
-		{
-			return LZ4Stream.Encode(stream, leaveOpen: true);
-		}
-
-		public Stream CreateDecompressionStream(Stream stream)
-		{
-			return LZ4Stream.Decode(stream, leaveOpen: true);
-		}
+	public Stream CreateDecompressionStream(Stream stream)
+	{
+		return LZ4Stream.Decode(stream, leaveOpen: true);
 	}
 }

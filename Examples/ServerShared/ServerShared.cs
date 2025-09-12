@@ -5,278 +5,277 @@ using System.Threading;
 using System.Threading.Tasks;
 using GoreRemoting;
 
-namespace ServerShared
+namespace ServerShared;
+
+interface ITestService
 {
-	interface ITestService
-	{
-		string Echo(string s);
-		Task<string> EchoAsync(string s);
+	string Echo(string s);
+	Task<string> EchoAsync(string s);
 
-		void TestProgress(Action<string> progress, Func<string, Task<string>> echo);
-		Task GetMessages(Action<string> message);
-		void CompleteGetMessages();
-		void SendMessage(string mess);
-		void GetFile(string file, Action<byte[], int, int> write, Action<string> progress);
-		void SendFile(string file, [StreamingFunc] Func<int, (byte[], int)> read, Action<string> progress);
+	void TestProgress(Action<string> progress, Func<string, Task<string>> echo);
+	Task GetMessages(Action<string> message);
+	void CompleteGetMessages();
+	void SendMessage(string mess);
+	void GetFile(string file, Action<byte[], int, int> write, Action<string> progress);
+	void SendFile(string file, [StreamingFunc] Func<int, (byte[], int)> read, Action<string> progress);
+}
+
+interface IDITest
+{
+	string Echo(string str);
+}
+class DITest : IDITest
+{
+	public string Echo(string str)
+	{
+		return "Echo: " + str;
 	}
+}
 
-	interface IDITest
+class TestService : ITestService
+{
+	static ConcurrentDictionary<Guid, MessageGetters> pMessageGetters = new ConcurrentDictionary<Guid, MessageGetters>();
+
+	private Guid pSessionID;
+
+#if NET6_DI_TEST
+	public TestService(IDITest test, Guid sessionID)
 	{
-		string Echo(string str);
+		var res = test.Echo("test");
+
+		pSessionID = sessionID;
 	}
-	class DITest : IDITest
+#else
+	public TestService(Guid sessionID)
 	{
-		public string Echo(string str)
-		{
-			return "Echo: " + str;
-		}
+		pSessionID = sessionID;
 	}
+#endif
 
-	class TestService : ITestService
+	public void TestProgress(Action<string> progress, Func<string, Task<string>> echo)
 	{
-		static ConcurrentDictionary<Guid, MessageGetters> pMessageGetters = new ConcurrentDictionary<Guid, MessageGetters>();
-
-		private Guid pSessionID;
-
-//#if NET6_DI_TEST
-		public TestService(IDITest test, Guid sessionID)
+		Task.Run(() =>
 		{
-			var res = test.Echo("test");
-
-			pSessionID = sessionID;
-		}
-//#else
-//		public TestService(Guid sessionID)
-//		{
-//			pSessionID = sessionID;
-//		}
-//#endif
-
-		public void TestProgress(Action<string> progress, Func<string, Task<string>> echo)
+			for (int i = 0; i < 1000; i++)
+				progress("hi");
+		});
+		Task.Run(() =>
 		{
-			Task.Run(() =>
+			for (int i = 0; i < 1000; i++)
+				progress("hello");
+		});
+		Task.Run(() =>
+		{
+			for (int i = 0; i < 1000; i++)
+				progress("bye");
+		});
+
+		Task.Run(async () =>
+		{
+			for (int i = 0; i < 1000; i++)
 			{
-				for (int i = 0; i < 1000; i++)
-					progress("hi");
-			});
-			Task.Run(() =>
-			{
-				for (int i = 0; i < 1000; i++)
-					progress("hello");
-			});
-			Task.Run(() =>
-			{
-				for (int i = 0; i < 1000; i++)
-					progress("bye");
-			});
-
-			Task.Run(async () =>
-			{
-				for (int i = 0; i < 1000; i++)
-				{
-					var res = await echo("bye");
-					if (res != "eye")
-						throw new Exception();
-				}
-			});
-
-			Thread.Sleep(1000);
-		}
-
-		public string Echo(string s)
-		{
-			Console.WriteLine("Enter Echo: " + s);
-			return s;
-		}
-
-		public async Task<string> EchoAsync(string s)
-		{
-			Console.WriteLine("Enter Echo: " + s);
-			return s;
-		}
-
-		public void CompleteGetMessages()
-		{
-			if (pMessageGetters.TryGetValue(pSessionID, out var mg))
-				mg.Completed.SetResult(true);
-		}
-
-		public async Task GetMessages(Action<string> message)
-		{
-			var mg = new MessageGetters { sessionID = pSessionID, message = message };
-
-			if (pMessageGetters.TryAdd(pSessionID, mg))
-			{
-				await mg.Completed.Task;
-				pMessageGetters.TryRemove(pSessionID, out _);
+				var res = await echo("bye");
+				if (res != "eye")
+					throw new Exception();
 			}
-		}
+		});
 
-		public void SendMessage(string mess)
+		Thread.Sleep(1000);
+	}
+
+	public string Echo(string s)
+	{
+		Console.WriteLine("Enter Echo: " + s);
+		return s;
+	}
+
+	public async Task<string> EchoAsync(string s)
+	{
+		Console.WriteLine("Enter Echo: " + s);
+		return s;
+	}
+
+	public void CompleteGetMessages()
+	{
+		if (pMessageGetters.TryGetValue(pSessionID, out var mg))
+			mg.Completed.SetResult(true);
+	}
+
+	public async Task GetMessages(Action<string> message)
+	{
+		var mg = new MessageGetters { sessionID = pSessionID, message = message };
+
+		if (pMessageGetters.TryAdd(pSessionID, mg))
 		{
-			foreach (var mg in pMessageGetters.Values)
-				mg.message(mess);
-		}
-
-		public void GetFile(string file, Action<byte[], int, int> write, Action<string> progress)
-		{
-			progress("hi");
-
-			var sw = new WriteStreamWrapper(write);
-			using (var f = File.OpenRead(file))
-				f.CopyTo(sw, 81920);
-		}
-
-		public void SendFile(string file, Func<int, (byte[], int)> read, Action<string> progress)
-		{
-			progress("hello");
-
-			var sr = new ReadStreamWrapper(read);
-			using (var f = File.OpenWrite(file))
-				sr.CopyTo(f, 81920);
-
-			// Alternative to using the stream wrapper, it will avoid the buffer copy but does not help much for performance:
-			//using (var f = File.OpenWrite(file))
-			//{
-			//    while (true)
-			//    {
-			//        (var data, var off, var len) = read(1024 * 1204);
-			//        if (len > 0)
-			//            f.Write(data, off, len);
-			//        else
-			//            break;
-			//    }
-
-			//}
+			await mg.Completed.Task;
+			pMessageGetters.TryRemove(pSessionID, out _);
 		}
 	}
 
-	class MessageGetters
+	public void SendMessage(string mess)
 	{
-		public Action<string> message;
-		public Guid sessionID;
-		public TaskCompletionSource<bool> Completed = new TaskCompletionSource<bool>();
+		foreach (var mg in pMessageGetters.Values)
+			mg.message(mess);
 	}
 
-	class WriteStreamWrapper : Stream
+	public void GetFile(string file, Action<byte[], int, int> write, Action<string> progress)
 	{
-		Action<byte[], int, int> pChunk;
+		progress("hi");
 
-		public WriteStreamWrapper(Action<byte[], int, int> chunk)
-		{
-			pChunk = chunk;
-		}
-
-		public override bool CanRead => false;
-		public override bool CanSeek => false;
-		public override bool CanWrite => true;
-		public override long Length => throw new NotImplementedException();
-		public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-		public override void Flush()
-		{
-			//throw new NotImplementedException();
-		}
-
-		public override int Read(byte[] buffer, int offset, int count)
-		{
-			throw new NotImplementedException();
-		}
-
-		public override long Seek(long offset, SeekOrigin origin)
-		{
-			throw new NotImplementedException();
-		}
-
-		public override void SetLength(long value)
-		{
-			throw new NotImplementedException();
-		}
-
-		public override void Write(byte[] buffer, int offset, int count)
-		{
-			pChunk(buffer, offset, count);
-		}
+		var sw = new WriteStreamWrapper(write);
+		using (var f = File.OpenRead(file))
+			f.CopyTo(sw, 81920);
 	}
 
-	class ReadStreamWrapper : Stream
+	public void SendFile(string file, Func<int, (byte[], int)> read, Action<string> progress)
 	{
-		Func<int, (byte[], int)> pChunk;
+		progress("hello");
 
+		var sr = new ReadStreamWrapper(read);
+		using (var f = File.OpenWrite(file))
+			sr.CopyTo(f, 81920);
 
-		public ReadStreamWrapper(Func<int, (byte[], int)> chunk)
-		{
-			pChunk = chunk;
-		}
+		// Alternative to using the stream wrapper, it will avoid the buffer copy but does not help much for performance:
+		//using (var f = File.OpenWrite(file))
+		//{
+		//    while (true)
+		//    {
+		//        (var data, var off, var len) = read(1024 * 1204);
+		//        if (len > 0)
+		//            f.Write(data, off, len);
+		//        else
+		//            break;
+		//    }
 
-		public override bool CanRead => true;
-		public override bool CanSeek => false;
-		public override bool CanWrite => false;
-		public override long Length => throw new NotImplementedException();
-		public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+		//}
+	}
+}
 
-		public override void Flush()
-		{
-			//throw new NotImplementedException();
-		}
+class MessageGetters
+{
+	public Action<string> message;
+	public Guid sessionID;
+	public TaskCompletionSource<bool> Completed = new TaskCompletionSource<bool>();
+}
 
-		public override int Read(byte[] buffer, int offset, int count)
-		{
-			(byte[] data, int len) res;
-			try
-			{
-				res = pChunk(81920); // MUST BE a constant value when using StreamingFunc
-			}
-			catch (StreamingDoneException)
-			{
-				return 0;
-			}
-			//catch (RemoteInvocationException e)
-			//{
-			//    return 0;
-			//}
+class WriteStreamWrapper : Stream
+{
+	Action<byte[], int, int> pChunk;
 
-			if (res.len == 0)
-				throw new Exception("should have used StreamingDoneException");
-
-			if (res.len > count)
-				throw new Exception("too much data");
-
-			if (res.len > 0)
-				Buffer.BlockCopy(res.data, 0, buffer, offset, res.len);
-
-			return res.len;
-		}
-
-		public override long Seek(long offset, SeekOrigin origin)
-		{
-			throw new NotImplementedException();
-		}
-
-		public override void SetLength(long value)
-		{
-			throw new NotImplementedException();
-		}
-
-		public override void Write(byte[] buffer, int offset, int count)
-		{
-			throw new NotImplementedException();
-		}
+	public WriteStreamWrapper(Action<byte[], int, int> chunk)
+	{
+		pChunk = chunk;
 	}
 
-	interface IOtherService
+	public override bool CanRead => false;
+	public override bool CanSeek => false;
+	public override bool CanWrite => true;
+	public override long Length => throw new NotImplementedException();
+	public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+	public override void Flush()
 	{
-		string Get();
+		//throw new NotImplementedException();
 	}
 
-	class OtherService : IOtherService
+	public override int Read(byte[] buffer, int offset, int count)
 	{
-		public OtherService(Guid sessid)
+		throw new NotImplementedException();
+	}
+
+	public override long Seek(long offset, SeekOrigin origin)
+	{
+		throw new NotImplementedException();
+	}
+
+	public override void SetLength(long value)
+	{
+		throw new NotImplementedException();
+	}
+
+	public override void Write(byte[] buffer, int offset, int count)
+	{
+		pChunk(buffer, offset, count);
+	}
+}
+
+class ReadStreamWrapper : Stream
+{
+	Func<int, (byte[], int)> pChunk;
+
+
+	public ReadStreamWrapper(Func<int, (byte[], int)> chunk)
+	{
+		pChunk = chunk;
+	}
+
+	public override bool CanRead => true;
+	public override bool CanSeek => false;
+	public override bool CanWrite => false;
+	public override long Length => throw new NotImplementedException();
+	public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+	public override void Flush()
+	{
+		//throw new NotImplementedException();
+	}
+
+	public override int Read(byte[] buffer, int offset, int count)
+	{
+		(byte[] data, int len) res;
+		try
 		{
-			
+			res = pChunk(81920); // MUST BE a constant value when using StreamingFunc
 		}
-		public string Get()
+		catch (StreamingDoneException)
 		{
-			return DateTime.Now.ToString();
+			return 0;
 		}
+		//catch (RemoteInvocationException e)
+		//{
+		//    return 0;
+		//}
+
+		if (res.len == 0)
+			throw new Exception("should have used StreamingDoneException");
+
+		if (res.len > count)
+			throw new Exception("too much data");
+
+		if (res.len > 0)
+			Buffer.BlockCopy(res.data, 0, buffer, offset, res.len);
+
+		return res.len;
+	}
+
+	public override long Seek(long offset, SeekOrigin origin)
+	{
+		throw new NotImplementedException();
+	}
+
+	public override void SetLength(long value)
+	{
+		throw new NotImplementedException();
+	}
+
+	public override void Write(byte[] buffer, int offset, int count)
+	{
+		throw new NotImplementedException();
+	}
+}
+
+interface IOtherService
+{
+	string Get();
+}
+
+class OtherService : IOtherService
+{
+	public OtherService(Guid sessid)
+	{
+		
+	}
+	public string Get()
+	{
+		return DateTime.Now.ToString();
 	}
 }

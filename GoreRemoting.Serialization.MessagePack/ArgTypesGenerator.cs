@@ -2,87 +2,86 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace GoreRemoting.Serialization.MessagePack
+namespace GoreRemoting.Serialization.MessagePack;
+
+internal class Generator
 {
-	internal class Generator
+	internal static void Generate()
 	{
-		internal static void Generate()
+		var max = 20;
+
+		StringBuilder sb = new StringBuilder();
+		for (int i = 1; i <= max; i++)
+			sb.Append(GenerateType(i));
+
+		sb.AppendLine();
+		sb.Append(GenerateTypeGetter(max));
+
+		var res = sb.ToString();
+	}
+
+	private static string GenerateTypeGetter(int num)
+	{
+		StringBuilder sb = new StringBuilder();
+		
+		sb.AppendLine("private static Type GetArgsType(Type[] types)");
+		sb.AppendLine("{");
+		sb.AppendLine("var type = types.Length switch");
+		sb.AppendLine("{");
+
+		for (int i = 1; i <= num; i++)
 		{
-			var max = 20;
+			var pad = "".PadRight(i - 1, ',');
+			sb.AppendLine($"{i} => typeof(Args<{pad}>).MakeGenericType(types),");
+		}
+		
+		sb.AppendLine("_ => throw new NotImplementedException(\"Too many arguments\")");
+		sb.AppendLine("};");
+		sb.AppendLine("return type;");
+		sb.AppendLine("}");
 
-			StringBuilder sb = new StringBuilder();
-			for (int i = 1; i <= max; i++)
-				sb.Append(GenerateType(i));
+		return sb.ToString();
+	}
 
-			sb.AppendLine();
-			sb.Append(GenerateTypeGetter(max));
+	internal static string GenerateType(int args)
+	{
+		StringBuilder sb = new StringBuilder();
 
-			var res = sb.ToString();
+		sb.AppendLine("[MessagePackObject]");
+
+		string clas = "public class Args<";
+
+		List<string> tees = new List<string>();
+		List<string> argss = new List<string>();
+		for (int i = 1; i <= args; i++)
+		{
+			tees.Add("T" + i);
+			argss.Add("Arg" + i);
 		}
 
-		private static string GenerateTypeGetter(int num)
+		clas += string.Join(", ", tees);
+
+		clas += "> : IArgs";
+		sb.AppendLine(clas);
+		sb.AppendLine("{");
+		for (int i = 1; i <= args; i++)
 		{
-			StringBuilder sb = new StringBuilder();
-			
-			sb.AppendLine("private static Type GetArgsType(Type[] types)");
-			sb.AppendLine("{");
-			sb.AppendLine("var type = types.Length switch");
-			sb.AppendLine("{");
-
-			for (int i = 1; i <= num; i++)
-			{
-				var pad = "".PadRight(i - 1, ',');
-				sb.AppendLine($"{i} => typeof(Args<{pad}>).MakeGenericType(types),");
-			}
-			
-			sb.AppendLine("_ => throw new NotImplementedException(\"Too many arguments\")");
-			sb.AppendLine("};");
-			sb.AppendLine("return type;");
-			sb.AppendLine("}");
-
-			return sb.ToString();
+			sb.AppendLine($"[Key({i - 1})]");
+			sb.AppendLine($"public T{i}? Arg{i} {{ get; set; }}");
 		}
 
-		internal static string GenerateType(int args)
-		{
-			StringBuilder sb = new StringBuilder();
+		sb.AppendLine($"public object?[] Get() => new object?[] {{ {string.Join(", ", argss)} }};");
 
-			sb.AppendLine("[MessagePackObject]");
+		sb.AppendLine("public void Set(object?[] args)");
+		sb.AppendLine("{");
+		for (int i = 1; i <= args; i++)
+			sb.AppendLine($"Arg{i} = (T{i}?)args[{i - 1}];");
+		sb.AppendLine("}");
 
-			string clas = "public class Args<";
+		sb.AppendLine("}");
 
-			List<string> tees = new List<string>();
-			List<string> argss = new List<string>();
-			for (int i = 1; i <= args; i++)
-			{
-				tees.Add("T" + i);
-				argss.Add("Arg" + i);
-			}
+		sb.AppendLine();
 
-			clas += string.Join(", ", tees);
-
-			clas += "> : IArgs";
-			sb.AppendLine(clas);
-			sb.AppendLine("{");
-			for (int i = 1; i <= args; i++)
-			{
-				sb.AppendLine($"[Key({i - 1})]");
-				sb.AppendLine($"public T{i}? Arg{i} {{ get; set; }}");
-			}
-
-			sb.AppendLine($"public object?[] Get() => new object?[] {{ {string.Join(", ", argss)} }};");
-
-			sb.AppendLine("public void Set(object?[] args)");
-			sb.AppendLine("{");
-			for (int i = 1; i <= args; i++)
-				sb.AppendLine($"Arg{i} = (T{i}?)args[{i - 1}];");
-			sb.AppendLine("}");
-
-			sb.AppendLine("}");
-
-			sb.AppendLine();
-
-			return sb.ToString();
-		}
+		return sb.ToString();
 	}
 }

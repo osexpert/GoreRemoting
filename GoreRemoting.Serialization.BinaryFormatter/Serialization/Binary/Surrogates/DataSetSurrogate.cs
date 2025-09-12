@@ -5,104 +5,103 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace GoreRemoting.Serialization.BinaryFormatter
+namespace GoreRemoting.Serialization.BinaryFormatter;
+
+using System;
+using System.Data;
+using System.IO;
+using System.Reflection;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.Permissions;
+
+/// <summary>
+/// Deserialization surrogate for the DataSet class.
+/// </summary>
+internal class DataSetSurrogate : ISurrogate
 {
-	using System;
-	using System.Data;
-	using System.IO;
-	using System.Reflection;
-	using System.Runtime.Serialization;
-	using System.Runtime.Serialization.Formatters.Binary;
-	using System.Security.Permissions;
+	BinarySerializerOptions _options;
 
-	/// <summary>
-	/// Deserialization surrogate for the DataSet class.
-	/// </summary>
-	internal class DataSetSurrogate : ISurrogate
+	public DataSetSurrogate(BinarySerializerOptions options)
 	{
-		BinarySerializerOptions _options;
+		_options = options;
+	}
 
-		public DataSetSurrogate(BinarySerializerOptions options)
+	private static ConstructorInfo Constructor { get; } = typeof(DataSet).GetConstructor(
+		BindingFlags.Instance | BindingFlags.NonPublic,
+		null,
+		new[] { typeof(SerializationInfo), typeof(StreamingContext) },
+		null);
+
+	public bool Handles(Type type, StreamingContext context)
+	{
+		bool handles = type == typeof(DataSet);
+		return handles;
+	}
+
+	/// <inheritdoc cref="ISerializationSurrogate" />
+	[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
+	[SuppressMessage("ReSharper", "PossibleNullReferenceException")]
+	public void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
+	{
+		var ds = (DataSet)obj;
+		ds.GetObjectData(info, context);
+	}
+
+	/// <inheritdoc cref="ISerializationSurrogate" />
+	[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
+	public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
+	{
+		Validate(info, context);
+
+		// discard obj
+		var ds = Constructor.Invoke(new object[] { info, context });
+		return ds;
+	}
+
+	[SuppressMessage("ReSharper", "AssignNullToNotNullAttribute")]
+	private void Validate(SerializationInfo info, StreamingContext context)
+	{
+		var remotingFormat = SerializationFormat.Xml;
+
+		var e = info.GetEnumerator();
+		while (e.MoveNext())
 		{
-			_options = options;
+			if (e.Name == "DataSet.RemotingFormat") // DataSet.RemotingFormat does not exist in V1/V1.1 versions
+				remotingFormat = (SerializationFormat)e.Value;
 		}
 
-		private static ConstructorInfo Constructor { get; } = typeof(DataSet).GetConstructor(
-			BindingFlags.Instance | BindingFlags.NonPublic,
-			null,
-			new[] { typeof(SerializationInfo), typeof(StreamingContext) },
-			null);
-
-		public bool Handles(Type type, StreamingContext context)
+		// XML dataset serialization isn't known to be vulnerable
+		if (remotingFormat == SerializationFormat.Xml)
 		{
-			bool handles = type == typeof(DataSet);
-			return handles;
+			return;
 		}
 
-		/// <inheritdoc cref="ISerializationSurrogate" />
-		[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
-		[SuppressMessage("ReSharper", "PossibleNullReferenceException")]
-		public void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
+		// binary dataset serialization should be double-checked
+		var tableCount = info.GetInt32("DataSet.Tables.Count");
+		for (int i = 0; i < tableCount; i++)
 		{
-			var ds = (DataSet)obj;
-			ds.GetObjectData(info, context);
-		}
+			var key = $"DataSet.Tables_{i}";
+			var buffer = info.GetValue(key, typeof(byte[])) as byte[];
 
-		/// <inheritdoc cref="ISerializationSurrogate" />
-		[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
-		public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
-		{
-			Validate(info, context);
+			// check the serialized data table using a guarded BinaryFormatter
+			var fmt =
+				new BinaryFormatter(
+					selector: null,
+					context: new StreamingContext(context.State, false))
+				.Safe(_options);
 
-			// discard obj
-			var ds = Constructor.Invoke(new object[] { info, context });
-			return ds;
-		}
+			using var ms = new MemoryStream(buffer);
 
-		[SuppressMessage("ReSharper", "AssignNullToNotNullAttribute")]
-		private void Validate(SerializationInfo info, StreamingContext context)
-		{
-			var remotingFormat = SerializationFormat.Xml;
+			var dt = fmt.Deserialize(ms);
 
-			var e = info.GetEnumerator();
-			while (e.MoveNext())
+			if (dt is DataTable)
 			{
-				if (e.Name == "DataSet.RemotingFormat") // DataSet.RemotingFormat does not exist in V1/V1.1 versions
-					remotingFormat = (SerializationFormat)e.Value;
+				continue;
 			}
 
-			// XML dataset serialization isn't known to be vulnerable
-			if (remotingFormat == SerializationFormat.Xml)
-			{
-				return;
-			}
-
-			// binary dataset serialization should be double-checked
-			var tableCount = info.GetInt32("DataSet.Tables.Count");
-			for (int i = 0; i < tableCount; i++)
-			{
-				var key = $"DataSet.Tables_{i}";
-				var buffer = info.GetValue(key, typeof(byte[])) as byte[];
-
-				// check the serialized data table using a guarded BinaryFormatter
-				var fmt =
-					new BinaryFormatter(
-						selector: null,
-						context: new StreamingContext(context.State, false))
-					.Safe(_options);
-
-				using var ms = new MemoryStream(buffer);
-
-				var dt = fmt.Deserialize(ms);
-
-				if (dt is DataTable)
-				{
-					continue;
-				}
-
-				// the deserialized data doesn't appear to be a data table
-				throw new UnsafeDeserializationException("Serialized DataSet probably includes malicious data.");
-			}
+			// the deserialized data doesn't appear to be a data table
+			throw new UnsafeDeserializationException("Serialized DataSet probably includes malicious data.");
 		}
 	}
 }
