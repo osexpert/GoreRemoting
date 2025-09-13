@@ -46,9 +46,9 @@ public class GoreRequestMessage
 	{
 		GoreRequestMessage res;
 		if (mType == RequestType.DelegateResult)
-			res = new GoreRequestMessage(Goreializer.Deserialize<DelegateResultMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
+			res = new GoreRequestMessage(GoreSerializer.Deserialize<DelegateResultMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
 		else if (mType == RequestType.MethodCall)
-			res = new GoreRequestMessage(Goreializer.Deserialize<MethodCallMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
+			res = new GoreRequestMessage(GoreSerializer.Deserialize<MethodCallMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
 		else
 			throw new Exception();
 
@@ -59,9 +59,9 @@ public class GoreRequestMessage
 	internal void Serialize(IRemotingParty r, Stream s, MethodInfo method)
 	{
 		if (RequestType == RequestType.DelegateResult)
-			Goreializer.Serialize(r, s, method, DelegateResultMessage, Serializer, Compressor);
+			GoreSerializer.Serialize(r, s, method, DelegateResultMessage, Serializer, Compressor);
 		else if (RequestType == RequestType.MethodCall)
-			Goreializer.Serialize(r, s, method, MethodCallMessage, Serializer, Compressor);
+			GoreSerializer.Serialize(r, s, method, MethodCallMessage, Serializer, Compressor);
 		else
 			throw new Exception();
 

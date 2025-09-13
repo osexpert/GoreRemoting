@@ -1,9 +1,9 @@
 ﻿using System.Collections.Concurrent;
 using System.Reflection;
-using GoreRemoting.Nerdbank.Streams;
 using GoreRemoting.RpcMessaging;
 using Grpc.Core;
 using Grpc.Net.Compression;
+using Nerdbank.Streams;
 
 namespace GoreRemoting;
 

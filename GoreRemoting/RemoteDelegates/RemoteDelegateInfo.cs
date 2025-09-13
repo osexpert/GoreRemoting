@@ -6,7 +6,7 @@ namespace GoreRemoting.RemoteDelegates;
 /// Describes a remote delegate.
 /// </summary>
 
-public class RemoteDelegateInfo : IGoreializable
+public class RemoteDelegateInfo : IGoreSerializable
 {
 	private bool _hasResult;
 

@@ -5,7 +5,7 @@ namespace GoreRemoting.RpcMessaging;
 /// <summary>
 /// Serializable message that describes a parameter of an remote method call. 
 /// </summary>
-public class MethodCallArgument : IGoreializable
+public class MethodCallArgument : IGoreSerializable
 {
 	public MethodCallArgument()
 	{ }
@@ -75,7 +75,7 @@ public class MethodCallArgument : IGoreializable
 		w.WriteVarInt(Position);
 		
 
-		if (Value is IGoreializable g)
+		if (Value is IGoreSerializable g)
 		{
 			if (Value is RemoteDelegates.RemoteDelegateInfo)
 			{

@@ -1,12 +1,12 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using GoreRemoting.Nerdbank.Streams;
 using GoreRemoting.RemoteDelegates;
 using GoreRemoting.RpcMessaging;
 using Grpc.Core;
 using Grpc.Net.Compression;
 using KPreisser;
+using Nerdbank.Streams;
 
 namespace GoreRemoting;
 
@@ -328,7 +328,7 @@ public class RemotingServer : IRemotingParty
 		}
 		else
 		{
-			var serEx = Goreializer.GetSerializableException(request.Serializer, ex2);
+			var serEx = GoreSerializer.GetSerializableException(request.Serializer, ex2);
 			resultMessage = new MethodResultMessage { Value = serEx, ResultType = MethodResultType.Exception };
 		}
 
@@ -386,7 +386,7 @@ public class RemotingServer : IRemotingParty
 					throw new Exception("Incorrect result position");
 
 				if (msg.IsException)
-					throw Goreializer.RestoreSerializedException(_config.ExceptionStrategy, request.Serializer, msg.Value!);
+					throw GoreSerializer.RestoreSerializedException(_config.ExceptionStrategy, request.Serializer, msg.Value!);
 
 				if (msg.StreamingStatus == StreamingStatus.Active)
 					state.ActiveStreamingDelegatePosition = msg.Position;
@@ -447,7 +447,7 @@ public class RemotingServer : IRemotingParty
 					throw new Exception("Incorrect result position");
 
 				if (msg.IsException)
-					throw Goreializer.RestoreSerializedException(_config.ExceptionStrategy, request.Serializer, msg.Value!);
+					throw GoreSerializer.RestoreSerializedException(_config.ExceptionStrategy, request.Serializer, msg.Value!);
 
 				if (msg.StreamingStatus == StreamingStatus.Active)
 					state.ActiveStreamingDelegatePosition = msg.Position;

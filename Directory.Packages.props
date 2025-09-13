@@ -10,7 +10,6 @@
     <PackageVersion Include="Castle.Core" Version="5.1.1" />
     <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
-    <PackageVersion Include="Nerdbank.Streams" Version="2.10.72" />
     <PackageVersion Include="protobuf-net" Version="3.2.45" />
     <PackageVersion Include="stakx.DynamicProxy.AsyncInterceptor" Version="0.1.0" />
     <!--      <PackageReference Include="Microsoft.CSharp" Version="4.7.0" /> -->
@@ -44,5 +43,6 @@
     <PackageVersion Include="Portable.System.DateTimeOnly" Version="8.0.1" />
     <PackageVersion Include="ExtremeJsonEncoders" Version="0.0.5" />
     <PackageVersion Include="System.Runtime.Serialization.Formatters" Version="9.0.0" />
+    <PackageVersion Include="Nerdbank.Streams" Version="2.13.16" />
   </ItemGroup>
 </Project>

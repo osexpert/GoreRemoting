@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using GoreRemoting.Nerdbank.Streams;
+using Microsoft;
 
 namespace GoreRemoting;
 

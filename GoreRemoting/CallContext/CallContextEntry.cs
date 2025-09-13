@@ -4,7 +4,7 @@
 /// Describes a single call context entry.
 /// </summary>
 
-public class CallContextEntry : IGoreializable
+public class CallContextEntry : IGoreSerializable
 {
 	public CallContextEntry()
 	{

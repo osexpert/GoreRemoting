@@ -8,14 +8,14 @@ using Grpc.Net.Compression;
 
 namespace GoreRemoting;
 
-public interface IGoreializable
+public interface IGoreSerializable
 {
 	void Serialize(GoreBinaryWriter w, Stack<object?> st);
 	void Deserialize(GoreBinaryReader r);
 	void Deserialize(Stack<object?> st);
 }
 
-public interface IMessage : IGoreializable
+public interface IMessage : IGoreSerializable
 {
 	MessageType MessageType { get; }
 
@@ -33,7 +33,7 @@ public enum MessageType
 	DelegateResult = 4,
 }
 
-internal class Goreializer
+internal class GoreSerializer
 {
 
 	public static void Serialize(IRemotingParty r, Stream ms, MethodInfo method, IMessage msg, ISerializerAdapter serializer, ICompressionProvider? compressor)
@@ -119,7 +119,7 @@ internal class Goreializer
 		{
 			if (mrm.ResultType == MethodResultType.Exception)
 			{
-				return new Type[] { Goreializer.GetExceptionType(serializer) };
+				return new Type[] { GoreSerializer.GetExceptionType(serializer) };
 			}
 			else if (mrm.ResultType == MethodResultType.Exception_dict_internal)
 			{
@@ -203,7 +203,7 @@ internal class Goreializer
 		{
 			if (drm.ResultType == DelegateResultType.Exception)
 			{
-				return new Type[] { Goreializer.GetExceptionType(serializer) };
+				return new Type[] { GoreSerializer.GetExceptionType(serializer) };
 			}
 			else if (drm.ResultType == DelegateResultType.Exception_dict_internal)
 			{

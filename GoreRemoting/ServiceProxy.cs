@@ -53,7 +53,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 			new CallOptions(headers: headers, cancellationToken: cancel));
 
 		if (resultMessage.IsException)
-			throw Goreializer.RestoreSerializedException(_client._config.ExceptionStrategy, serializer, resultMessage.Value!);
+			throw GoreSerializer.RestoreSerializedException(_client._config.ExceptionStrategy, serializer, resultMessage.Value!);
 
 		var parameterInfos = targetMethod.GetParameters();
 
@@ -105,7 +105,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 			new CallOptions(headers: headers, cancellationToken: cancel)).ConfigureAwait(false);
 
 		if (resultMessage.IsException)
-			throw Goreializer.RestoreSerializedException(_client._config.ExceptionStrategy, serializer, resultMessage.Value!);
+			throw GoreSerializer.RestoreSerializedException(_client._config.ExceptionStrategy, serializer, resultMessage.Value!);
 
 		// out|ref not possible with async
 
@@ -222,7 +222,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 							}
 							else
 							{
-								exception = Goreializer.GetSerializableException(serializer, ex2);
+								exception = GoreSerializer.GetSerializableException(serializer, ex2);
 							}
 						}
 					}
