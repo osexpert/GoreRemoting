@@ -1,3 +1,11 @@
+## 0.0.4
+* Drop support for .net 6.0
+* Update nugets
+* Fix warnings
+* Add MessagePack DedupingResolver
+* Add ConfigureAwait(false) all places
+* Use Nerdbank.Streams (they finally removed their dependency on VS analyzers)
+
 ## 0.0.3
 * Use nuget stakx.DynamicProxy.AsyncInterceptor instead of copying the code
 * Use nuget AsyncReaderWriterLockSlim instead of copying the code
