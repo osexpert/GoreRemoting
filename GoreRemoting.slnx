@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/Examples/">
+    <Project Path="Examples/grpc-dotnetClientNet80/grpc-dotnetClientNet80.csproj" />
+    <Project Path="Examples/grpc-dotnetServerNet80/grpc-dotnetServerNet80.csproj" />
+    <Project Path="Examples/GrpcCoreClientNet48/GrpcCoreClientNet48.csproj" />
+    <Project Path="Examples/GrpcCoreClientNet80/GrpcCoreClientNet80.csproj" />
+    <Project Path="Examples/GrpcCoreServerNet48/GrpcCoreServerNet48.csproj" />
+    <Project Path="Examples/GrpcCoreServerNet80/GrpcCoreServerNet80.csproj" />
+  </Folder>
+  <Project Path="GoreRemoting.Compression.Lz4/GoreRemoting.Compression.Lz4.csproj" />
+  <Project Path="GoreRemoting.Serialization.BinaryFormatter/GoreRemoting.Serialization.BinaryFormatter.csproj" />
+  <Project Path="GoreRemoting.Serialization.Json/GoreRemoting.Serialization.Json.csproj" />
+  <Project Path="GoreRemoting.Serialization.MemoryPack/GoreRemoting.Serialization.MemoryPack.csproj" />
+  <Project Path="GoreRemoting.Serialization.MessagePack/GoreRemoting.Serialization.MessagePack.csproj" />
+  <Project Path="GoreRemoting.Serialization.Protobuf/GoreRemoting.Serialization.Protobuf.csproj" />
+  <Project Path="GoreRemoting.Tests.ExternalTypes/GoreRemoting.Tests.ExternalTypes.csproj" />
+  <Project Path="GoreRemoting.Tests/GoreRemoting.Tests.csproj" />
+  <Project Path="GoreRemoting/GoreRemoting.csproj" />
+</Solution>
