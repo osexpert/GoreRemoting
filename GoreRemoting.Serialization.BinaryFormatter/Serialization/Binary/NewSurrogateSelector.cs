@@ -63,7 +63,7 @@ public sealed class SafeSurrogateSelector : ISurrogateSelector
 	}
 
 	[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
-	ISerializationSurrogate? ISurrogateSelector.GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector? selector)
+	ISerializationSurrogate? ISurrogateSelector.GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
 	{
 		// Use a simpler logic at first, until we get conflicts (if ever)
 		ISurrogate? found = null;

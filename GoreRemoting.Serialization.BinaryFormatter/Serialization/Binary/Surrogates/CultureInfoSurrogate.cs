@@ -23,7 +23,7 @@ internal class CultureInfoSurrogate : ISurrogate
 	}
 
 	[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
-	public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
+	public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector? selector)
 	{
 		//return new CultureInfo(info.GetString("Name"), info.GetBoolean("UseUserOverride"));
 		throw new NotSupportedException();

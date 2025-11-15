@@ -187,7 +187,7 @@ public class BinaryFormatterAdapter : ISerializerAdapter, IExceptionAdapter
 		//#if NET6_0_OR_GREATER
 		//		public static void SetRemoteStackTrace(Exception e, string stackTrace) => ExceptionDispatchInfo.SetRemoteStackTrace(e, stackTrace);
 		//#else
-		public static void SetRemoteStackTrace(Exception e, string stackTrace)
+		public static void SetRemoteStackTrace(Exception e, string? stackTrace)
 		{
 			//            if (!CanSetRemoteStackTrace())
 			//          {

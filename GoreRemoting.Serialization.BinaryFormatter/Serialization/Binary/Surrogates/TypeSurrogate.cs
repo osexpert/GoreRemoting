@@ -35,8 +35,7 @@ public sealed class TypeSurrogate : ISurrogate
 	}
 
 	[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
-	public object SetObjectData(object obj, SerializationInfo info, StreamingContext context,
-		ISurrogateSelector selector)
+	public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector? selector)
 	{
 		// Why go via IObjectReference? Why don't just use this?
 		// I guess...this can be wasteful? BF has already made some object here and want us to set things in it.

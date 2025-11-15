@@ -39,6 +39,9 @@ public class UnsafeDeserializationException : SecurityException
 	}
 
 	/// <inheritdoc cref="SecurityException"/>
+#if NET8_0_OR_GREATER
+	[Obsolete]
+#endif
 	[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
 	public override void GetObjectData(SerializationInfo info, StreamingContext context)
 	{

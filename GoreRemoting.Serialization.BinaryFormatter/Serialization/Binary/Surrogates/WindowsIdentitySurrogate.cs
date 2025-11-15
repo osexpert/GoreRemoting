@@ -50,7 +50,7 @@ internal class WindowsIdentitySurrogate : ISurrogate
 
 	/// <inheritdoc cref="ISerializationSurrogate" />
 	[SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
-	public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
+	public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector? selector)
 	{
 		Validate(info, context);
 
