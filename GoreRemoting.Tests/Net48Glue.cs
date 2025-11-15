@@ -27,19 +27,19 @@ namespace MemoryPack
 	}
 }
 
-namespace GoreRemoting.Serialization.MemoryPack
-{
-	public class MemoryPackAdapter : GoreRemoting.Serialization.ISerializerAdapter
-	{
-		public void Serialize(Stream stream, object?[] graph, Type[] types)
-		{
-		}
-		public object?[] Deserialize(Stream stream, Type[] types)
-		{
-			return null;
-		}
-		public string Name => "ff";
-	}
-}
+//namespace GoreRemoting.Serialization.MemoryPack
+//{
+//	public class MemoryPackAdapter : GoreRemoting.Serialization.ISerializerAdapter
+//	{
+//		public void Serialize(Stream stream, object?[] graph, Type[] types)
+//		{
+//		}
+//		public object?[] Deserialize(Stream stream, Type[] types)
+//		{
+//			return [];
+//		}
+//		public string Name => "ff";
+//	}
+//}
 
 #endif

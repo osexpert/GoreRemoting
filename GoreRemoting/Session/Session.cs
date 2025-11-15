@@ -75,9 +75,9 @@ public class Session : IDisposable
 	/// </summary>
 	public DateTime CreatedUtc { get; }
 
-	/// <summary>
-	/// Gets whether authentication was successful.
-	/// </summary>
+	// <summary>
+	// Gets whether authentication was successful.
+	// </summary>
 //		public bool IsAuthenticated => _isAuthenticated;
 
 

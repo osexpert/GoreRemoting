@@ -70,7 +70,7 @@ public class TypeFullName : IEquatable<TypeFullName>
 	}
 
 	/// <inheritdoc cref="IEquatable{T}" />
-	public bool Equals(TypeFullName other)
+	public bool Equals(TypeFullName? other)
 	{
 		var cmp = StringComparer.OrdinalIgnoreCase;
 		return other != null &&

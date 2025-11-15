@@ -44,34 +44,48 @@ public class CallContextTests
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 
+		Exception? ex = null;
+
 		var clientThread =
 			new Thread(async () =>
 			{
-				var g = Guid.NewGuid();
-				CallContext.SetValue("testGuid", g);
-				var t = DateTime.Now;
-				CallContext.SetValue("testTime", t);
-				CallContext.SetValue("test", "CallContext");
-				Assert.AreEqual("CallContext", CallContext.GetValue<string>("test"));
+#pragma warning disable MSTEST0040
+				try
+				{
+					var g = Guid.NewGuid();
+					CallContext.SetValue("testGuid", g);
+					var t = DateTime.Now;
+					CallContext.SetValue("testTime", t);
+					CallContext.SetValue("test", "CallContext");
+					Assert.AreEqual("CallContext", CallContext.GetValue<string>("test"));
 
-				await using var client = new NativeClient(9093, new ClientConfig(Serializers.GetSerializer(ser)));
+					await using var client = new NativeClient(9093, new ClientConfig(Serializers.GetSerializer(ser)));
 
-				var localCallContextValueBeforeRpc = CallContext.GetValue<string>("test");
+					var localCallContextValueBeforeRpc = CallContext.GetValue<string>("test");
 
-				var proxy = client.CreateProxy<ITestService>();
-				var result = (string)proxy.TestMethod("x")!;
+					var proxy = client.CreateProxy<ITestService>();
+					var result = (string)proxy.TestMethod("x")!;
 
-				var localCallContextValueAfterRpc = CallContext.GetValue<string>("test");
+					var localCallContextValueAfterRpc = CallContext.GetValue<string>("test");
 
-				Assert.AreNotEqual(localCallContextValueBeforeRpc, result);
-				Assert.AreEqual("Changed", result);
-				Assert.AreEqual(g, CallContext.GetValue<Guid>("testGuid"));
-				Assert.AreEqual(t, CallContext.GetValue<DateTime>("testTime"));
-				Assert.AreEqual("Changed", CallContext.GetValue<string>("test"));
-				Assert.AreEqual("Changed", localCallContextValueAfterRpc);
+					Assert.AreNotEqual(localCallContextValueBeforeRpc, result);
+					Assert.AreEqual("Changed", result);
+					Assert.AreEqual(g, CallContext.GetValue<Guid>("testGuid"));
+					Assert.AreEqual(t, CallContext.GetValue<DateTime>("testTime"));
+					Assert.AreEqual("Changed", CallContext.GetValue<string>("test"));
+					Assert.AreEqual("Changed", localCallContextValueAfterRpc);
+				}
+				catch (Exception e)
+				{
+					ex = e;
+				}
+#pragma warning restore MSTEST0040
 			});
 
 		clientThread.Start();
 		clientThread.Join();
+
+		if (ex != null)
+			Assert.Fail();
 	}
 }

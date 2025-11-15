@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using ExtremeJsonEncoders;
 using GoreRemoting.Serialization.Json.ArgTypes;
-#if NET6_0_OR_GREATER
+#if !NETSTANDARD2_0
 using TupleAsJsonArray;
 #endif
 
@@ -33,7 +33,7 @@ public class JsonAdapter : ISerializerAdapter
 			ReferenceHandler = ReferenceHandler.Preserve,
 			Converters =
 			{
-#if NET6_0_OR_GREATER
+#if !NETSTANDARD2_0
 				new TupleConverterFactory()
 #endif
 			},

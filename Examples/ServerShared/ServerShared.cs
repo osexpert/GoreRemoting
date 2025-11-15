@@ -115,7 +115,7 @@ class TestService : ITestService
 	public void SendMessage(string mess)
 	{
 		foreach (var mg in pMessageGetters.Values)
-			mg.message(mess);
+			mg.message!(mess);
 	}
 
 	public void GetFile(string file, Action<byte[], int, int> write, Action<string> progress)
@@ -153,7 +153,7 @@ class TestService : ITestService
 
 class MessageGetters
 {
-	public Action<string> message;
+	public Action<string>? message;
 	public Guid sessionID;
 	public TaskCompletionSource<bool> Completed = new TaskCompletionSource<bool>();
 }

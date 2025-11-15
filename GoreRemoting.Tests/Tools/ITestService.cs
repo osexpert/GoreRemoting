@@ -57,7 +57,7 @@ public partial class TestObj
 {
 	[MemoryPackOrder(0)]
 	[ProtoMember(1)]
-	public string Test { get; set; }
+	public string? Test { get; set; }
 }
 
 public interface IBaseService

@@ -59,10 +59,10 @@ internal class Program
 	public ServiceHandle CreateInstance(Type serviceType, ServerCallContext context)
 	{
 		//Guid sessID = (Guid)CallContext.GetData("SessionId");
-		Guid sessID = Guid.Parse(context.RequestHeaders.GetValue(Constants.SessionIdHeaderKey));
+		Guid sessID = Guid.Parse(context.RequestHeaders.GetValue(Constants.SessionIdHeaderKey)!);
 
 		Console.WriteLine("SessID: " + sessID);
 
-		return new(Activator.CreateInstance(serviceType, sessID), true);
+		return new(Activator.CreateInstance(serviceType, sessID)!, true);
 	}
 }

@@ -180,7 +180,7 @@ public class BinaryFormatterAdapter : ISerializerAdapter, IExceptionAdapter
 	{
 		private static void SetRemoteStackTraceString(Exception e, string stackTrace)
 		{
-			FieldInfo remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
+			var remoteStackTraceString = typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic);
 			remoteStackTraceString.SetValue(e, stackTrace);
 		}
 

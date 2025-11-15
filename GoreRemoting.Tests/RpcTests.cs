@@ -322,7 +322,7 @@ public class RpcTests
 
 				Assert.AreEqual(1, methodCallCount);
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
 //					_testOutputHelper.WriteLine(e.ToString());
 				throw;
@@ -415,7 +415,7 @@ public class RpcTests
 				Assert.AreEqual("test", result);
 				Assert.AreEqual("test", result2);
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
 				//_testOutputHelper.WriteLine(e.ToString());
 				throw;
@@ -462,7 +462,7 @@ public class RpcTests
 				var proxy = client.CreateProxy<ITestService>();
 				proxy.TestMethodWithDelegateArg(arg => argumentFromServer = arg);
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
 //					_testOutputHelper.WriteLine(e.ToString());
 				throw;
@@ -515,7 +515,7 @@ public class RpcTests
 		//Assert.Throws<System.Threading.Channels.ChannelClosedException>(() => proxy.FireServiceEvent());
 
 
-		var ex = Assert.ThrowsException<Exception>(proxy.FireServiceEvent);
+		var ex = Assert.ThrowsExactly<Exception>(proxy.FireServiceEvent);
 
 		Assert.AreEqual("Too late, result sent", ex.Message);
 
@@ -567,7 +567,7 @@ public class RpcTests
 
 				Assert.AreEqual(42, parameterValue!.Value);
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
 //					_testOutputHelper.WriteLine(e.ToString());
 				throw;
@@ -602,7 +602,7 @@ public class RpcTests
 	[Serializable]
 	public class DeleType
 	{
-		public Delegate Test;
+		public Delegate? Test;
 	}
 
 	public class GenericEchoService : IGenericEchoService
@@ -669,7 +669,7 @@ public class RpcTests
 		//Assert.Equal(42, result2);
 
 		var result3 = proxy.Echo2(new List<int> { 1, 2, 3 });
-		Assert.AreEqual(3, result3.Count);
+		Assert.HasCount(3, result3);
 		Assert.AreEqual(1, result3[0]);
 		Assert.AreEqual(2, result3[1]);
 		Assert.AreEqual(3, result3[2]);
@@ -783,7 +783,7 @@ public class RpcTests
 		var proxy = client.CreateProxy<IRefTestService>();
 
 		string aString = "test";
-		Assert.ThrowsException<NotSupportedException>(() => proxy.EchoRef(ref aString));
+		Assert.ThrowsExactly<NotSupportedException>(() => proxy.EchoRef(ref aString));
 		Assert.AreEqual("test", aString);
 
 		var r = proxy.EchoOut(out var outstr);
@@ -942,8 +942,7 @@ public class RpcTests
 
 		public string Test(Func<S1, R1> echo, Func<S2, R2> echo2, Func<S3, R3> echo3)
 		{
-			// can't get here
-			Assert.IsTrue(false);
+			Assert.Fail();
 
 			throw new NotImplementedException();
 		}
@@ -986,9 +985,9 @@ public class RpcTests
 
 			Thread.Sleep(1000);
 
-			Assert.IsTrue(i > 0);
-			Assert.IsTrue(i1 > 0);
-			Assert.IsTrue(i2 > 0);
+			Assert.IsGreaterThan(0, i);
+			Assert.IsGreaterThan(0, i1);
+			Assert.IsGreaterThan(0, i2);
 
 
 			run = false;
@@ -1002,6 +1001,8 @@ public class RpcTests
 
 		public string Test3(Action<S1> echo, Func<S2, Task<R2>> echo2, Action<S3> echo3)
 		{
+			Exception? ex = null;
+
 			int i = 0, i1 = 0, i2 = 0;
 			var t1 = new Thread(() =>
 			{
@@ -1016,12 +1017,21 @@ public class RpcTests
 			t1.Start();
 			var t2 = new Thread(async () =>
 			{
-				while (run)
+#pragma warning disable MSTEST0040
+				try
 				{
-					var r = await echo2(new S2("Yhello"));
-					Assert.AreEqual("Yhellohi", r.r2);
-					i1++;
+					while (run)
+					{
+						var r = await echo2(new S2("Yhello"));
+						Assert.AreEqual("Yhellohi", r.r2);
+						i1++;
+					}
 				}
+				catch (Exception e)
+				{
+					ex = e;
+				}
+#pragma warning restore MSTEST0040
 			});
 			t2.Start();
 			var t3 = new Thread(() =>
@@ -1038,9 +1048,9 @@ public class RpcTests
 
 			Thread.Sleep(1000);
 
-			Assert.IsTrue(i > 0);
-			Assert.IsTrue(i1 > 0);
-			Assert.IsTrue(i2 > 0);
+			Assert.IsGreaterThan(0, i);
+			Assert.IsGreaterThan(0, i1);
+			Assert.IsGreaterThan(0, i2);
 
 
 			run = false;
@@ -1048,6 +1058,9 @@ public class RpcTests
 			t1.Join();
 			t2.Join();
 			t3.Join();
+
+			if (ex != null)
+				Assert.Fail();
 
 			return "רזו";
 		}
@@ -1108,7 +1121,7 @@ public class RpcTests
 		Assert.IsFalse(wasHere2);
 		Assert.IsFalse(wasHere3);
 
-		Assert.IsTrue(ex1!.Message == "Only one delegate with result is supported");
+		Assert.AreEqual("Only one delegate with result is supported", ex1!.Message);
 
 		wasHere = false;
 		wasHere2 = false;
@@ -1429,13 +1442,13 @@ public class RpcTests
 		var proxy = client.CreateProxy<IVarArgTest>();
 		{
 			var r1 = proxy.Test0(ser == enSerializer.Protobuf, 1);
-			Assert.IsTrue(r1.Length == 1);
+			Assert.HasCount(1, r1);
 			Assert.AreEqual(1, r1[0]);
 		}
 
 		{
 			var r2 = proxy.Test0(ser == enSerializer.Protobuf, 1, 2, 3);
-			Assert.AreEqual(3, r2.Length);
+			Assert.HasCount(3, r2);
 			Assert.AreEqual(1, r2[0]);
 			Assert.AreEqual(2, r2[1]);
 			Assert.AreEqual(3, r2[2]);
@@ -1443,7 +1456,7 @@ public class RpcTests
 
 		{
 			var r3 = proxy.Test0(ser == enSerializer.Protobuf, 1, 2);
-			Assert.AreEqual(2, r3.Length);
+			Assert.HasCount(2, r3);
 			Assert.AreEqual(1, r3[0]);
 			Assert.AreEqual(2, r3[1]);
 		}
@@ -1662,7 +1675,7 @@ public class RpcTests
 public partial class S1
 {
 	[ProtoMember(1)]
-	public string s1;
+	public string? s1;
 	public S1(string s)
 	{
 		s1 = s;
@@ -1682,7 +1695,7 @@ public partial class S1
 public partial class S2
 {
 	[ProtoMember(1)]
-	public string s2;
+	public string? s2;
 	public S2(string s)
 	{
 		s2 = s;
@@ -1702,7 +1715,7 @@ public partial class S2
 public partial class S3
 {
 	[ProtoMember(1)]
-	public string s3;
+	public string? s3;
 	public S3(string s)
 	{
 		s3 = s;
@@ -1722,7 +1735,7 @@ public partial class S3
 public partial class R1
 {
 	[ProtoMember(1)]
-	public string r1;
+	public string? r1;
 	public R1(string r)
 	{
 		r1 = r;
@@ -1742,7 +1755,7 @@ public partial class R1
 public partial class R2
 {
 	[ProtoMember(1)]
-	public string r2;
+	public string? r2;
 	public R2(string r)
 	{
 		r2 = r;
@@ -1762,7 +1775,7 @@ public partial class R2
 public partial class R3
 {
 	[ProtoMember(1)]
-	public string r3;
+	public string? r3;
 
 	[MemoryPackConstructor]
 	public R3()

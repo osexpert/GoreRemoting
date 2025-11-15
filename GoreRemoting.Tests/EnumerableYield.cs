@@ -224,7 +224,7 @@ public class EnumerableYield
 		var proxy = client.CreateProxy<IIenumera>();
 
 		var n1 = proxy.NonJild().ToList();
-		Assert.AreEqual(2, n1.Count);
+		Assert.HasCount(2, n1);
 		Assert.AreEqual("1", n1[0]);
 		Assert.AreEqual("2", n1[1]);
 
@@ -260,7 +260,7 @@ public class EnumerableYield
 			//Debug.WriteLine(i);
 		}
 
-		Assert.AreEqual(2, i2.Count);
+		Assert.HasCount(2, i2);
 		Assert.AreEqual("1", i2[0]);
 		Assert.AreEqual("2", i2[1]);
 
@@ -300,7 +300,7 @@ public class EnumerableYield
 
 		var td = DateTime.Now - t1;
 //			Assert.True(td.TotalSeconds < 10);
-		Assert.IsTrue(hit1 == 3);
+		Assert.AreEqual(3, hit1);
 		Assert.IsTrue(wasC);
 
 		Exception? cee = null;
@@ -325,8 +325,8 @@ public class EnumerableYield
 		//weird hack: ProgressChanged is called on background thread?
 		//await Task.Delay(100);
 
-		Assert.IsTrue(l.Count == 2);
-		Assert.IsTrue(l.Sum() == 43);
+		Assert.HasCount(2, l);
+		Assert.AreEqual(43, l.Sum());
 
 		Exception? _ex1 = null;
 		try

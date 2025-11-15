@@ -2,24 +2,25 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\ServerShared\ServerShared.cs" Link="ServerShared.cs" />
+    <Compile Include="..\ClientShared\ClientShared.cs" Link="ClientShared.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.Core" />
- <!--   <PackageReference Include="Open.ChannelExtensions" /> -->
+    <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="Grpc.Net.ClientFactory" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\GoreRemoting.Serialization.BinaryFormatter\GoreRemoting.Serialization.BinaryFormatter.csproj" />
+    <ProjectReference Include="..\..\GoreRemoting.Serialization.MessagePack\GoreRemoting.Serialization.MessagePack.csproj" />
     <ProjectReference Include="..\..\GoreRemoting\GoreRemoting.csproj" />
   </ItemGroup>
 
 </Project>
-
-

@@ -23,7 +23,7 @@ public static class ChannelReaderExtensions
 	{
 		while (await cr.WaitToReadAsync(cancellationToken).ConfigureAwait(continueOnCapturedContext: false))
 		{
-			while (cr.TryRead(out T item))
+			while (cr.TryRead(out T? item))
 			{
 				yield return item;
 			}

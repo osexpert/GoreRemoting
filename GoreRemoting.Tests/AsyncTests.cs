@@ -98,7 +98,7 @@ public class AsyncTests
 		Assert.IsNull(res.Item1);
 		Assert.IsNull(res.Item4);
 		Assert.AreEqual(new Version(1, 42), res.Item2);
-		Assert.AreEqual(2, res.Item3.Length);
+		Assert.HasCount(2, res.Item3);
 		Assert.AreEqual(new Version(1, 2), res.Item3[0]);
 		Assert.AreEqual(new Version(2, 3, 5), res.Item3[1]);
 	}
@@ -216,13 +216,16 @@ public class AsyncTests
 			Data.Add("teste", "foobar");
 		}
 
+		[Obsolete]
 		public SerExMistake(SerializationInfo si, StreamingContext sc) : base(si, sc)
 		{
 			// Mistake: should be "test"
 			Test = si.GetString("Test")!;
 		}
 
+#if NET8_0_OR_GREATER
 		[Obsolete]
+#endif
 		public override void GetObjectData(SerializationInfo info, StreamingContext context)
 		{
 			base.GetObjectData(info, context);
@@ -241,13 +244,16 @@ public class AsyncTests
 			Data.Add("teste", "foobar");
 		}
 
+		[Obsolete]
 		public SerExMistakeNotPriv(SerializationInfo si, StreamingContext sc) : base(si, sc)
 		{
 			// Mistake: should be "test"
 			Test = si.GetString("Test")!;
 		}
 
+#if NET8_0_OR_GREATER
 		[Obsolete]
+#endif
 		public override void GetObjectData(SerializationInfo info, StreamingContext context)
 		{
 			base.GetObjectData(info, context);
@@ -273,12 +279,15 @@ public class AsyncTests
 		}
 
 
+		[Obsolete]
 		public SerExOk(SerializationInfo si, StreamingContext sc) : base(si, sc)
 		{
 			Test = si.GetString("test")!;
 		}
 
+#if NET8_0_OR_GREATER
 		[Obsolete]
+#endif
 		public override void GetObjectData(SerializationInfo info, StreamingContext context)
 		{
 			base.GetObjectData(info, context);
@@ -311,19 +320,19 @@ public class AsyncTests
 		Exception e;
 		if (ser == enSerializer.BinaryFormatter)
 		{
-			e = Assert.ThrowsException<TaskCanceledException>(proxy.TestSerializedExMistakeAndPrivate);
+			e = Assert.ThrowsExactly<TaskCanceledException>(proxy.TestSerializedExMistakeAndPrivate);
 			Assert.AreEqual("A task was canceled.", e.Message);
 			Assert.IsNull(e.InnerException);
 
 			AssertLines(e, new string[]
 			{
 				"System.Threading.Tasks.TaskCanceledException: A task was canceled.",
-				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
+				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType, String assertMethodName)"
 			});
 		}
 		else
 		{
-			e = Assert.ThrowsException<TargetInvocationException>(proxy.TestSerializedExMistakeAndPrivate);
+			e = Assert.ThrowsExactly<TargetInvocationException>(proxy.TestSerializedExMistakeAndPrivate);
 			Assert.AreEqual("Exception has been thrown by the target of an invocation.", e.Message);
 			Assert.AreEqual("Member 'Test' was not found.", e.InnerException!.Message);
 
@@ -332,14 +341,14 @@ public class AsyncTests
 				"System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation.",
 				" ---> System.Runtime.Serialization.SerializationException: Member 'Test' was not found.",
 				"   --- End of inner exception stack trace ---",
-				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
+				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType, String assertMethodName)"
 			});
 		}
 
 		Exception e2;
 		if (ser == enSerializer.BinaryFormatter)
 		{
-			e2 = Assert.ThrowsException<TaskCanceledException>(proxy.TestSerializedExMistake);
+			e2 = Assert.ThrowsExactly<TaskCanceledException>(proxy.TestSerializedExMistake);
 
 			Assert.AreEqual("A task was canceled.", e2.Message);
 			Assert.IsNull(e2.InnerException);
@@ -347,12 +356,12 @@ public class AsyncTests
 			AssertLines(e, new string[]
 			{
 				"System.Threading.Tasks.TaskCanceledException: A task was canceled.",
-				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
+				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType, String assertMethodName)"
 			});
 		}
 		else
 		{
-			e2 = Assert.ThrowsException<TargetInvocationException>(proxy.TestSerializedExMistake);
+			e2 = Assert.ThrowsExactly<TargetInvocationException>(proxy.TestSerializedExMistake);
 			Assert.AreEqual("Exception has been thrown by the target of an invocation.", e2.Message);
 			Assert.AreEqual("Member 'Test' was not found.", e2.InnerException!.Message);
 
@@ -361,11 +370,11 @@ public class AsyncTests
 				"System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation.",
 				" ---> System.Runtime.Serialization.SerializationException: Member 'Test' was not found.",
 				"   --- End of inner exception stack trace ---",
-				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
+				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType, String assertMethodName)"
 			});
 		}
 
-		var e3 = Assert.ThrowsException<SerExOk>(proxy.TestSerializedOk);
+		var e3 = Assert.ThrowsExactly<SerExOk>(proxy.TestSerializedOk);
 
 		Assert.AreEqual("The mess", e3.Message);
 		Assert.IsNull(e3.InnerException);
@@ -374,7 +383,7 @@ public class AsyncTests
 		{
 			"GoreRemoting.Tests.AsyncTests+SerExOk: The mess",
 			"--- End of stack trace from previous location ---",
-			"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
+			"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType, String assertMethodName)"
 		});
 	}
 
@@ -398,7 +407,7 @@ public class AsyncTests
 
 		var proxy = client.CreateProxy<IExceptionTest>();
 
-		var e4 = Assert.ThrowsException<SerExOk>(proxy.TestWithInnerException);
+		var e4 = Assert.ThrowsExactly<SerExOk>(proxy.TestWithInnerException);
 
 		Assert.AreEqual("The mess", e4.Message);
 		if (ser == enSerializer.BinaryFormatter)
@@ -415,7 +424,7 @@ public class AsyncTests
 				" ---> System.ArgumentException: Format of the initialization string does not conform to specification starting at index 0.",
 				"   --- End of inner exception stack trace ---",
 				"--- End of stack trace from previous location ---",
-				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)",
+				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType, String assertMethodName)",
 		});
 	}
 
@@ -446,7 +455,7 @@ public class AsyncTests
 			}
 		}
 
-		Assert.IsTrue(strings_list.Count == 0);
+		Assert.IsEmpty(strings_list);
 	}
 
 	[TestMethod]
@@ -469,7 +478,7 @@ public class AsyncTests
 
 		var proxy = client.CreateProxy<IExceptionTest>();
 
-		var e4 = Assert.ThrowsException<SqlException>(proxy.TestWithSqlException);
+		var e4 = Assert.ThrowsExactly<SqlException>(proxy.TestWithSqlException);
 
 		Assert.AreEqual("A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)", e4.Message);
 
@@ -492,7 +501,7 @@ public class AsyncTests
 			"Microsoft.Data.SqlClient.SqlException (0x80131904): A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)",
 			" ---> System.ComponentModel.Win32Exception (53): The network path was not found.",
 			"--- End of stack trace from previous location ---",
-			"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
+			"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType, String assertMethodName)"
 		});
 #else
 		AssertLines(e4, new string[]
@@ -500,7 +509,7 @@ public class AsyncTests
 			"Microsoft.Data.SqlClient.SqlException (0x80131904): A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)",
 			" ---> System.ComponentModel.Win32Exception (0x80004005): The network path was not found", // no dot
 			"--- End of stack trace from previous location ---",
-			"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.ThrowsException[T](Action action, String message, Object[] parameters)"
+			"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType, String assertMethodName)"
 		});
 #endif
 

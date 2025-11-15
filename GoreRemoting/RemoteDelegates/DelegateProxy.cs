@@ -89,7 +89,7 @@ public sealed class DelegateProxy : AsyncInterceptor
 		public MethodInfo GetConcreteMethod() => throw new NotImplementedException();
 		public MethodInfo GetConcreteMethodInvocationTarget() => throw new NotImplementedException();
 		public void Proceed() => throw new NotImplementedException();
-		public void SetArgumentValue(int index, object value) => throw new NotImplementedException();
+		public void SetArgumentValue(int index, object? value) => throw new NotImplementedException();
 	}
 
 	/// <summary>
