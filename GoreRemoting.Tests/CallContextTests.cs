@@ -33,10 +33,6 @@ public class CallContextTests
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser))
 			{
-				//RegisterServicesAction = container =>
-				//    container.RegisterService<ITestService>(
-				//        factoryDelegate: () => testService,
-				//        lifetime: ServiceLifetime.Singleton)
 				CreateService = (_, _) => new(testService, false)
 			};
 

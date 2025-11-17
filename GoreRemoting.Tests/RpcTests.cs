@@ -273,60 +273,47 @@ public class RpcTests
 
 		async Task ClientAction()
 		{
-			try
-			{
-				var stopWatch = new Stopwatch();
-				stopWatch.Start();
+			var stopWatch = new Stopwatch();
+			stopWatch.Start();
 
-				var cc = new ClientConfig(Serializers.GetSerializer(ser));
-				if (compress)
-					cc.AddCompressor(new Lz4CompressionProvider()); // default since only 1
+			var cc = new ClientConfig(Serializers.GetSerializer(ser));
+			if (compress)
+				cc.AddCompressor(new Lz4CompressionProvider()); // default since only 1
 
-				await using var client = new NativeClient(9094, cc);
+			await using var client = new NativeClient(9094, cc);
 
-				stopWatch.Stop();
-			//	_testOutputHelper.WriteLine($"Creating client took {stopWatch.ElapsedMilliseconds} ms");
-				stopWatch.Reset();
-				stopWatch.Start();
+			stopWatch.Stop();
+			stopWatch.Reset();
+			stopWatch.Start();
 
-				//client.Connect();
+			//client.Connect();
 
-				stopWatch.Stop();
-		//		_testOutputHelper.WriteLine($"Establishing connection took {stopWatch.ElapsedMilliseconds} ms");
-				stopWatch.Reset();
-				stopWatch.Start();
+			stopWatch.Stop();
+			stopWatch.Reset();
+			stopWatch.Start();
 
-				var proxy = client.CreateProxy<ITestService>();
+			var proxy = client.CreateProxy<ITestService>();
 
-				stopWatch.Stop();
-	//			_testOutputHelper.WriteLine($"Creating proxy took {stopWatch.ElapsedMilliseconds} ms");
-				stopWatch.Reset();
-				stopWatch.Start();
+			stopWatch.Stop();
+			stopWatch.Reset();
+			stopWatch.Start();
 
-				var result = proxy.TestMethod("test");
+			var result = proxy.TestMethod("test");
 
-				stopWatch.Stop();
-//				_testOutputHelper.WriteLine($"Remote method invocation took {stopWatch.ElapsedMilliseconds} ms");
-				stopWatch.Reset();
-				stopWatch.Start();
+			stopWatch.Stop();
+			stopWatch.Reset();
+			stopWatch.Start();
 
-				var result2 = proxy.TestMethod("test");
+			var result2 = proxy.TestMethod("test");
 
-				stopWatch.Stop();
-//					_testOutputHelper.WriteLine($"Second remote method invocation took {stopWatch.ElapsedMilliseconds} ms");
+			stopWatch.Stop();
 
-				Assert.AreEqual("test", result);
-				Assert.AreEqual("test", result2);
+			Assert.AreEqual("test", result);
+			Assert.AreEqual("test", result2);
 
-				proxy.MethodWithOutParameter(out int methodCallCount);
+			proxy.MethodWithOutParameter(out int methodCallCount);
 
-				Assert.AreEqual(1, methodCallCount);
-			}
-			catch (Exception)
-			{
-//					_testOutputHelper.WriteLine(e.ToString());
-				throw;
-			}
+			Assert.AreEqual(1, methodCallCount);
 		}
 
 		var clientThread = new Thread(async () =>
@@ -374,52 +361,37 @@ public class RpcTests
 
 		async Task ClientAction()
 		{
-			try
-			{
-				var stopWatch = new Stopwatch();
-				stopWatch.Start();
+			var stopWatch = new Stopwatch();
+			stopWatch.Start();
 
-				await using var client = new NativeClient(9094, new ClientConfig(Serializers.GetSerializer(ser)));
+			await using var client = new NativeClient(9094, new ClientConfig(Serializers.GetSerializer(ser)));
 
-				stopWatch.Stop();
-	//			_testOutputHelper.WriteLine($"Creating client took {stopWatch.ElapsedMilliseconds} ms");
-				stopWatch.Reset();
-				stopWatch.Start();
+			stopWatch.Stop();
+			stopWatch.Reset();
+			stopWatch.Start();
 
-				//client.Connect();
+			stopWatch.Stop();
+			stopWatch.Reset();
+			stopWatch.Start();
 
-				stopWatch.Stop();
-//				_testOutputHelper.WriteLine($"Establishing connection took {stopWatch.ElapsedMilliseconds} ms");
-				stopWatch.Reset();
-				stopWatch.Start();
+			var proxy = client.CreateProxy<ITestService>();
 
-				var proxy = client.CreateProxy<ITestService>();
+			stopWatch.Stop();
+			stopWatch.Reset();
+			stopWatch.Start();
 
-				stopWatch.Stop();
-//					_testOutputHelper.WriteLine($"Creating proxy took {stopWatch.ElapsedMilliseconds} ms");
-				stopWatch.Reset();
-				stopWatch.Start();
+			var result = proxy.TestMethod("test");
 
-				var result = proxy.TestMethod("test");
+			stopWatch.Stop();
+			stopWatch.Reset();
+			stopWatch.Start();
 
-				stopWatch.Stop();
-		//		_testOutputHelper.WriteLine($"Remote method invocation took {stopWatch.ElapsedMilliseconds} ms");
-				stopWatch.Reset();
-				stopWatch.Start();
+			var result2 = proxy.TestMethod("test");
 
-				var result2 = proxy.TestMethod("test");
+			stopWatch.Stop();
 
-				stopWatch.Stop();
-			//	_testOutputHelper.WriteLine($"Second remote method invocation took {stopWatch.ElapsedMilliseconds} ms");
-
-				Assert.AreEqual("test", result);
-				Assert.AreEqual("test", result2);
-			}
-			catch (Exception)
-			{
-				//_testOutputHelper.WriteLine(e.ToString());
-				throw;
-			}
+			Assert.AreEqual("test", result);
+			Assert.AreEqual("test", result2);
 		}
 
 		var clientThread = new Thread(async () =>
@@ -455,18 +427,10 @@ public class RpcTests
 
 		async Task ClientAction()
 		{
-			try
-			{
-				await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
+			await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
 
-				var proxy = client.CreateProxy<ITestService>();
-				proxy.TestMethodWithDelegateArg(arg => argumentFromServer = arg);
-			}
-			catch (Exception)
-			{
-//					_testOutputHelper.WriteLine(e.ToString());
-				throw;
-			}
+			var proxy = client.CreateProxy<ITestService>();
+			proxy.TestMethodWithDelegateArg(arg => argumentFromServer = arg);
 		}
 
 		var clientThread = new Thread(async () =>
@@ -558,20 +522,12 @@ public class RpcTests
 
 		async Task ClientAction()
 		{
-			try
-			{
-				await using var client = new NativeClient(9097, new ClientConfig(Serializers.GetSerializer(ser)));
+			await using var client = new NativeClient(9097, new ClientConfig(Serializers.GetSerializer(ser)));
 
-				var proxy = client.CreateProxy<ITestService>();
-				proxy.TestExternalTypeParameter(new DataClass() { Value = 42 });
+			var proxy = client.CreateProxy<ITestService>();
+			proxy.TestExternalTypeParameter(new DataClass() { Value = 42 });
 
-				Assert.AreEqual(42, parameterValue!.Value);
-			}
-			catch (Exception)
-			{
-//					_testOutputHelper.WriteLine(e.ToString());
-				throw;
-			}
+			Assert.AreEqual(42, parameterValue!.Value);
 		}
 
 		var clientThread = new Thread(async () =>
@@ -589,13 +545,9 @@ public class RpcTests
 	public interface IGenericEchoService
 	{
 		string Echo(string value);
-
 		List<int> Echo2(List<int> value);
-
 		void a();
-
 		Type EchoType(Type t);
-
 		DeleType EchoTypeWithDelegate(DeleType dt);
 	}
 
@@ -803,23 +755,16 @@ public class RpcTests
 	{
 		public string Test(Func<string, string> echo)
 		{
-
 			var t = new Thread(() =>
 			{
-
 				Test_Thread_Started = true;
-
 				try
 				{
 					Exception? ex = null;
-
-
 					while (true)
 					{
-
 						try
 						{
-
 							var r = echo("hi");
 							Assert.AreEqual("hihi", r);
 
@@ -847,12 +792,8 @@ public class RpcTests
 
 							break;
 						}
-
 					}
-
 					Assert.AreEqual("Too late, result sent", ex.Message);
-
-
 				}
 				finally
 				{
@@ -860,9 +801,7 @@ public class RpcTests
 				}
 			});
 
-
 			t.Start();
-
 			Thread.Sleep(1000);
 
 			while (!Test_Thread_Started)
@@ -923,27 +862,21 @@ public class RpcTests
 		Assert.IsTrue(Test_Thread_Callback_Failed);
 	}
 
-
-
-
 	public interface IDelegateTest2
 	{
 		string Test(Func<S1, R1> echo, Func<S2, R2> echo2, Func<S3, R3> echo3);
 		string Test2(Action<S1> echo, Func<S2, R2> echo2, Action<S3> echo3);
-
 		string Test3(Action<S1> echo, Func<S2, Task<R2>> echo2, Action<S3> echo3);
 	}
 
 
 	public class DelegateTest2 : IDelegateTest2
 	{
-
 		volatile bool run = true;
 
 		public string Test(Func<S1, R1> echo, Func<S2, R2> echo2, Func<S3, R3> echo3)
 		{
 			Assert.Fail();
-
 			throw new NotImplementedException();
 		}
 
@@ -988,7 +921,6 @@ public class RpcTests
 			Assert.IsGreaterThan(0, i);
 			Assert.IsGreaterThan(0, i1);
 			Assert.IsGreaterThan(0, i2);
-
 
 			run = false;
 
@@ -1051,7 +983,6 @@ public class RpcTests
 			Assert.IsGreaterThan(0, i);
 			Assert.IsGreaterThan(0, i1);
 			Assert.IsGreaterThan(0, i2);
-
 
 			run = false;
 
@@ -1254,8 +1185,6 @@ public class RpcTests
 			{
 				throw;
 			}
-
-
 		}
 
 		public async Task<int> Test3(Func<int> f, Action a, Func<Task> a2, Func<ValueTask> vt)
@@ -1692,18 +1621,10 @@ public class RpcTests
 
 		async Task ClientAction()
 		{
-			try
-			{
-				await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
+			await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
 
-				var proxy = client.CreateProxy<ITestService>();
-				argumentFromServer = string.Join(",", proxy.GetIEnumerableYieldStrings().ToList());
-			}
-			catch (Exception)
-			{
-				//					_testOutputHelper.WriteLine(e.ToString());
-				throw;
-			}
+			var proxy = client.CreateProxy<ITestService>();
+			argumentFromServer = string.Join(",", proxy.GetIEnumerableYieldStrings().ToList());
 		}
 
 		var clientThread = new Thread(async () =>
@@ -1735,7 +1656,6 @@ public partial class S1
 	[MemoryPackConstructor]
 	public S1()
 	{
-
 	}
 }
 
@@ -1755,7 +1675,6 @@ public partial class S2
 	[MemoryPackConstructor]
 	public S2()
 	{
-
 	}
 }
 
@@ -1775,7 +1694,6 @@ public partial class S3
 	[MemoryPackConstructor]
 	public S3()
 	{
-
 	}
 }
 
@@ -1795,7 +1713,6 @@ public partial class R1
 	[MemoryPackConstructor]
 	public R1()
 	{
-
 	}
 }
 
@@ -1815,7 +1732,6 @@ public partial class R2
 	[MemoryPackConstructor]
 	public R2()
 	{
-
 	}
 }
 
@@ -1831,14 +1747,12 @@ public partial class R3
 	[MemoryPackConstructor]
 	public R3()
 	{
-
 	}
 
 	public R3(string r)
 	{
 		r3 = r;
 	}
-
 }
 
 

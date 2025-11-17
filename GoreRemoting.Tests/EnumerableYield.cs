@@ -15,38 +15,24 @@ public class EnumerableYield
 	public interface IIenumera
 	{
 		IEnumerable<string> NonJild();
-
 		IEnumerable<string> Jild();
 		IAsyncEnumerable<string> Jild2();
-
 		IEnumerable<Task<string>> Jild3();
-
 		Task Jild4(Func<string, Task> outt, int t);
-
 		Tuple<string, int> RetCom1();
 		(string, int) RetCom2();
 		ValueTuple<string, int> RetCom3();
-
 		Task<Tuple<string, int>> RetACom1();
 		Task<(string, int)> RetACom2();
 		Task<ValueTuple<string, int>> RetACom3();
-
-
 		//Task<IAsyncEnumerable<string>> Jild3();
 		//Task<IEnumerable<string>> Jild4();
-
-
 		Task TestCancel(Func<string, Task> outt, CancellationToken cancel);
 		Task TestCancel2(CancellationToken c1, CancellationToken cancel);
-
 		Task TestProg(Action<int> p);
-
-
 		void TextNonserEx();
 		void TextNonserEx2();
 	}
-
-
 
 	public class EnumeTest : IIenumera
 	{
@@ -72,10 +58,7 @@ public class EnumerableYield
 
 		public Task Jild4(Func<string, Task> outt, int t)
 		{
-			//return Jild3Int().ViaFuncAsync(outt);
-
-			return AsyncEnumerableAdapter.Produce(Jild3Int(t), outt);
-			//				return AsyncEnumerableAdapter.Produce(cancel => Jild3Int(t, cancel), outt, new CancellationToken());
+			return Jild3Int(t).Push(outt);
 		}
 
 		private async IAsyncEnumerable<string> Jild3Int(int x)
@@ -93,20 +76,20 @@ public class EnumerableYield
 
 		}
 
-		private async IAsyncEnumerable<string> Jild3Int(int x, [EnumeratorCancellation]CancellationToken cancel)
-		{
-			await Task.CompletedTask;
-			yield return "1";
-			yield return "2";
+		//private async IAsyncEnumerable<string> Jild3Int(int x, [EnumeratorCancellation]CancellationToken cancel)
+		//{
+		//	await Task.CompletedTask;
+		//	yield return "1";
+		//	yield return "2";
 
-			//while (true)
-			//{
-			//	yield return Random.Shared.Next().ToString();// "2";
+		//	//while (true)
+		//	//{
+		//	//	yield return Random.Shared.Next().ToString();// "2";
 
-			//	await Task.Delay(1000);
-			//}
+		//	//	await Task.Delay(1000);
+		//	//}
 
-		}
+		//}
 
 
 		public async Task<Tuple<string, int>> RetACom1()
@@ -192,14 +175,12 @@ public class EnumerableYield
 
 	class NonoEx : Exception
 	{
-
 	}
 
 	class NonoEx2 : Exception
 	{
 		public NonoEx2(object? t, string mess) : base(mess)
 		{
-
 		}
 	}
 
@@ -251,7 +232,8 @@ public class EnumerableYield
 		List<string> i2 = new();
 
 		//await proxy.Jild4(async x => { i2.Add(x); }, 42);
-		var res = AsyncEnumerableAdapter.Consume<string>(bb => proxy.Jild4(x => bb(x), 42));
+		var res = AsyncEnumerableAdapter.FromPush<string>(bb => proxy.Jild4(bb, 42));
+
 		await foreach (var i in res)
 		{
 			i2.Add(i);
