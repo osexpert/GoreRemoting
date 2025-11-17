@@ -89,4 +89,18 @@ public class TestService : ITestService
 	{
 		return (dt, off, g, enu, ts, nullDto);
 	}
+
+	public IEnumerable<string> GetIEnumerableYieldStrings()
+	{
+		yield return "a";
+		Thread.Sleep(1000);
+		yield return "b";
+	}
+
+	public async IAsyncEnumerable<string> GetIAsyncEnumerableYieldStrings()
+	{
+		yield return "a";
+		await Task.Delay(1000);
+		yield return "b";
+	}
 }

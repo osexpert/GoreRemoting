@@ -68,13 +68,13 @@ public class EnumerableYield
 			yield return "2";
 		}
 
+
+
 		public Task Jild4(Func<string, Task> outt, int t)
 		{
 			//return Jild3Int().ViaFuncAsync(outt);
 
-			return AsyncEnumerableAdapter.ServerProduce(() => Jild3Int(t), outt);
-
-
+			return AsyncEnumerableAdapter.Produce(Jild3Int(t), outt);
 			//				return AsyncEnumerableAdapter.Produce(cancel => Jild3Int(t, cancel), outt, new CancellationToken());
 		}
 
@@ -251,7 +251,8 @@ public class EnumerableYield
 		List<string> i2 = new();
 
 		//await proxy.Jild4(async x => { i2.Add(x); }, 42);
-		await foreach (var i in AsyncEnumerableAdapter.ClientConsume<string>(bb => proxy.Jild4(x => bb(x), 42)))
+		var res = AsyncEnumerableAdapter.Consume<string>(bb => proxy.Jild4(x => bb(x), 42));
+		await foreach (var i in res)
 		{
 			i2.Add(i);
 

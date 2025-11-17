@@ -1666,6 +1666,57 @@ public class RpcTests
 		Assert.IsNull(throw8Ex);
 		Assert.AreEqual("test", throw9Ex!.Message);
 	}
+
+
+
+	[TestMethod]
+	//[DataRow(enSerializer.BinaryFormatter)] does nor work, complain the generated iterator class is not serializable
+#if NET6_0_OR_GREATER
+	[DataRow(enSerializer.MemoryPack)]
+#endif
+	[DataRow(enSerializer.Json)]
+	[DataRow(enSerializer.MessagePack)]
+	[DataRow(enSerializer.Protobuf)]
+	public async Task IEnumerableYield(enSerializer ser)
+	{
+		string? argumentFromServer = null;
+
+		var testService = new TestService();
+
+		var serverConfig =
+			new ServerConfig(Serializers.GetSerializer(ser));
+
+		await using var server = new NativeServer(9095, serverConfig);
+		server.RegisterService<ITestService, TestService>();
+		server.Start();
+
+		async Task ClientAction()
+		{
+			try
+			{
+				await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
+
+				var proxy = client.CreateProxy<ITestService>();
+				argumentFromServer = string.Join(",", proxy.GetIEnumerableYieldStrings().ToList());
+			}
+			catch (Exception)
+			{
+				//					_testOutputHelper.WriteLine(e.ToString());
+				throw;
+			}
+		}
+
+		var clientThread = new Thread(async () =>
+		{
+			await ClientAction();
+		});
+		clientThread.Start();
+		clientThread.Join();
+
+		Assert.AreEqual("a,b", argumentFromServer);
+	}
+
+
 }
 
 [Serializable]
@@ -1787,8 +1838,6 @@ public partial class R3
 	{
 		r3 = r;
 	}
-
-
 
 }
 

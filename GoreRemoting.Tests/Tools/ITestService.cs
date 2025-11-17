@@ -39,6 +39,10 @@ public interface ITestService : IBaseService
 	(DateTime dt, DateTimeOffset off, Guid g, TestEnum4 enu, TimeSpan ts, DateTimeOffset? nullDto)
 		EchoMiscBasicTypesNet48(DateTime dt, DateTimeOffset off, Guid g, TestEnum4 enu, TimeSpan ts, DateTimeOffset? nullDto);
 
+	IEnumerable<string> GetIEnumerableYieldStrings();
+
+	IAsyncEnumerable<string> GetIAsyncEnumerableYieldStrings();
+
 }
 
 public enum TestEnum4

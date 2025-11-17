@@ -52,7 +52,7 @@ public static class CallContext
 	/// Gets a serializable snapshot of the current call context.
 	/// </summary>
 	/// <returns>Array of call context entries</returns>
-	internal static CallContextEntry[] GetChangesSnapshot()
+	internal static CallContextEntry[] CreateChangesSnapshot()
 	{
 		var stateSnaphsot = State.ToArray();
 

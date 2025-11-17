@@ -31,7 +31,7 @@ public class MethodCallMessageBuilder //: IMethodCallMessageBuilder
 				).ToArray(),
 		};
 
-		message.CallContextSnapshot = CallContext.GetChangesSnapshot();
+		message.CallContextSnapshot = CallContext.CreateChangesSnapshot();
 
 		return message;
 	}
@@ -138,7 +138,7 @@ public class MethodCallMessageBuilder //: IMethodCallMessageBuilder
 
 		message.OutArguments = outArguments.ToArray();
 
-		message.CallContextSnapshot = CallContext.GetChangesSnapshot();
+		message.CallContextSnapshot = CallContext.CreateChangesSnapshot();
 
 		return message;
 	}
