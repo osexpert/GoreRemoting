@@ -119,11 +119,11 @@ internal class GoreSerializer
 		{
 			if (mrm.ResultType == MethodResultType.Exception)
 			{
-				return new Type[] { GoreSerializer.GetExceptionType(serializer) };
+				return [GoreSerializer.GetExceptionType(serializer)];
 			}
 			else if (mrm.ResultType == MethodResultType.Exception_dict_internal)
 			{
-				return new Type[] { };
+				return [];
 			}
 			else
 			{
@@ -160,7 +160,6 @@ internal class GoreSerializer
 		else if (msg is MethodCallMessage mcm)
 		{
 			var types =	param_s
-				//						.Select(p => p.ParameterType)
 				.Where(p =>
 				{
 					if (p.IsOutParameterForReal()
@@ -171,20 +170,7 @@ internal class GoreSerializer
 
 					return true;
 				})
-				.Select(t =>
-				{
-					//if (t.IsByRef)
-					//	t = t.GetElementType();
-					//else if (typeof(Delegate).IsAssignableFrom(t))
-					//{
-					//	//var invokeMethod = t.GetMethod("Invoke");
-					//	//var retType = invokeMethod.ReturnType;
-					//	t = typeof(string);//  retType; it does not matter the type. it will always be null anyways, but it can not be void...
-					//}
-
-
-					return t.ParameterType;
-				})
+				.Select(t => t.ParameterType)
 				.ToArray();
 			return types;
 		}
@@ -203,11 +189,11 @@ internal class GoreSerializer
 		{
 			if (drm.ResultType == DelegateResultType.Exception)
 			{
-				return new Type[] { GoreSerializer.GetExceptionType(serializer) };
+				return [GoreSerializer.GetExceptionType(serializer)];
 			}
 			else if (drm.ResultType == DelegateResultType.Exception_dict_internal)
 			{
-				return new Type[] { };
+				return [];
 			}
 			else
 			{
@@ -225,7 +211,7 @@ internal class GoreSerializer
 					}
 				}
 
-				return new Type[] { retType };
+				return [retType];
 			}
 		}
 		else
