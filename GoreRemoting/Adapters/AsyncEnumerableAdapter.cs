@@ -4,9 +4,12 @@ namespace GoreRemoting;
 
 public static class AsyncEnumerableAdapter
 {
-	public static IAsyncEnumerable<T> FromPush<T>(Func<Func<T, Task>, Task> dataSource, CancellationToken cancel = default)
+	public static IAsyncEnumerable<T> FromPush<T>(
+		Func<Func<T, Task>, Task> dataSource, 
+		CancellationToken cancel = default
+		)
 	{
-		Channel<T> channel = Channel.CreateUnbounded<T>(new UnboundedChannelOptions
+		var channel = Channel.CreateUnbounded<T>(new UnboundedChannelOptions
 		{
 			SingleReader = true,
 			SingleWriter = true
@@ -34,7 +37,8 @@ public static class AsyncEnumerableAdapter
 	// Overload for data sources that accept cancellation
 	public static IAsyncEnumerable<T> FromPush<T>(
 		Func<Func<T, Task>, CancellationToken, Task> dataSource,
-		CancellationToken cancel = default)
+		CancellationToken cancel = default
+		)
 	{
 		var channel = Channel.CreateUnbounded<T>(new UnboundedChannelOptions
 		{
@@ -67,7 +71,8 @@ public static class AsyncEnumerableExtensions
 	public static async Task Push<T>(
 		this IAsyncEnumerable<T> source,
 		Func<T, Task> action,
-		CancellationToken cancel = default)
+		CancellationToken cancel = default
+		)
 	{
 		await foreach (var item in source.WithCancellation(cancel).ConfigureAwait(false))
 		{

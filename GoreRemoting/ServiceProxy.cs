@@ -167,9 +167,14 @@ public class ServiceProxy<T> : AsyncInterceptor
 		return _client._config.DefaultCompressor;
 	}
 
-	private async Task<MethodResultMessage?> HandleResponseAsync(ISerializerAdapter serializer, ICompressionProvider? compressor, GoreResponseMessage callbackData,
-		Func<GoreRequestMessage, Task> res, object?[] args,
-		int? streamingDelegatePosition)
+	private async Task<MethodResultMessage?> HandleResponseAsync(
+		ISerializerAdapter serializer, 
+		ICompressionProvider? compressor, 
+		GoreResponseMessage callbackData,
+		Func<GoreRequestMessage, Task> res, 
+		object?[] args,
+		int? streamingDelegatePosition
+		)
 	{
 		// WEIRD BUT...callbackData also has serializer and compressor!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! This make no sense.
 		// It kind of make sense:

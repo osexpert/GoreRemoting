@@ -206,16 +206,24 @@ public class RemotingServer : IRemotingParty
 			new DelegateProxy(delegateType,
 			(method, delegateArgs) =>
 			{
-				var r = callDelegate(method, new DelegateCallMessage { Arguments = delegateArgs, Position = position,
+				var r = callDelegate(method, new DelegateCallMessage
+				{
+					Arguments = delegateArgs,
+					Position = position,
 					ParameterName = method.Name,
-					OneWay = !remoteDelegateInfo.HasResult });
+					OneWay = !remoteDelegateInfo.HasResult
+				});
 				return r;
 			},
 			(method, delegateArgs) => // async
 			{
-				var r = callDelegateAsync(method, new DelegateCallMessage { Arguments = delegateArgs,
+				var r = callDelegateAsync(method, new DelegateCallMessage
+				{
+					Arguments = delegateArgs,
 					ParameterName = method.Name,
-					Position = position, OneWay = !remoteDelegateInfo.HasResult });
+					Position = position,
+					OneWay = !remoteDelegateInfo.HasResult
+				});
 				return r;
 			});
 
@@ -245,7 +253,10 @@ public class RemotingServer : IRemotingParty
 
 	private async Task DuplexCall(
 		GoreRequestMessage request,
-		Func<Task<GoreRequestMessage>> req, Func<GoreResponseMessage, Task> reponse, ServerCallContext context)
+		Func<Task<GoreRequestMessage>> req, 
+		Func<GoreResponseMessage, Task> reponse, 
+		ServerCallContext context
+		)
 	{
 		var callMessage = request.MethodCallMessage;
 
@@ -267,7 +278,6 @@ public class RemotingServer : IRemotingParty
 			context
 			);
 
-		//var oneWay = false;// method.GetCustomAttribute<OneWayAttribute>() != null;
 
 		object? result = null;
 		ServiceHandle? serviceHandle = null;
@@ -276,7 +286,7 @@ public class RemotingServer : IRemotingParty
 
 		try
 		{
-			serviceHandle = GetService(request.ServiceName, /*method,*/ context);
+			serviceHandle = GetService(request.ServiceName, context);
 			var service = serviceHandle.Value.Service;
 
 			callScope = _config.CreateCallScope?.Invoke();
@@ -289,17 +299,9 @@ public class RemotingServer : IRemotingParty
 		}
 		catch (Exception ex)
 		{
-			//if (oneWay)
-			//{
-			//	// eat...
-			//	//OnOneWayException(ex);
-			//}
-			//else
-			{
-				ex2 = ex;
-				if (ex2 is TargetInvocationException tie)
-					ex2 = tie.InnerException;
-			}
+			ex2 = ex;
+			if (ex2 is TargetInvocationException tie)
+				ex2 = tie.InnerException;
 
 			callScope?.Failure(ex2);
 		}
@@ -311,9 +313,6 @@ public class RemotingServer : IRemotingParty
 			if (serviceHandle != null)
 				await _config.ReleaseService(serviceHandle.Value).ConfigureAwait(false);
 		}
-
-		//			if (oneWay)
-		//				return;
 
 		MethodResultMessage resultMessage;
 
@@ -342,12 +341,14 @@ public class RemotingServer : IRemotingParty
 		await reponse(responseMsg).ConfigureAwait(false);
 	}
 
-	private object? DelegateCall(GoreRequestMessage request, 
+	private object? DelegateCall(
+		GoreRequestMessage request, 
 		Func<Task<GoreRequestMessage>> req, 
 		Func<GoreResponseMessage, Task> reponse, 
 		DelegateCallMessage delegateCallMsg, 
 		DuplexCallState state, 
-		AsyncReaderWriterLockSlim responseLock)
+		AsyncReaderWriterLockSlim responseLock
+		)
 	{
 		var delegateCallResponseMsg = new GoreResponseMessage(delegateCallMsg, request.ServiceName, request.MethodName, request.Serializer, request.Compressor);
 
@@ -463,11 +464,6 @@ public class RemotingServer : IRemotingParty
 		}
 	}
 
-		//public event EventHandler<Exception> OneWayException;
-		//internal void OnOneWayException(Exception ex)
-		//{
-		//	OneWayException?.Invoke(this, ex);
-		//}
 
 	public Method<GoreRequestMessage, GoreResponseMessage> DuplexCallDescriptor { get; }
 
@@ -478,8 +474,11 @@ public class RemotingServer : IRemotingParty
 		/// <param name="responseStream"></param>
 		/// <param name="context"></param>
 		/// <returns></returns>
-	public async Task DuplexCall(IAsyncStreamReader<GoreRequestMessage> requestStream,
-		IServerStreamWriter<GoreResponseMessage> responseStream, ServerCallContext context)
+	public async Task DuplexCall(
+		IAsyncStreamReader<GoreRequestMessage> requestStream,
+		IServerStreamWriter<GoreResponseMessage> responseStream, 
+		ServerCallContext context
+		)
 	{
 		try
 		{
