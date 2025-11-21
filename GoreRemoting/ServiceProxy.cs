@@ -28,7 +28,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 
 		_client._serviceMethodLookup.TryAdd((_serviceName, targetMethod.Name), targetMethod);
 
-		(var arguments, var cancel, var streamingDelePos) = MapArguments(targetMethod, args);
+		(var arguments, var cancelArgument, var streamingDelePos) = MapArguments(targetMethod, args);
 
 		var headers = new Metadata();
 		var serializer = ChooseSerializer(typeof(T), targetMethod);
@@ -50,7 +50,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 
 		var resultMessage = _client.Invoke(requestMsg,
 			(callback, res) => HandleResponseAsync(serializer, compressor, callback, res, args, streamingDelePos),
-			new CallOptions(headers: headers, cancellationToken: cancel));
+			new CallOptions(headers: headers, cancellationToken: cancelArgument));
 
 		if (resultMessage.IsException)
 			throw GoreSerializer.RestoreSerializedException(_client._config.ExceptionStrategy, serializer, resultMessage.Value!);
@@ -81,7 +81,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 
 		_client._serviceMethodLookup.TryAdd((_serviceName, targetMethod.Name), targetMethod);
 
-		(var arguments, var cancel, var streamingDelePos) = MapArguments(targetMethod, args);
+		(var arguments, var cancelArgument, var streamingDelePos) = MapArguments(targetMethod, args);
 
 		var headers = new Metadata();
 		var serializer = ChooseSerializer(typeof(T), targetMethod);
@@ -102,7 +102,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 
 		var resultMessage = await _client.InvokeAsync(requestMsg,
 			(callback, req) => HandleResponseAsync(serializer, compressor, callback, req, args.ToArray(), streamingDelePos),
-			new CallOptions(headers: headers, cancellationToken: cancel)).ConfigureAwait(false);
+			new CallOptions(headers: headers, cancellationToken: cancelArgument)).ConfigureAwait(false);
 
 		if (resultMessage.IsException)
 			throw GoreSerializer.RestoreSerializedException(_client._config.ExceptionStrategy, serializer, resultMessage.Value!);
@@ -269,11 +269,11 @@ public class ServiceProxy<T> : AsyncInterceptor
 	/// </summary>
 	/// <param name="arguments">Arguments</param>
 	/// <returns>Array of arguments (includes mapped ones)</returns>
-	private (object?[] arguments, CancellationToken cancel, int? streamingDelePos) MapArguments(MethodInfo mi, object?[] arguments)
+	private (object?[] arguments, CancellationToken cancelArgument, int? streamingDelePos) MapArguments(MethodInfo mi, object?[] arguments)
 	{
 		bool delegateHasResult = false;
 
-		CancellationToken? lastCancel = null;
+		CancellationToken? lastCancelArgument = null;
 
 		int? streamingDelePos = null;
 
@@ -313,10 +313,10 @@ public class ServiceProxy<T> : AsyncInterceptor
 			}
 			else if (typeof(CancellationToken).IsAssignableFrom(type))
 			{
-				if (lastCancel != null)
+				if (lastCancelArgument != null)
 					throw new Exception("More than one CancellationToken");
 				else
-					lastCancel = (CancellationToken)argument!;
+					lastCancelArgument = (CancellationToken)argument!;
 
 				res[i] = new CancellationTokenPlaceholder();
 			}
@@ -326,7 +326,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 			}
 		}
 
-		return (res, lastCancel ?? default, streamingDelePos);
+		return (res, lastCancelArgument ?? default, streamingDelePos);
 	}
 
 	/// <summary>
