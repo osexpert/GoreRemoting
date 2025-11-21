@@ -9,14 +9,14 @@ namespace GoreRemoting.Tests;
 public class CallContextTests
 {
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task CallContext_should_flow_from_client_to_server_and_back(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task CallContext_should_flow_from_client_to_server_and_back(Serializer ser)
 	{
 		var testService =
 			new TestService

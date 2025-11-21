@@ -278,7 +278,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 	{
 		bool delegateHasResult = false;
 
-		CancellationToken? lastCancelArgument = null;
+		CancellationToken? cancelArgument = null;
 
 		int? streamingDelePos = null;
 
@@ -318,10 +318,10 @@ public class ServiceProxy<T> : AsyncInterceptor
 			}
 			else if (typeof(CancellationToken).IsAssignableFrom(type))
 			{
-				if (lastCancelArgument != null)
+				if (cancelArgument != null)
 					throw new Exception("More than one CancellationToken");
 				else
-					lastCancelArgument = (CancellationToken)argument!;
+					cancelArgument = (CancellationToken)argument!;
 
 				res[i] = new CancellationTokenPlaceholder();
 			}
@@ -331,7 +331,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 			}
 		}
 
-		return (res, lastCancelArgument ?? default, streamingDelePos);
+		return (res, cancelArgument ?? default, streamingDelePos);
 	}
 
 	/// <summary>

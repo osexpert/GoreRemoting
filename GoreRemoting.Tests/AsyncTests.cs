@@ -60,14 +60,14 @@ public class AsyncTests
 
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
-	[DataRow(enSerializer.Json)]
+	[DataRow(Serializer.BinaryFormatter)]
+	[DataRow(Serializer.Json)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task AsyncMethods_should_work(enSerializer ser)
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task AsyncMethods_should_work(Serializer ser)
 	{
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
@@ -98,14 +98,14 @@ public class AsyncTests
 	/// </summary>
 	//[Fact(Timeout = 15000)]
 	[TestMethod()]//Timeout = 15000)]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task AwaitingNonGenericTask_should_not_hang_forever(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task AwaitingNonGenericTask_should_not_hang_forever(Serializer ser)
 	{
 		var port = 9197;
 
@@ -282,14 +282,14 @@ public class AsyncTests
 
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
-	[DataRow(enSerializer.Json)]
+	[DataRow(Serializer.BinaryFormatter)]
+	[DataRow(Serializer.Json)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task ExceptionTests(enSerializer ser)
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task ExceptionTests(Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
@@ -303,7 +303,7 @@ public class AsyncTests
 
 
 		Exception e;
-		if (ser == enSerializer.BinaryFormatter)
+		if (ser == Serializer.BinaryFormatter)
 		{
 			e = Assert.ThrowsExactly<TaskCanceledException>(proxy.TestSerializedExMistakeAndPrivate);
 			Assert.AreEqual("A task was canceled.", e.Message);
@@ -331,7 +331,7 @@ public class AsyncTests
 		}
 
 		Exception e2;
-		if (ser == enSerializer.BinaryFormatter)
+		if (ser == Serializer.BinaryFormatter)
 		{
 			e2 = Assert.ThrowsExactly<TaskCanceledException>(proxy.TestSerializedExMistake);
 
@@ -373,14 +373,14 @@ public class AsyncTests
 	}
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
-	[DataRow(enSerializer.Json)]
+	[DataRow(Serializer.BinaryFormatter)]
+	[DataRow(Serializer.Json)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task ExceptionTests_InnerEx(enSerializer ser)
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task ExceptionTests_InnerEx(Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
@@ -395,7 +395,7 @@ public class AsyncTests
 		var e4 = Assert.ThrowsExactly<SerExOk>(proxy.TestWithInnerException);
 
 		Assert.AreEqual("The mess", e4.Message);
-		if (ser == enSerializer.BinaryFormatter)
+		if (ser == Serializer.BinaryFormatter)
 		{
 			Assert.AreEqual("Format of the initialization string does not conform to specification starting at index 0.", e4.InnerException!.Message);
 		}
@@ -444,14 +444,14 @@ public class AsyncTests
 	}
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
-	[DataRow(enSerializer.Json)]
+	[DataRow(Serializer.BinaryFormatter)]
+	[DataRow(Serializer.Json)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task ExceptionTests_SqlException(enSerializer ser)
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task ExceptionTests_SqlException(Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
@@ -467,7 +467,7 @@ public class AsyncTests
 
 		Assert.AreEqual("A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)", e4.Message);
 
-		if (ser == enSerializer.BinaryFormatter)
+		if (ser == Serializer.BinaryFormatter)
 		{
 #if NET6_0_OR_GREATER
 			Assert.AreEqual("The network path was not found.", e4.InnerException!.Message);
@@ -503,7 +503,7 @@ public class AsyncTests
 }
 
 
-public enum enSerializer
+public enum Serializer
 {
 	BinaryFormatter = 1,
 #if NET6_0_OR_GREATER
@@ -516,17 +516,17 @@ public enum enSerializer
 
 public static class Serializers
 {
-	public static ISerializerAdapter GetSerializer(enSerializer ser)
+	public static ISerializerAdapter GetSerializer(Serializer ser)
 	{
 		return ser switch
 		{
-			enSerializer.BinaryFormatter => new BinaryFormatterAdapter(),
+			Serializer.BinaryFormatter => new BinaryFormatterAdapter(),
 #if NET6_0_OR_GREATER
-			enSerializer.MemoryPack => new MemoryPackAdapter(),
+			Serializer.MemoryPack => new MemoryPackAdapter(),
 #endif
-			enSerializer.Json => new JsonAdapter(),
-			enSerializer.MessagePack => new MessagePackAdapter(),
-			enSerializer.Protobuf => new ProtobufAdapter(),
+			Serializer.Json => new JsonAdapter(),
+			Serializer.MessagePack => new MessagePackAdapter(),
+			Serializer.Protobuf => new ProtobufAdapter(),
 			_ => throw new NotImplementedException(),
 		};
 	}

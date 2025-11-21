@@ -18,7 +18,7 @@ public class EnumerableYield
 		IEnumerable<string> Jild();
 		IAsyncEnumerable<string> Jild2();
 		IEnumerable<Task<string>> Jild3();
-		Task Jild4(Func<string, Task> outt, int t);
+		IAsyncEnumerable<string> Jild4(int t);
 		Tuple<string, int> RetCom1();
 		(string, int) RetCom2();
 		ValueTuple<string, int> RetCom3();
@@ -29,6 +29,11 @@ public class EnumerableYield
 		//Task<IEnumerable<string>> Jild4();
 		Task TestCancel(Func<string, Task> outt, CancellationToken cancel);
 		Task TestCancel2(CancellationToken c1, CancellationToken cancel);
+		IAsyncEnumerable<string> TestCancel3(CancellationToken c1);
+		IAsyncEnumerable<string> TestCancel3_noAtt(CancellationToken ct);
+		Task TestCancel4(IAsyncEnumerable<string> arg);
+		Task TestCancel5(CancellationToken ct1);
+		Task TestCancel6(CancellationToken ct1);
 		Task TestProg(Action<int> p);
 		void TextNonserEx();
 		void TextNonserEx2();
@@ -38,7 +43,7 @@ public class EnumerableYield
 	{
 		public IEnumerable<string> NonJild()
 		{
-			return new[] { "1", "2" };
+			return new[] { "1", "2" }; // ["1", "2"]; does not work with BF
 		}
 
 		public IEnumerable<string> Jild()
@@ -54,11 +59,9 @@ public class EnumerableYield
 			yield return "2";
 		}
 
-
-
-		public Task Jild4(Func<string, Task> outt, int t)
+		public IAsyncEnumerable<string> Jild4(int t)
 		{
-			return Jild3Int(t).Push(outt);
+			return Jild3Int(t);//.Push(outt);
 		}
 
 		private async IAsyncEnumerable<string> Jild3Int(int x)
@@ -148,6 +151,39 @@ public class EnumerableYield
 			throw new NotImplementedException();
 		}
 
+		public async IAsyncEnumerable<string> TestCancel3([EnumeratorCancellation] CancellationToken cancel)
+		{
+			while (true)
+			{
+				yield return r.Next().ToString();
+			}
+		}
+
+		public async IAsyncEnumerable<string> TestCancel3_noAtt(CancellationToken cancel)
+		{
+			while (true)
+			{
+				yield return r.Next().ToString();
+			}
+		}
+
+		public async Task TestCancel4(IAsyncEnumerable<string> arg)
+		{
+			await foreach (var v in arg)
+			{
+			}
+		}
+
+		public async Task TestCancel5(CancellationToken ct)
+		{
+			throw new ArgumentException("lol");
+		}
+
+		public async Task TestCancel6(CancellationToken ct)
+		{
+			await Task.Delay(2000);
+		}
+
 		public async Task TestProg(Action<int> pReport)
 		{
 			await Task.CompletedTask;
@@ -186,15 +222,15 @@ public class EnumerableYield
 
 
 
-	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+//	[TestMethod]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task YieldTest(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task YieldTest(Serializer ser)
 	{
 		await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
 		server.RegisterService<IIenumera, EnumeTest>();
@@ -209,45 +245,18 @@ public class EnumerableYield
 		Assert.AreEqual("1", n1[0]);
 		Assert.AreEqual("2", n1[1]);
 
-		//List<string> i1 = new();
-		//foreach (var i in proxy.Jild())
-		//{
-		//	i1.Add(i);
-		//}
-		//Assert.Equal(2, i1.Count);
-		//Assert.Equal("1", i1[0]);
-		//Assert.Equal("2", i1[1]);
-
-		//List<string> i2 = new();
-		//await foreach (var i in proxy.Jild2())
-		//{
-		//	i2.Add(i);
-		//}
-		//Assert.Equal(2, i2.Count);
-		//Assert.Equal("1", i2[0]);
-		//Assert.Equal("2", i2[1]);
-
-
-
 		List<string> i2 = new();
 
-		//await proxy.Jild4(async x => { i2.Add(x); }, 42);
-		var res = AsyncEnumerableAdapter.FromPush<string>(bb => proxy.Jild4(bb, 42));
+		var res = proxy.Jild4(42);
 
 		await foreach (var i in res)
 		{
 			i2.Add(i);
-
-			//Console.WriteLine(i);
-			//OutputDebugString(i);
-			//Debug.WriteLine(i);
 		}
 
 		Assert.HasCount(2, i2);
 		Assert.AreEqual("1", i2[0]);
 		Assert.AreEqual("2", i2[1]);
-
-
 
 		var r1 = proxy.RetCom1();
 		var r2 = proxy.RetCom2();
@@ -282,7 +291,7 @@ public class EnumerableYield
 		}
 
 		var td = DateTime.Now - t1;
-//			Assert.True(td.TotalSeconds < 10);
+		//			Assert.True(td.TotalSeconds < 10);
 		Assert.AreEqual(3, hit1);
 		Assert.IsTrue(wasC);
 
@@ -343,7 +352,195 @@ public class EnumerableYield
 		public void Report(T value)
 		{
 			ProCha?.Invoke(this, value);
-
 		}
 	}
+
+
+//	[TestMethod]
+	[DataRow(Serializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
+	[DataRow(Serializer.MemoryPack)]
+#endif
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task CancelAsyncTest(Serializer ser)
+	{
+		await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
+		server.RegisterService<IIenumera, EnumeTest>();
+		server.Start();
+
+		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+
+		var proxy = client.CreateProxy<IIenumera>();
+
+		var ct = new CancellationTokenSource(2000);
+
+		var res = proxy.TestCancel3(ct.Token);
+
+		// timing sensitive: OperationCanceledException or TaskCancelledException (either the foreach in client or the loop in server is cancelled first)
+		await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+		{
+			await foreach (var item in res)
+			{
+			}
+		});
+
+
+	}
+
+
+//	[TestMethod]
+	[DataRow(Serializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
+	[DataRow(Serializer.MemoryPack)]
+#endif
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task CancelAsyncTest3_notoken(Serializer ser)
+	{
+		await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
+		server.RegisterService<IIenumera, EnumeTest>();
+		server.Start();
+
+		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+
+		var proxy = client.CreateProxy<IIenumera>();
+
+		var ct = new CancellationTokenSource(2000);
+
+		var res = proxy.TestCancel3_noAtt(ct.Token);
+
+		// timing sensitive: OperationCanceledException or TaskCancelledException (either the foreach in client or the loop in server is cancelled first)
+		await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+		{
+			await foreach (var item in res)
+			{
+			}
+		});
+
+
+	}
+
+
+
+//	[TestMethod]
+	[DataRow(Serializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
+	[DataRow(Serializer.MemoryPack)]
+#endif
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task Cancel4AsyncTest(Serializer ser)
+	{
+		await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
+		server.RegisterService<IIenumera, EnumeTest>();
+		server.Start();
+
+		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+
+		var proxy = client.CreateProxy<IIenumera>();
+
+		var ct = new CancellationTokenSource(2000);
+
+		async IAsyncEnumerable<string> GetData([EnumeratorCancellation] CancellationToken cancel)
+		{
+			while (true)
+			{
+				cancel.ThrowIfCancellationRequested();
+				yield return "lol";
+			}
+		}
+
+		await Assert.ThrowsExactlyAsync<OperationCanceledException>(() => proxy.TestCancel4(GetData(ct.Token)));
+
+	}
+
+
+	[TestMethod]
+	[DataRow(Serializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
+	[DataRow(Serializer.MemoryPack)]
+#endif
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task CancelFromTheStart(Serializer ser)
+	{
+		await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
+		server.RegisterService<IIenumera, EnumeTest>();
+		server.Start();
+
+		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+
+		var proxy = client.CreateProxy<IIenumera>();
+
+		var ct = new CancellationTokenSource();
+		ct.Cancel();
+
+
+		await Assert.ThrowsExactlyAsync<TaskCanceledException>(() => proxy.TestCancel5(ct.Token));
+	}
+
+	[TestMethod]
+	[DataRow(Serializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
+	[DataRow(Serializer.MemoryPack)]
+#endif
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task CancelAfter2sec(Serializer ser)
+	{
+		await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
+		server.RegisterService<IIenumera, EnumeTest>();
+		server.Start();
+
+		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+
+		var proxy = client.CreateProxy<IIenumera>();
+
+		var ct = new CancellationTokenSource(2000);
+
+		await Assert.ThrowsExactlyAsync<TaskCanceledException>(() => proxy.TestCancel6(ct.Token));
+	}
+
+
+
+
+//	[TestMethod]
+	[DataRow(Serializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
+	[DataRow(Serializer.MemoryPack)]
+#endif
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task AsyncExceptionLocally(Serializer ser)
+	{
+		await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
+		server.RegisterService<IIenumera, EnumeTest>();
+		server.Start();
+
+		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+
+		var proxy = client.CreateProxy<IIenumera>();
+
+		var ct = new CancellationTokenSource(2000);
+
+		async IAsyncEnumerable<string> GetData()
+		{
+			yield return "lol";
+			yield return "lol";
+			throw new ArgumentException("lol");
+		}
+
+		await Assert.ThrowsExactlyAsync<ArgumentException>(() => proxy.TestCancel4(GetData()));
+
+	}
+
+
+
 }

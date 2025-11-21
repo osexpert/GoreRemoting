@@ -29,12 +29,12 @@ public class RpcTests
 	[TestMethod]
 	//		[DataRow(enSerializer.BinaryFormatter)] FIXME: TimeOnly, DateOnly missing
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task TestMiscTypes(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task TestMiscTypes(Serializer ser)
 	{
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
@@ -74,14 +74,14 @@ public class RpcTests
 
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task TestSendBytes(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task TestSendBytes(Serializer ser)
 	{
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
@@ -104,14 +104,14 @@ public class RpcTests
 
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task TestReferences(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task TestReferences(Serializer ser)
 	{
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
@@ -135,17 +135,17 @@ public class RpcTests
 
 		var result = proxy.TestReferences1(l1, l2);
 
-		if (ser == enSerializer.BinaryFormatter)
+		if (ser == Serializer.BinaryFormatter)
 			Assert.AreEqual(1, result);
-		else if (ser == enSerializer.Json)
+		else if (ser == Serializer.Json)
 			Assert.AreEqual(1, result);
 #if NET6_0_OR_GREATER
-		else if (ser == enSerializer.MemoryPack)
+		else if (ser == Serializer.MemoryPack)
 			Assert.AreEqual(1, result);
 #endif
-		else if (ser == enSerializer.MessagePack)
+		else if (ser == Serializer.MessagePack)
 			Assert.AreEqual(1, result);
-		else if (ser == enSerializer.Protobuf)
+		else if (ser == Serializer.Protobuf)
 			Assert.AreEqual(4, result);
 		else
 			throw new NotImplementedException();
@@ -154,14 +154,14 @@ public class RpcTests
 
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task ReturnNullWithLz4(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task ReturnNullWithLz4(Serializer ser)
 	{
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
@@ -199,14 +199,14 @@ public class RpcTests
 
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task Inherited_methods_should_be_called_correctly(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task Inherited_methods_should_be_called_correctly(Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
@@ -231,21 +231,21 @@ public class RpcTests
 
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter, false)]
+	[DataRow(Serializer.BinaryFormatter, false)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack, false)]
+	[DataRow(Serializer.MemoryPack, false)]
 #endif
-	[DataRow(enSerializer.Json, false)]
-	[DataRow(enSerializer.MessagePack, false)]
-	[DataRow(enSerializer.BinaryFormatter, true)]
+	[DataRow(Serializer.Json, false)]
+	[DataRow(Serializer.MessagePack, false)]
+	[DataRow(Serializer.BinaryFormatter, true)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack, true)]
+	[DataRow(Serializer.MemoryPack, true)]
 #endif
-	[DataRow(enSerializer.Json, true)]
-	[DataRow(enSerializer.MessagePack, true)]
-	[DataRow(enSerializer.Protobuf, false)]
-	[DataRow(enSerializer.Protobuf, true)]
-	public async Task Call_on_Proxy_should_be_invoked_on_remote_service(enSerializer ser, bool compress)
+	[DataRow(Serializer.Json, true)]
+	[DataRow(Serializer.MessagePack, true)]
+	[DataRow(Serializer.Protobuf, false)]
+	[DataRow(Serializer.Protobuf, true)]
+	public async Task Call_on_Proxy_should_be_invoked_on_remote_service(Serializer ser, bool compress)
 	{
 		bool remoteServiceCalled = false;
 
@@ -327,14 +327,14 @@ public class RpcTests
 	}
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task Call_on_Proxy_should_be_invoked_on_remote_service_without_MessageEncryption(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task Call_on_Proxy_should_be_invoked_on_remote_service_without_MessageEncryption(Serializer ser)
 	{
 		bool remoteServiceCalled = false;
 
@@ -405,14 +405,14 @@ public class RpcTests
 	}
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task Delegate_invoked_on_server_should_callback_client(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task Delegate_invoked_on_server_should_callback_client(Serializer ser)
 	{
 		string? argumentFromServer = null;
 
@@ -444,14 +444,14 @@ public class RpcTests
 	}
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task Events_should_NOT_work_remotly(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task Events_should_NOT_work_remotly(Serializer ser)
 	{
 		var testService = new TestService();
 
@@ -487,14 +487,14 @@ public class RpcTests
 	}
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task External_types_should_work_as_remote_service_parameters(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task External_types_should_work_as_remote_service_parameters(Serializer ser)
 	{
 		bool remoteServiceCalled = false;
 		DataClass? parameterValue = null;
@@ -594,14 +594,14 @@ public class RpcTests
 	#endregion
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task Generic_methods_should_be_called_correctly(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task Generic_methods_should_be_called_correctly(Serializer ser)
 	{
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
@@ -665,14 +665,14 @@ public class RpcTests
 	#endregion
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task Enum_arguments_should_be_passed_correctly(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task Enum_arguments_should_be_passed_correctly(Serializer ser)
 	{
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
@@ -715,14 +715,14 @@ public class RpcTests
 
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task Ref_param_should_fail(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task Ref_param_should_fail(Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
@@ -820,14 +820,14 @@ public class RpcTests
 
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task Delegate_callback_after_return(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task Delegate_callback_after_return(Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
@@ -998,14 +998,14 @@ public class RpcTests
 	}
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task MultipleDelegateCallback(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task MultipleDelegateCallback(Serializer ser)
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
@@ -1353,14 +1353,14 @@ public class RpcTests
 	static Exception? throw9Ex;
 
 	[TestMethod]
-	[DataRow(enSerializer.BinaryFormatter)]
+	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task DoVarArgTest(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task DoVarArgTest(Serializer ser)
 	{
 		await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
 		server.RegisterService<IVarArgTest, VarArgTest>();
@@ -1370,13 +1370,13 @@ public class RpcTests
 
 		var proxy = client.CreateProxy<IVarArgTest>();
 		{
-			var r1 = proxy.Test0(ser == enSerializer.Protobuf, 1);
+			var r1 = proxy.Test0(ser == Serializer.Protobuf, 1);
 			Assert.HasCount(1, r1);
 			Assert.AreEqual(1, r1[0]);
 		}
 
 		{
-			var r2 = proxy.Test0(ser == enSerializer.Protobuf, 1, 2, 3);
+			var r2 = proxy.Test0(ser == Serializer.Protobuf, 1, 2, 3);
 			Assert.HasCount(3, r2);
 			Assert.AreEqual(1, r2[0]);
 			Assert.AreEqual(2, r2[1]);
@@ -1384,7 +1384,7 @@ public class RpcTests
 		}
 
 		{
-			var r3 = proxy.Test0(ser == enSerializer.Protobuf, 1, 2);
+			var r3 = proxy.Test0(ser == Serializer.Protobuf, 1, 2);
 			Assert.HasCount(2, r3);
 			Assert.AreEqual(1, r3[0]);
 			Assert.AreEqual(2, r3[1]);
@@ -1601,12 +1601,12 @@ public class RpcTests
 	[TestMethod]
 	//[DataRow(enSerializer.BinaryFormatter)] does nor work, complain the generated iterator class is not serializable
 #if NET6_0_OR_GREATER
-	[DataRow(enSerializer.MemoryPack)]
+	[DataRow(Serializer.MemoryPack)]
 #endif
-	[DataRow(enSerializer.Json)]
-	[DataRow(enSerializer.MessagePack)]
-	[DataRow(enSerializer.Protobuf)]
-	public async Task IEnumerableYield(enSerializer ser)
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task IEnumerableYield(Serializer ser)
 	{
 		string? argumentFromServer = null;
 
