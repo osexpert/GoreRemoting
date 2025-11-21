@@ -482,7 +482,8 @@ public class RemotingServer : IRemotingParty
 	{
 		try
 		{
-			var responseStreamWrapped = new GoreRemoting.StreamResponseQueue<GoreResponseMessage>(responseStream, _config.ResponseQueueLength);
+			// TODO: pass context.CancellationToken here??
+			using var responseStreamWrapped = new GoreRemoting.StreamResponseQueue<GoreResponseMessage>(responseStream, _config.ResponseQueueLength);
 
 			bool gotNext = await requestStream.MoveNext().ConfigureAwait(false);
 			if (!gotNext)
@@ -490,7 +491,7 @@ public class RemotingServer : IRemotingParty
 
 			await this.DuplexCall(requestStream.Current, async () =>
 			{
-				var gotNext = await requestStream.MoveNext().ConfigureAwait(false);
+				var gotNext = await requestStream.MoveNext(responseStreamWrapped.OnErrorToken).ConfigureAwait(false);
 				if (!gotNext)
 					throw new Exception("No delegate request data");
 				return requestStream.Current;

@@ -15,11 +15,14 @@ namespace GoreRemoting;
 /// 
 /// </summary>
 /// <typeparam name="T">Type of message written to the stream</typeparam>
-public class StreamResponseQueue<T>
+public class StreamResponseQueue<T> : IDisposable
 {
 	private readonly IServerStreamWriter<T> _stream;
 	private readonly Task _consumer;
 	private readonly Channel<T> _channel;
+	private CancellationTokenSource _ctsError = new();
+
+	public CancellationToken OnErrorToken => _ctsError.Token;
 
 	public StreamResponseQueue(
 		IServerStreamWriter<T> stream,
@@ -78,11 +81,8 @@ public class StreamResponseQueue<T>
 		{
 			await foreach (var message in _channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
 			{
-#if NETSTANDARD2_1_OR_GREATER
-				await _stream.WriteAsync(message, cancellationToken).ConfigureAwait(false);
-#else
+				// Task WriteAsync(T message, CancellationToken cancellationToken) seems to always throw if handed a real cancelToken, so don't use it
 				await _stream.WriteAsync(message).ConfigureAwait(false);
-#endif
 			}
 		}
 		catch (Exception e)
@@ -96,10 +96,22 @@ public class StreamResponseQueue<T>
 			// leading to pending WriteAsync calls to throw with the exception, then that's a perfectly acceptable solution."
 			// This should have been mentioned in the docs IMO...
 
+			// this seems to really fix it (as long as we cancel MoveNext with this)
+			_ctsError.Cancel();
+
 			// this seems to fix it...
 			_channel.Writer.TryComplete(e); // or Complete(e)?
 			throw;
 		}
+		finally
+		{
+			_ctsError.Dispose();
+		}
+	}
+
+	public void Dispose()
+	{
+		_ctsError.Dispose();
 	}
 
 }
