@@ -18,7 +18,8 @@ public class EnumerableYield
 		IEnumerable<string> Jild();
 		IAsyncEnumerable<string> Jild2();
 		IEnumerable<Task<string>> Jild3();
-		IAsyncEnumerable<string> Jild4(int t);
+		//IAsyncEnumerable<string> Jild4(int t);
+		Task Jild4(Func<string, Task> outt, int t);
 		Tuple<string, int> RetCom1();
 		(string, int) RetCom2();
 		ValueTuple<string, int> RetCom3();
@@ -59,10 +60,15 @@ public class EnumerableYield
 			yield return "2";
 		}
 
-		public IAsyncEnumerable<string> Jild4(int t)
+		//public IAsyncEnumerable<string> Jild4(int t)
+		//{
+		//	return Jild3Int(t);//.Push(outt);
+		//}
+		public Task Jild4(Func<string, Task> outt, int t)
 		{
-			return Jild3Int(t);//.Push(outt);
+			return Jild3Int(t).Push(outt);
 		}
+
 
 		private async IAsyncEnumerable<string> Jild3Int(int x)
 		{
@@ -222,7 +228,7 @@ public class EnumerableYield
 
 
 
-//	[TestMethod]
+	[TestMethod]
 	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
 	[DataRow(Serializer.MemoryPack)]
@@ -247,7 +253,8 @@ public class EnumerableYield
 
 		List<string> i2 = new();
 
-		var res = proxy.Jild4(42);
+		//var res = proxy.Jild4(42);
+		var res = AsyncEnumerableAdapter.FromPush<string>(bb => proxy.Jild4(bb, 42));
 
 		await foreach (var i in res)
 		{

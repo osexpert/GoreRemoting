@@ -21,7 +21,7 @@ public static class AsyncEnumerableAdapter
 			}
 			catch (Exception e)
 			{
-				channel.Writer.Complete(e);
+				channel.Writer.TryComplete(e);
 			}
 		}
 
@@ -49,7 +49,7 @@ public static class AsyncEnumerableAdapter
 			}
 			catch (Exception e)
 			{
-				channel.Writer.Complete(e);
+				channel.Writer.TryComplete(e);
 			}
 		}
 

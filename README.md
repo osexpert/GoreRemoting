@@ -50,7 +50,7 @@ Services are always stateless\single call. If you need to store state, store in 
 You can send extra headers with every call from client to server, eg. a sessionId or a Token via BeforeMethodCall on client and CreateInstance on server (look in examples).
 Clients create proxies from service interfaces (typically in shared assembly).
 No support for MarshalByRef behaviour. Everything is by value.
-Currently there is a limit of 20 method parameters. It is possible to increase it, possibly can increated to 30 if demand. But more than 30 won't happen.
+Currently there is a limit of 20 method parameters. It is possible to increase it, but want to avoid it.
 
 ## Callbacks from server to client
 It is not possible to callback to clients directly, callbacks must happen during a call from client to server.
@@ -64,14 +64,14 @@ and send callbacks via a delegate argument (look in examples).
 Support CancellationToken (via Grpc itself)
 
 ## IAsyncEnumerable
-Does not support IEnumerable\IAsyncEnumerable as result.
-Has AsyncEnumerableAdapter to adapt to IAsyncEnumerable providers\consumers via delegate.
-But using delegate arguments may be just as easy\easier.
+Does not support IAsyncEnumerable as result.
+Has AsyncEnumerableAdapter to adapt to IAsyncEnumerable via delegate.
+But using delegate arguments may be just as easy.
 
 ## IProgress
 Does not support IProgress as argument.
 Has ProgressAdapter to adapt to IProgress providers\consumers via delegate.
-But using delegates arguments may be just as easy\easier.
+But using delegates arguments may be just as easy.
 
 ## Serializers
 Currently has serializers for BinaryFormatter, System.Text.Json, MessagePack, MemoryPack, Protobuf.
@@ -118,10 +118,9 @@ Can set default compressor, and like for serializers, can overide per service\pe
 A NoCompressionProvider exist in case you want to use eg. Lz4 as default but want to override some methods\services to not use compression.
 
 ## Task\async
-Support Task\ValueTask in service methods result and in result from delegate arguments (but max one delegate with actual result).
+Support Task\ValueTask in service methods result and in result from delegate arguments.
 
 ## Limitations
-Method that return IEnumerable and yield (crashes)  
 Method that return IAsyncEnumerable and yield (crashes)  
 
 ## Removed from CoreRemoting
@@ -131,7 +130,7 @@ Encryption, authentication, session management, DependencyInjection, Linq expres
 ## Delegate arguments
 Delegates that return void, Task, ValueTask are all threated as OneWay. Then it will not wait for any result and any exceptions thrown are eaten.
 You can have max one delegate with result (eg. int, Task\<int\>, ValueTask\<int\>) else will get runtime exception.
-If you need to force a delegate to be non-OneWay, then just make it return something (eg. a bool or Task\<bool\>). But again, max one delegate with result.
+If you need to force a delegate to be non-OneWay, then just make it return something (eg. a bool or Task\<bool\>).
 
 ### Advanced streaming
 StreamingFuncAttribute\StreamingDoneException can be used to make streaming from client to server faster.
