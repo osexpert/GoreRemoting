@@ -71,7 +71,7 @@ public class RemotingServer : IRemotingParty
 
 		byte version = br.ReadByte();
 		if (version != Constants.SerializationVersion)
-			throw new Exception("Unsupported version " + version);
+			throw new Exception($"Unsupported version: {version}");
 
 		var mType = (RequestType)br.ReadByte();
 
@@ -130,7 +130,7 @@ public class RemotingServer : IRemotingParty
 	private ServiceHandle GetService(string serviceName, ServerCallContext context)
 	{
 		if (!_services.TryGetValue(serviceName, out var serviceType))
-			throw new Exception("Service not registered: " + serviceName);
+			throw new Exception($"Service not registered: {serviceName}");
 
 		var service = _config.CreateService(serviceType, context);
 		return service;
@@ -141,7 +141,7 @@ public class RemotingServer : IRemotingParty
 		if (_services.TryGetValue(serviceName, out var serviceType))
 			return serviceType;
 
-		throw new Exception("Service not registered: " + serviceName);
+		throw new Exception($"Service not registered: {serviceName}");
 	}
 
 	/// <summary>
@@ -242,7 +242,7 @@ public class RemotingServer : IRemotingParty
 			throw new Exception($"{iface.Name} is not interface");
 
 		if (!_services.TryAdd(iface.Name, typeof(TService)))
-			throw new Exception("Service already added: " + iface.Name);
+			throw new Exception($"Service already added: {iface.Name}");
 	}
 
 	class DuplexCallState
@@ -344,63 +344,14 @@ public class RemotingServer : IRemotingParty
 	private object? DelegateCall(
 		GoreRequestMessage request, 
 		Func<Task<GoreRequestMessage>> req, 
-		Func<GoreResponseMessage, Task> reponse, 
+		Func<GoreResponseMessage, Task> response, 
 		DelegateCallMessage delegateCallMsg, 
 		DuplexCallState state, 
 		AsyncReaderWriterLockSlim responseLock
 		)
 	{
-		var delegateCallResponseMsg = new GoreResponseMessage(delegateCallMsg, request.ServiceName, request.MethodName, request.Serializer, request.Compressor);
-
-		// send respose to client and client will call the delegate via DelegateProxy
-		// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
-		// These may seem to be 2 varianst of OneWay: 1 where we send and wait until sent, but do not care about result\exceptions.
-		// 2: we send and do not even wait for the sending to complete. (currently not implemented)
-		responseLock.EnterReadLock();
-		try
-		{
-			if (state.ResultSent)
-				throw new Exception("Too late, result sent");
-
-			if (delegateCallMsg.Position == state.ActiveStreamingDelegatePosition)
-			{
-				// only recieve now that streaming is active
-			}
-			else
-			{
-				reponse(delegateCallResponseMsg).GetAwaiter().GetResult();
-			}
-
-			if (delegateCallMsg.OneWay)
-			{
-				// fire and forget. no result, not even exception
-				return null;
-			}
-			else
-			{
-				// we want result or exception
-				var reqMsg = req().GetAwaiter().GetResult();
-
-				var msg = reqMsg.DelegateResultMessage;
-
-				if (msg.Position != delegateCallMsg.Position)
-					throw new Exception("Incorrect result position");
-
-				if (msg.IsException)
-					throw GoreSerializer.RestoreSerializedException(_config.ExceptionStrategy, request.Serializer, msg.Value!);
-
-				if (msg.StreamingStatus == StreamingStatus.Active)
-					state.ActiveStreamingDelegatePosition = msg.Position;
-				else if (msg.StreamingStatus == StreamingStatus.Done)
-					throw new StreamingDoneException();
-
-				return msg.Value;
-			}
-		}
-		finally
-		{
-			responseLock.ExitReadLock();
-		}
+		return DelegateCallAsync(request, req, response, delegateCallMsg, state, responseLock)
+			.GetAwaiter().GetResult();
 	}
 
 	private async Task<object?> DelegateCallAsync(GoreRequestMessage request,
@@ -482,12 +433,12 @@ public class RemotingServer : IRemotingParty
 	{
 		try
 		{
-			// TODO: pass context.CancellationToken here??
-			using var responseStreamWrapped = new GoreRemoting.StreamResponseQueue<GoreResponseMessage>(responseStream, _config.ResponseQueueLength);
-
 			bool gotNext = await requestStream.MoveNext().ConfigureAwait(false);
 			if (!gotNext)
 				throw new Exception("No method call request data");
+
+			// TODO: pass context.CancellationToken here?
+			using var responseStreamWrapped = new GoreRemoting.StreamResponseQueue<GoreResponseMessage>(responseStream, _config.ResponseQueueLength);
 
 			await this.DuplexCall(requestStream.Current, async () =>
 			{

@@ -5,15 +5,12 @@ namespace GoreRemoting;
 public static class AsyncEnumerableAdapter
 {
 	public static IAsyncEnumerable<T> FromPush<T>(
-		Func<Func<T, Task>, Task> dataSource, 
+		Func<Func<T, Task>, Task> dataSource,
+		int? queueLimit = null,
 		CancellationToken cancel = default
 		)
 	{
-		var channel = Channel.CreateUnbounded<T>(new UnboundedChannelOptions
-		{
-			SingleReader = true,
-			SingleWriter = true
-		});
+		var channel = CreateChannel<T>(queueLimit);
 
 		async Task ForwardAsync()
 		{
@@ -37,14 +34,11 @@ public static class AsyncEnumerableAdapter
 	// Overload for data sources that accept cancellation
 	public static IAsyncEnumerable<T> FromPush<T>(
 		Func<Func<T, Task>, CancellationToken, Task> dataSource,
+		int? queueLimit = null,
 		CancellationToken cancel = default
 		)
 	{
-		var channel = Channel.CreateUnbounded<T>(new UnboundedChannelOptions
-		{
-			SingleReader = true,
-			SingleWriter = true
-		});
+		var channel = CreateChannel<T>(queueLimit);
 
 		async Task ForwardAsync()
 		{
@@ -64,6 +58,27 @@ public static class AsyncEnumerableAdapter
 
 		return channel.Reader.ReadAllAsync(cancel);
 	}
+
+	private static Channel<TT> CreateChannel<TT>(int? queueLimit)
+	{
+		if (queueLimit == null)
+		{
+			return Channel.CreateUnbounded<TT>(new UnboundedChannelOptions
+			{
+				SingleWriter = false,
+				SingleReader = true,
+			});
+		}
+		else
+		{
+			return Channel.CreateBounded<TT>(new BoundedChannelOptions(queueLimit.Value)
+			{
+				SingleWriter = false,
+				SingleReader = true
+			});
+		}
+	}
+
 }
 
 public static class AsyncEnumerableExtensions

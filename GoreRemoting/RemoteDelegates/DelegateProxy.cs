@@ -195,7 +195,7 @@ public sealed class DelegateProxy : AsyncInterceptor
 	/// </summary>
 	public void Dispose()
 	{
-		ProxiedDelegate = null;
-		_callInterceptionHandler = null;
+		ProxiedDelegate = null!;
+		_callInterceptionHandler = null!;
 	}
 }
