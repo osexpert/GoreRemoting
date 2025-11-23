@@ -21,7 +21,7 @@ public static class ChannelReaderExtensions
 	//     The created async enumerable.
 	public static async IAsyncEnumerable<T> ReadAllAsync<T>(this ChannelReader<T> cr, [EnumeratorCancellation] CancellationToken cancellationToken = default)
 	{
-		while (await cr.WaitToReadAsync(cancellationToken).ConfigureAwait(continueOnCapturedContext: false))
+		while (await cr.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
 		{
 			while (cr.TryRead(out T? item))
 			{

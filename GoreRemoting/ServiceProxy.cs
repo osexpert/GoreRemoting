@@ -203,7 +203,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 					try
 					{
 						result = delegt.DynamicInvoke(delegateMsg.Arguments);
-						result = await TaskResultHelper.GetTaskResult(delegt.Method, result);
+						result = await TaskResultHelper.GetTaskResult(delegt.Method, result).ConfigureAwait(false);
 					}
 					catch (Exception ex)
 					{
