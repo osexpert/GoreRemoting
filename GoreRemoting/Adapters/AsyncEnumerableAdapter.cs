@@ -40,7 +40,8 @@ public static class AsyncEnumerableAdapter
 		bool delayed = true;
 		if (delayed)
 		{
-			return new AsyncEnumerableImplementation<T>(channel, () => _ = ForwardAsync());
+			var source = channel.Reader.ReadAllAsync(cancel).GetAsyncEnumerator(cancel);
+			return new AsyncEnumerableImplementation<T>(source, () => _ = ForwardAsync(), cancel);
 		}
 		else
 		{
@@ -53,43 +54,48 @@ public static class AsyncEnumerableAdapter
 
 	class AsyncEnumerableImplementation<T> : IAsyncEnumerable<T>
 	{
-		readonly Channel<T> _channel;
+		readonly CancellationToken _cancel;
+		readonly IAsyncEnumerator<T> _source;
 		readonly Action _start;
 		bool _enumerated;
 
-		public AsyncEnumerableImplementation(Channel<T> channel, Action start)
+		public AsyncEnumerableImplementation(IAsyncEnumerator<T> source, Action start, CancellationToken cancel)
 		{
-			_channel = channel;
+			_cancel = cancel;
+			_source = source;
 			_start = start;
 		}
+
 		public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancel = default)
 		{
 			if (_enumerated)
 				throw new InvalidOperationException("This IAsyncEnumerable can only be enumerated once");
 			_enumerated = true;
 
-			return new AsyncEnumeratorImplementation<T>(_channel, _start, cancel);
+			return new AsyncEnumeratorImplementation<T>(_source, _start, cancel);
 		}
 	}
 
 	class AsyncEnumeratorImplementation<T> : IAsyncEnumerator<T>
 	{
+		readonly CancellationToken _cancel;
 		readonly IAsyncEnumerator<T> _source;
-		readonly Channel<T> _channel;
 		readonly Action _start;
 		int _started;
 
-		public AsyncEnumeratorImplementation(Channel<T> channel, Action start, CancellationToken cancel)
+		public AsyncEnumeratorImplementation(IAsyncEnumerator<T> source, Action start, CancellationToken cancel)
 		{
+			_cancel = cancel;
 			_start = start;
-			_channel = channel;
-			_source = _channel.Reader.ReadAllAsync(cancel).GetAsyncEnumerator(cancel);
+			_source = source;
 		}
 
 		public T Current => _source.Current;
 
 		public ValueTask<bool> MoveNextAsync()
 		{
+			_cancel.ThrowIfCancellationRequested();
+
 			if (Interlocked.Exchange(ref _started, 1) == 0)
 				_start();
 
