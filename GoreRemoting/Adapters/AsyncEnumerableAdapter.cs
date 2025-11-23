@@ -41,7 +41,7 @@ public static class AsyncEnumerableAdapter
 		if (delayed)
 		{
 			var source = channel.Reader.ReadAllAsync(cancel).GetAsyncEnumerator(cancel);
-			return new AsyncEnumerableImplementation<T>(source, () => _ = ForwardAsync(), cancel);
+			return new AsyncEnumerableImplementation<T>(source, () => _ = ForwardAsync());
 		}
 		else
 		{
@@ -54,14 +54,12 @@ public static class AsyncEnumerableAdapter
 
 	class AsyncEnumerableImplementation<T> : IAsyncEnumerable<T>
 	{
-		readonly CancellationToken _cancel;
 		readonly IAsyncEnumerator<T> _source;
 		readonly Action _start;
 		bool _enumerated;
 
-		public AsyncEnumerableImplementation(IAsyncEnumerator<T> source, Action start, CancellationToken cancel)
+		public AsyncEnumerableImplementation(IAsyncEnumerator<T> source, Action start)
 		{
-			_cancel = cancel;
 			_source = source;
 			_start = start;
 		}
