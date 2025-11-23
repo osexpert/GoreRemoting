@@ -64,7 +64,7 @@ public class MessagePackAdapter : ISerializerAdapter
 		}
 		else
 		{
-			return new[] { MessagePackSerializer.Deserialize(types[0], stream, Options) };
+			return [MessagePackSerializer.Deserialize(types[0], stream, Options)];
 		}
 	}
 

@@ -106,7 +106,7 @@ public class JsonAdapter : ISerializerAdapter
 		}
 		else
 		{
-			res = new[] { JsonSerializer.Deserialize(stream, types[0], Options) };
+			res = [JsonSerializer.Deserialize(stream, types[0], Options)];
 		}
 
 		foreach (var kv in byteArrays)

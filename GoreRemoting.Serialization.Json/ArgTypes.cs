@@ -15,7 +15,7 @@ interface IArgs
 class Args<T1> : IArgs
 {
 	public T1? Arg1 { get; set; }
-	public object?[] Get() => new object?[] { Arg1 };
+	public object?[] Get() => [Arg1];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -26,7 +26,7 @@ class Args<T1, T2> : IArgs
 {
 	public T1? Arg1 { get; set; }
 	public T2? Arg2 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2 };
+	public object?[] Get() => [Arg1, Arg2];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -39,7 +39,7 @@ class Args<T1, T2, T3> : IArgs
 	public T1? Arg1 { get; set; }
 	public T2? Arg2 { get; set; }
 	public T3? Arg3 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3 };
+	public object?[] Get() => [Arg1, Arg2, Arg3];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -54,7 +54,7 @@ class Args<T1, T2, T3, T4> : IArgs
 	public T2? Arg2 { get; set; }
 	public T3? Arg3 { get; set; }
 	public T4? Arg4 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -71,7 +71,7 @@ class Args<T1, T2, T3, T4, T5> : IArgs
 	public T3? Arg3 { get; set; }
 	public T4? Arg4 { get; set; }
 	public T5? Arg5 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -90,7 +90,7 @@ class Args<T1, T2, T3, T4, T5, T6> : IArgs
 	public T4? Arg4 { get; set; }
 	public T5? Arg5 { get; set; }
 	public T6? Arg6 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5, Arg6 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5, Arg6];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -111,7 +111,7 @@ class Args<T1, T2, T3, T4, T5, T6, T7> : IArgs
 	public T5? Arg5 { get; set; }
 	public T6? Arg6 { get; set; }
 	public T7? Arg7 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -134,7 +134,7 @@ class Args<T1, T2, T3, T4, T5, T6, T7, T8> : IArgs
 	public T6? Arg6 { get; set; }
 	public T7? Arg7 { get; set; }
 	public T8? Arg8 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -159,7 +159,7 @@ class Args<T1, T2, T3, T4, T5, T6, T7, T8, T9> : IArgs
 	public T7? Arg7 { get; set; }
 	public T8? Arg8 { get; set; }
 	public T9? Arg9 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -186,7 +186,7 @@ class Args<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> : IArgs
 	public T8? Arg8 { get; set; }
 	public T9? Arg9 { get; set; }
 	public T10? Arg10 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -215,7 +215,7 @@ class Args<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> : IArgs
 	public T9? Arg9 { get; set; }
 	public T10? Arg10 { get; set; }
 	public T11? Arg11 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -246,7 +246,7 @@ class Args<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> : IArgs
 	public T10? Arg10 { get; set; }
 	public T11? Arg11 { get; set; }
 	public T12? Arg12 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -279,7 +279,7 @@ class Args<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> : IArgs
 	public T11? Arg11 { get; set; }
 	public T12? Arg12 { get; set; }
 	public T13? Arg13 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -314,7 +314,7 @@ class Args<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> : IArgs
 	public T12? Arg12 { get; set; }
 	public T13? Arg13 { get; set; }
 	public T14? Arg14 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13, Arg14 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13, Arg14];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -351,7 +351,7 @@ class Args<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> : I
 	public T13? Arg13 { get; set; }
 	public T14? Arg14 { get; set; }
 	public T15? Arg15 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13, Arg14, Arg15 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13, Arg14, Arg15];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -390,7 +390,7 @@ class Args<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16
 	public T14? Arg14 { get; set; }
 	public T15? Arg15 { get; set; }
 	public T16? Arg16 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13, Arg14, Arg15, Arg16 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13, Arg14, Arg15, Arg16];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -431,7 +431,7 @@ class Args<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16
 	public T15? Arg15 { get; set; }
 	public T16? Arg16 { get; set; }
 	public T17? Arg17 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13, Arg14, Arg15, Arg16, Arg17 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13, Arg14, Arg15, Arg16, Arg17];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -474,7 +474,7 @@ class Args<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16
 	public T16? Arg16 { get; set; }
 	public T17? Arg17 { get; set; }
 	public T18? Arg18 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13, Arg14, Arg15, Arg16, Arg17, Arg18 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13, Arg14, Arg15, Arg16, Arg17, Arg18];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -519,7 +519,7 @@ class Args<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16
 	public T17? Arg17 { get; set; }
 	public T18? Arg18 { get; set; }
 	public T19? Arg19 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13, Arg14, Arg15, Arg16, Arg17, Arg18, Arg19 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13, Arg14, Arg15, Arg16, Arg17, Arg18, Arg19];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];
@@ -566,7 +566,7 @@ class Args<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16
 	public T18? Arg18 { get; set; }
 	public T19? Arg19 { get; set; }
 	public T20? Arg20 { get; set; }
-	public object?[] Get() => new object?[] { Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13, Arg14, Arg15, Arg16, Arg17, Arg18, Arg19, Arg20 };
+	public object?[] Get() => [Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9, Arg10, Arg11, Arg12, Arg13, Arg14, Arg15, Arg16, Arg17, Arg18, Arg19, Arg20];
 	public void Set(object?[] args)
 	{
 		Arg1 = (T1?)args[0];

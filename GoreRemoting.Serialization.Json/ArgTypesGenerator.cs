@@ -12,7 +12,7 @@ internal class Generator
 	{
 		var max = 20;
 
-		StringBuilder sb = new StringBuilder();
+		var sb = new StringBuilder();
 		for (int i = 1; i <= max; i++)
 			sb.Append(GenerateType(i));
 
@@ -24,7 +24,7 @@ internal class Generator
 
 	private static string GenerateTypeGetter(int num)
 	{
-		StringBuilder sb = new StringBuilder();
+		var sb = new StringBuilder();
 
 		sb.AppendLine("private static Type GetArgsType(Type[] types)");
 		sb.AppendLine("{");
@@ -47,12 +47,12 @@ internal class Generator
 
 	private static string GenerateType(int args)
 	{
-		StringBuilder sb = new StringBuilder();
+		var sb = new StringBuilder();
 
 		string clas = "class Args<";
 
-		List<string> tees = new List<string>();
-		List<string> argss = new List<string>();
+		var tees = new List<string>();
+		var argss = new List<string>();
 		for (int i = 1; i <= args; i++)
 		{
 			tees.Add("T" + i);
@@ -67,7 +67,7 @@ internal class Generator
 		for (int i = 1; i <= args; i++)
 			sb.AppendLine($"public T{i}? Arg{i} {{ get; set; }}");
 
-		sb.AppendLine($"public object?[] Get() => new object?[] {{ {string.Join(", ", argss)} }};");
+		sb.AppendLine($"public object?[] Get() => [{string.Join(", ", argss)}];");
 
 		sb.AppendLine("public void Set(object?[] args)");
 		sb.AppendLine("{");

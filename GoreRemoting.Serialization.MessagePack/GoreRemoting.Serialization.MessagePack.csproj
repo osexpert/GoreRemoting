@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\GoreRemoting.Serialization.Protobuf\GoreRemoting.Serialization.Protobuf.csproj" />
     <ProjectReference Include="..\GoreRemoting\GoreRemoting.csproj" />
   </ItemGroup>
 

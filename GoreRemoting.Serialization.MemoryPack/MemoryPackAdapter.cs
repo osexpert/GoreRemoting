@@ -43,7 +43,7 @@ public class MemoryPackAdapter : ISerializerAdapter
 		}
 		else
 		{
-			return new[] { MemoryPackSerializer.DeserializeAsync(types[0], stream, Options).GetResult() };
+			return [MemoryPackSerializer.DeserializeAsync(types[0], stream, Options).GetResult()];
 		}
 	}
 
