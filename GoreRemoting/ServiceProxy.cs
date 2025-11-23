@@ -265,7 +265,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 					return null;
 				}
 			default:
-				throw new Exception("Unknown repose type: " + callbackData.ResponseType);
+				throw new Exception($"Unknown repose type: {callbackData.ResponseType}");
 		}
 	}
 
@@ -302,7 +302,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 						if (streamingDelePos == null)
 							streamingDelePos = i;
 						else
-							throw new Exception("Only one streaming func delegate supported");
+							throw new Exception("Only one streaming func delegate is supported");
 					}
 
 					if (!delegateHasResult)
@@ -319,7 +319,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 			else if (typeof(CancellationToken).IsAssignableFrom(type))
 			{
 				if (cancelArgument != null)
-					throw new Exception("More than one CancellationToken");
+					throw new Exception("Only one CancellationToken argument is supported");
 				else
 					cancelArgument = (CancellationToken)argument!;
 

@@ -61,7 +61,8 @@ If you need to have a permanent open stream from server to client, have the clie
 and send callbacks via a delegate argument (look in examples).
 
 ## Cancellation
-Support CancellationToken (via Grpc itself)
+Support CancellationToken (via Grpc itself). CancellationToken argument in proxy method is automatically picked up and used.
+If more than one CancellationToken argument, will get runtime exception.
 
 ## IAsyncEnumerable
 Does not support IAsyncEnumerable as result.

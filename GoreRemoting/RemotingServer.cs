@@ -117,7 +117,7 @@ public class RemotingServer : IRemotingParty
 		if (!methods.Any())
 			throw new MissingMethodException($"Method not found: {serviceName}.{methodName}");
 		else if (methods.Count() > 1)
-			throw new MissingMethodException($"More than one method: {serviceName}.{methodName}");
+			throw new MissingMethodException($"More than one method found: {serviceName}.{methodName} (method names must be unique)");
 		else if (methods.Single().IsGenericMethod)
 			throw new MissingMethodException($"Generic method not supported: {serviceName}.{methodName}");
 		var method = methods.Single();
@@ -239,7 +239,7 @@ public class RemotingServer : IRemotingParty
 		var iface = typeof(TInterface);
 
 		if (!iface.IsInterface)
-			throw new Exception($"{iface.Name} is not interface");
+			throw new Exception($"{iface.Name} is not an interface");
 
 		if (!_services.TryAdd(iface.Name, typeof(TService)))
 			throw new Exception($"Service already added: {iface.Name}");
