@@ -63,7 +63,7 @@ public class RemotingClient : IRemotingParty
 
 		byte version = br.ReadByte();
 		if (version != Constants.SerializationVersion)
-			throw new Exception("Unsupported version " + version);
+			throw new Exception($"Unsupported version: {version}");
 
 		var mType = (ResponseType)br.ReadByte();
 

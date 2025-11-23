@@ -34,7 +34,7 @@ internal static class TaskResultHelper
 				}
 				else if (returnType.GetGenericTypeDefinition() == typeof(ValueTask<>))
 				{
-					var resultTask = (Task)returnType.GetMethod("AsTask").Invoke(resultIn, new object[] { });
+					var resultTask = (Task)returnType.GetMethod("AsTask").Invoke(resultIn, []);
 					await resultTask.ConfigureAwait(false);
 					resultOut = returnType.GetProperty("Result").GetValue(resultIn);
 				}

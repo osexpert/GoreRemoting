@@ -75,6 +75,7 @@ public class EnumerableYield
 			await Task.CompletedTask;
 			yield return "1";
 			yield return "2";
+			yield return "3";
 
 			//while (true)
 			//{
@@ -261,9 +262,10 @@ public class EnumerableYield
 			i2.Add(i);
 		}
 
-		Assert.HasCount(2, i2);
+		Assert.HasCount(3, i2);
 		Assert.AreEqual("1", i2[0]);
 		Assert.AreEqual("2", i2[1]);
+		Assert.AreEqual("3", i2[2]);
 
 		var r1 = proxy.RetCom1();
 		var r2 = proxy.RetCom2();
