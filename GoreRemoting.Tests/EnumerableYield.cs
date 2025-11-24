@@ -475,7 +475,6 @@ public class EnumerableYield
 		}
 
 		await Assert.ThrowsExactlyAsync<OperationCanceledException>(() => proxy.TestCancel4(GetData(ct.Token)));
-
 	}
 
 

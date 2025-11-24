@@ -325,18 +325,16 @@ public class RemotingServer : IRemotingParty
 		CallContext.RestoreFromChangesSnapshot(callMessage.CallContextSnapshot);
 
 		var parameterTypes = request.Method.GetParameters().Select(p => (p.ParameterType, p.Name)).ToArray();
-
 		var parameterValues = callMessage.ParameterValues();
 
 		DuplexCallState state = new();
-
-		var responseLock = new AsyncReaderWriterLockSlim();
+		using var responseLock = new AsyncReaderWriterLockSlim();
 
 		parameterValues = MapArguments(
 			parameterValues, 
 			parameterTypes,
 			(delegateCallMsg) => DelegateCallAsync(request, req, reponse, delegateCallMsg, state, responseLock),
-			(asyncEnumCallMsg) => AsyncEnumCallAsync(request, req, reponse, asyncEnumCallMsg, state, responseLock, context.CancellationToken),
+			(asyncEnumCallMsg) => AsyncEnumCallAsync(request, req, reponse, asyncEnumCallMsg, state, responseLock),
 			context
 			);
 
@@ -471,15 +469,14 @@ public class RemotingServer : IRemotingParty
 		Func<GoreResponseMessage, Task> reponse,
 		AsyncEnumCallMessage delegateCallMsg,
 		DuplexCallState state,
-		AsyncReaderWriterLockSlim responseLock,
-		CancellationToken cancel
+		AsyncReaderWriterLockSlim responseLock
 		)
 	{
 		// send respose to client and client will call the delegate via DelegateProxy
 		// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
 		// These may seem to be 2 varianst of OneWay: 1 where we send and wait until sent, but do not care about result\exceptions.
 		// 2: we send and do not even wait for the sending to complete. (currently not implemented)
-		await responseLock.EnterReadLockAsync(cancel).ConfigureAwait(false);
+		await responseLock.EnterReadLockAsync().ConfigureAwait(false);
 		try
 		{
 			if (state.ResultSent)
