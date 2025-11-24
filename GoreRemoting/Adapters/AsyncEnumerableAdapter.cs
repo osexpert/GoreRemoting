@@ -7,22 +7,20 @@ public static class AsyncEnumerableAdapter
 {
 	public static IAsyncEnumerable<T> FromPush<T>(
 		Func<Func<T, Task>, Task> dataSource,
-		int? queueLimit = null,
 		CancellationToken cancel = default
 		)
 	{
-		return FromPush<T>((a, cancel) => dataSource(a), queueLimit, cancel);
+		return FromPush<T>((a, cancel) => dataSource(a), cancel);
 	}
 
 
 	// Overload for data sources that accept cancellation
 	public static IAsyncEnumerable<T> FromPush<T>(
 		Func<Func<T, Task>, CancellationToken, Task> dataSource,
-		int? queueLimit = null,
 		CancellationToken cancel = default
 		)
 	{
-		var channel = CreateChannel<T>(queueLimit);
+		var channel = CreateChannel<T>(queueLength: 1);
 
 		async Task ForwardAsync()
 		{
@@ -37,18 +35,8 @@ public static class AsyncEnumerableAdapter
 			}
 		}
 
-		bool delayed = true;
-		if (delayed)
-		{
-			var source = channel.Reader.ReadAllAsync(cancel).GetAsyncEnumerator(cancel);
-			return new AsyncEnumerableImplementation<T>(source, () => _ = ForwardAsync());
-		}
-		else
-		{
-			//_ = Task.Run(ForwardAsync, cancel); Can do this if we want immediate return (wont have to wait until await dataSource completes)
-			_ = ForwardAsync(); // fire and forget
-			return channel.Reader.ReadAllAsync(cancel);
-		}
+		var source = channel.Reader.ReadAllAsync(cancel).GetAsyncEnumerator(cancel);
+		return new AsyncEnumerableImplementation<T>(source, () => _ = ForwardAsync()); // fire and forget
 	}
 
 
@@ -108,9 +96,9 @@ public static class AsyncEnumerableAdapter
 	}
 
 
-	private static Channel<TT> CreateChannel<TT>(int? queueLimit)
+	private static Channel<TT> CreateChannel<TT>(int? queueLength)
 	{
-		if (queueLimit == null)
+		if (queueLength == null)
 		{
 			return Channel.CreateUnbounded<TT>(new UnboundedChannelOptions
 			{
@@ -120,7 +108,7 @@ public static class AsyncEnumerableAdapter
 		}
 		else
 		{
-			return Channel.CreateBounded<TT>(new BoundedChannelOptions(queueLimit.Value)
+			return Channel.CreateBounded<TT>(new BoundedChannelOptions(queueLength.Value)
 			{
 				SingleWriter = false,
 				SingleReader = true

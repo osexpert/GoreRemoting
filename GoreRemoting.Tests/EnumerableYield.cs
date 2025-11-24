@@ -33,6 +33,7 @@ public class EnumerableYield
 		IAsyncEnumerable<string> TestCancel3(CancellationToken c1);
 		IAsyncEnumerable<string> TestCancel3_noAtt(CancellationToken ct);
 		Task TestCancel4(IAsyncEnumerable<string> arg);
+		Task<string> TestEcho(IAsyncEnumerable<string> arg);
 		Task TestCancel5(CancellationToken ct1);
 		Task TestCancel6(CancellationToken ct1);
 		Task TestProg(Action<int> p);
@@ -181,6 +182,16 @@ public class EnumerableYield
 			}
 		}
 
+		public async Task<string> TestEcho(IAsyncEnumerable<string> arg)
+		{
+			string res = "";
+			await foreach (var v in arg)
+			{
+				res += v + ",";
+			}
+			return res;
+		}
+
 		public async Task TestCancel5(CancellationToken ct)
 		{
 			throw new ArgumentException("lol");
@@ -188,7 +199,7 @@ public class EnumerableYield
 
 		public async Task TestCancel6(CancellationToken ct)
 		{
-			await Task.Delay(2000);
+			await Task.Delay(200000, ct);
 		}
 
 		public async Task TestProg(Action<int> pReport)
@@ -313,7 +324,7 @@ public class EnumerableYield
 		{
 			cee = e;
 		}
-		Assert.AreEqual("More than one CancellationToken", cee!.Message);
+		Assert.AreEqual("Only one CancellationToken argument is supported", cee!.Message);
 
 		List<int> l = new();
 		var p = new GoodProgress<int>();
@@ -434,7 +445,7 @@ public class EnumerableYield
 
 
 
-//	[TestMethod]
+	[TestMethod]
 	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
 	[DataRow(Serializer.MemoryPack)]
@@ -519,7 +530,7 @@ public class EnumerableYield
 
 
 
-//	[TestMethod]
+	[TestMethod]
 	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
 	[DataRow(Serializer.MemoryPack)]
@@ -543,13 +554,41 @@ public class EnumerableYield
 		{
 			yield return "lol";
 			yield return "lol";
-			throw new ArgumentException("lol");
+			throw new ArgumentException("lol3");
 		}
 
-		await Assert.ThrowsExactlyAsync<ArgumentException>(() => proxy.TestCancel4(GetData()));
+		await Assert.ThrowsExactlyAsync<ArgumentException>(() => proxy.TestCancel4(GetData()), "lol3");
 
 	}
 
 
+
+	[TestMethod]
+	[DataRow(Serializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
+	[DataRow(Serializer.MemoryPack)]
+#endif
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task AsyncCheckResultEcho(Serializer ser)
+	{
+		await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
+		server.RegisterService<IIenumera, EnumeTest>();
+		server.Start();
+
+		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+
+		var proxy = client.CreateProxy<IIenumera>();
+
+		async IAsyncEnumerable<string> GetData()
+		{
+			yield return "lol1";
+			yield return "lol2";
+		}
+
+		var res = await proxy.TestEcho(GetData());
+		Assert.AreEqual("lol1,lol2,", res);
+	}
 
 }

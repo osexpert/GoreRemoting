@@ -25,12 +25,17 @@ public interface IMessage : IGoreSerializable
 	int CacheKey { get; }
 }
 
+/// <summary>
+/// Only used in the types caching, together with CacheKey
+/// </summary>
 public enum MessageType
 {
 	MethodCall = 1,
 	MethodResult = 2,
 	DelegateCall = 3,
 	DelegateResult = 4,
+	AsyncEnumCall = 5,
+	AsyncEnumResult = 6,
 }
 
 internal class GoreSerializer
@@ -52,7 +57,10 @@ internal class GoreSerializer
 			{ 
 				var types = GetTypes(r, method, msg, serializer);
 				// We can't get the elements out in the "correct" order...how they are stored internally...
-				serializer.Serialize(cs, stack.Reverse().ToArray(), types);
+				var graph = stack.Reverse().ToArray();
+				if (types.Length != graph.Length)
+					throw new InvalidOperationException("Graph and type count mismatch");
+				serializer.Serialize(cs, graph, types);
 			}
 		}
 		finally
@@ -159,12 +167,13 @@ internal class GoreSerializer
 		}
 		else if (msg is MethodCallMessage mcm)
 		{
-			var types =	param_s
+			var types = param_s
 				.Where(p =>
 				{
 					if (p.IsOutParameterForReal()
 						|| typeof(Delegate).IsAssignableFrom(p.ParameterType)
 						|| typeof(CancellationToken).IsAssignableFrom(p.ParameterType)
+						|| AsyncEnumerableHelper.IsAsyncEnumerable(p.ParameterType, out _)
 						)
 						return false;
 
@@ -213,6 +222,16 @@ internal class GoreSerializer
 
 				return [retType];
 			}
+		}
+		else if (msg is AsyncEnumResultMessage aerm)
+		{
+			var aeType = param_s[aerm.Position].ParameterType;
+			AsyncEnumerableHelper.IsAsyncEnumerable(aeType, out var elementType);
+			return [elementType!];
+		}
+		else if (msg is AsyncEnumCallMessage aecm)
+		{
+			return [];
 		}
 		else
 			throw new Exception();

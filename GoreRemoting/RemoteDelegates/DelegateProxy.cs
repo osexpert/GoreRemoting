@@ -10,8 +10,8 @@ namespace GoreRemoting.RemoteDelegates;
 /// </summary>
 public sealed class DelegateProxy : AsyncInterceptor
 {
-	private Func<MethodInfo, object?[], object?> _callInterceptionHandler;
-	private readonly Func<MethodInfo, object?[], Task<object?>> _callInterceptionAsyncHandler;
+	private Func<object?[], object?> _callInterceptionHandler;
+	private readonly Func<object?[], Task<object?>> _callInterceptionAsyncHandler;
 
 	static readonly MethodInfo _interceptMethod = typeof(DelegateProxy ).GetMethod(
 			name: nameof(DelegateProxy.DelegateTarget),
@@ -23,8 +23,8 @@ public sealed class DelegateProxy : AsyncInterceptor
 	/// <param name="delegateType">Delegate type to be proxied</param>
 	/// <param name="callInterceptionHandler">Function to be called when intercepting calls on the delegate</param>
 	internal DelegateProxy(Type delegateType, 
-		Func<MethodInfo, object?[], object?> callInterceptionHandler,
-		Func<MethodInfo, object?[], Task<object?>> callInterceptionAsyncHandler)
+		Func<object?[], object?> callInterceptionHandler,
+		Func<object?[], Task<object?>> callInterceptionAsyncHandler)
 	{
 		_callInterceptionHandler =
 			callInterceptionHandler ??
@@ -43,13 +43,13 @@ public sealed class DelegateProxy : AsyncInterceptor
 
 	protected override void Intercept(IInvocation invocation)
 	{
-		var res = _callInterceptionHandler(invocation.Method, invocation.Arguments);
+		var res = _callInterceptionHandler(invocation.Arguments);
 		invocation.ReturnValue = res;
 	}
 
 	protected override async ValueTask InterceptAsync(IAsyncInvocation invocation)
 	{
-		var res = await _callInterceptionAsyncHandler(invocation.Method, invocation.Arguments.ToArray()).ConfigureAwait(false);
+		var res = await _callInterceptionAsyncHandler(invocation.Arguments.ToArray()).ConfigureAwait(false);
 		invocation.Result = res;
 	}
 

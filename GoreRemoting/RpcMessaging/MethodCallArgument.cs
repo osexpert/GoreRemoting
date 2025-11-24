@@ -52,6 +52,10 @@ public class MethodCallArgument : IGoreSerializable
 		{
 			Value = new CancellationTokenPlaceholder();
 		}
+		else if (pt == ParameterValueType.RemoteAsyncEnumPlaceholder)
+		{
+			Value = new RemoteAsyncEnumPlaceholder();
+		}
 		else if (pt == ParameterValueType.Out)
 		{
 			// ignore
@@ -86,6 +90,10 @@ public class MethodCallArgument : IGoreSerializable
 
 			g.Serialize(w, st);
 		}
+		else if (Value is RemoteAsyncEnumPlaceholder)
+		{
+			w.Write((byte)ParameterValueType.RemoteAsyncEnumPlaceholder);
+		}
 		else if (Value is CancellationTokenPlaceholder)
 		{
 			w.Write((byte)ParameterValueType.CancellationTokenPlaceholder);
@@ -106,6 +114,7 @@ public class MethodCallArgument : IGoreSerializable
 		Normal = 1,
 		Out = 2,
 		RemoteDelegateInfo = 3,
-		CancellationTokenPlaceholder = 4
+		CancellationTokenPlaceholder = 4,
+		RemoteAsyncEnumPlaceholder = 5
 	}
 }

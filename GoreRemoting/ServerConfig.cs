@@ -73,7 +73,7 @@ public class ServerConfig
 
 	// Use capacity of 1. We don't want to buffer anything, we just wanted to solve the problem of max 1 can write at a time,
 	// the buffering was a side effect that I think may cause problems, at least unbounded, it may use all memory.
-	public int? ResponseQueueLength { get; set; } = 1;
+	//public int? ResponseQueueLength { get; set; } = 1;
 
 	//	public bool EmitCallContext { get; set; } = true;
 	//		public bool RestoreCallContext { get; set; } = true;

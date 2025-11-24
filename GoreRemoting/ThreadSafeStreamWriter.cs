@@ -15,7 +15,7 @@ namespace GoreRemoting;
 /// 
 /// </summary>
 /// <typeparam name="T">Type of message written to the stream</typeparam>
-public class StreamResponseQueue<T> : IDisposable
+public class ThreadSafeStreamWriter<T> : IDisposable
 {
 	private readonly IServerStreamWriter<T> _stream;
 	private readonly Task _consumer;
@@ -24,20 +24,19 @@ public class StreamResponseQueue<T> : IDisposable
 
 	public CancellationToken OnErrorToken => _ctsError.Token;
 
-	public StreamResponseQueue(
+	public ThreadSafeStreamWriter(
 		IServerStreamWriter<T> stream,
-		int? queueLimit = null,
 		CancellationToken cancellationToken = default
 	)
 	{
-		_channel = CreateChannel<T>(queueLimit);
+		_channel = CreateChannel<T>(queueLength: 1);
 		_stream = stream;
 		_consumer = Consume(cancellationToken);
 	}
 
-	private static Channel<TT> CreateChannel<TT>(int? queueLimit)
+	private static Channel<TT> CreateChannel<TT>(int? queueLength)
 	{
-		if (queueLimit == null)
+		if (queueLength == null)
 		{
 			return Channel.CreateUnbounded<TT>(new UnboundedChannelOptions
 			{
@@ -47,7 +46,7 @@ public class StreamResponseQueue<T> : IDisposable
 		}
 		else
 		{
-			return Channel.CreateBounded<TT>(new BoundedChannelOptions(queueLimit.Value)
+			return Channel.CreateBounded<TT>(new BoundedChannelOptions(queueLength.Value)
 			{
 				SingleWriter = false,
 				SingleReader = true

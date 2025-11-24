@@ -45,6 +45,10 @@ public class RemoteDelegateInfo : IGoreSerializable
 	}
 }
 
+public class RemoteAsyncEnumPlaceholder
+{
+}
+
 public class CancellationTokenPlaceholder
 {
 }

@@ -49,7 +49,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 		var requestMsg = new GoreRequestMessage(callMessage, _serviceName, targetMethod.Name, serializer, compressor);
 
 		var resultMessage = _client.Invoke(requestMsg,
-			(callback, res) => HandleResponseAsync(serializer, compressor, callback, res, args, streamingDelePos),
+			(callback, res) => HandleResponseAsync(serializer, compressor, callback, res, args, streamingDelePos, cancelArgument),
 			new CallOptions(headers: headers, cancellationToken: cancelArgument));
 
 		if (resultMessage.IsException)
@@ -101,7 +101,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 		var requestMsg = new GoreRequestMessage(callMessage, _serviceName, targetMethod.Name, serializer, compressor);
 
 		var resultMessage = await _client.InvokeAsync(requestMsg,
-			(callback, req) => HandleResponseAsync(serializer, compressor, callback, req, args.ToArray(), streamingDelePos),
+			(callback, req) => HandleResponseAsync(serializer, compressor, callback, req, args.ToArray(), streamingDelePos, cancelArgument),
 			new CallOptions(headers: headers, cancellationToken: cancelArgument)).ConfigureAwait(false);
 
 		if (resultMessage.IsException)
@@ -173,7 +173,8 @@ public class ServiceProxy<T> : AsyncInterceptor
 		GoreResponseMessage callbackData,
 		Func<GoreRequestMessage, Task> res, 
 		object?[] args,
-		int? streamingDelegatePosition
+		int? streamingDelegatePosition,
+		CancellationToken cancel
 		)
 	{
 		// WEIRD BUT...callbackData also has serializer and compressor!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! This make no sense.
@@ -186,87 +187,172 @@ public class ServiceProxy<T> : AsyncInterceptor
 			case ResponseType.MethodResult:
 				return callbackData.MethodResult;
 
+			case ResponseType.AsyncEnumCall:
+				{
+					var aeMsg = callbackData.AsyncEnumCall;
+					var arg = args[aeMsg.Position]!;
+
+					AsyncEnumerableHelper.IsAsyncEnumerable(arg.GetType(), out var enumElementType);
+	
+					// Handle IAsyncEnumerable streaming from client to server
+					await HandleAsyncEnumerableProduceAsync(arg, enumElementType!, aeMsg, serializer, compressor, res, callbackData, cancel).ConfigureAwait(false);
+					return null;
+				}
+
 			case ResponseType.DelegateCall:
 				{
 					var delegateMsg = callbackData.DelegateCall;
-
 					var delegt = (Delegate)args[delegateMsg.Position]!;
-
-					StreamingStatus streamingStatus = (streamingDelegatePosition == delegateMsg.Position) ? StreamingStatus.Active : StreamingStatus.None;
-
-				again:
-
-					// not possible with async here?
-					object? result = null;
-					object? exception = null;
-
-					try
-					{
-						result = delegt.DynamicInvoke(delegateMsg.Arguments);
-						result = await TaskResultHelper.GetTaskResult(delegt.Method, result).ConfigureAwait(false);
-					}
-					catch (Exception ex)
-					{
-						Exception ex2 = ex;
-						if (ex is TargetInvocationException tie)
-							ex2 = tie.InnerException;
-
-						if (ex2 is StreamingDoneException)
-						{
-							if (streamingStatus != StreamingStatus.Active)
-								throw new Exception("Streaming not active");
-							streamingStatus = StreamingStatus.Done;
-							result = null; // important!
-						}
-						else
-						{
-							if (delegateMsg.OneWay)
-							{
-								// eat...
-								_client.OnOneWayException(ex);
-							}
-							else
-							{
-								exception = GoreSerializer.GetSerializableException(serializer, ex2);
-							}
-						}
-					}
-
-					if (delegateMsg.OneWay)
-						return null;
-
-					DelegateResultMessage msg;
-					if (exception != null)
-						msg = new DelegateResultMessage 
-						{ 
-							// Hmmm...is this really interesting if EXCEPTION? (position, parametername etc.?) Could exception be its own message?
-							Position = delegateMsg.Position,
-							ParameterName = delegateMsg.ParameterName,
-							Value = exception, 
-							ResultType = DelegateResultType.Exception 
-						};
-					else
-						msg = new DelegateResultMessage 
-						{ 
-							Position = delegateMsg.Position,
-							ParameterName = delegateMsg.ParameterName,
-							Value = result, 
-							StreamingStatus = streamingStatus,
-							ResultType = DelegateResultType.ReturnValue
-						};
-
-					var requestMsg = new GoreRequestMessage(msg, callbackData.ServiceName, callbackData.MethodName, serializer, compressor);
-
-					await res(requestMsg).ConfigureAwait(false);
-
-					if (streamingStatus == StreamingStatus.Active && exception == null)
-						goto again;
-
+					await HandleDelegateCall(serializer, compressor, callbackData, res, streamingDelegatePosition, delegateMsg, delegt).ConfigureAwait(false);
 					return null;
 				}
 			default:
 				throw new Exception($"Unknown repose type: {callbackData.ResponseType}");
 		}
+	}
+
+	private async Task HandleDelegateCall(
+		ISerializerAdapter serializer,
+		ICompressionProvider? compressor, 
+		GoreResponseMessage callbackData, 
+		Func<GoreRequestMessage, Task> res, 
+		int? streamingDelegatePosition, 
+		DelegateCallMessage delegateMsg, 
+		Delegate delegt
+		)
+	{
+		StreamingStatus streamingStatus = streamingDelegatePosition == delegateMsg.Position ? StreamingStatus.Active : StreamingStatus.None;
+
+	again:
+
+		// not possible with async here?
+		object? result = null;
+		object? exception = null;
+
+		try
+		{
+			result = delegt.DynamicInvoke(delegateMsg.Arguments);
+			result = await TaskResultHelper.GetTaskResult(delegt.Method, result).ConfigureAwait(false);
+		}
+		catch (Exception ex)
+		{
+			Exception ex2 = ex;
+			if (ex is TargetInvocationException tie)
+				ex2 = tie.InnerException;
+
+			if (ex2 is StreamingDoneException)
+			{
+				if (streamingStatus != StreamingStatus.Active)
+					throw new Exception("Streaming not active");
+				streamingStatus = StreamingStatus.Done;
+				result = null; // important!
+			}
+			else
+			{
+				if (delegateMsg.OneWay)
+				{
+					// eat...
+					_client.OnOneWayException(ex);
+				}
+				else
+				{
+					exception = GoreSerializer.GetSerializableException(serializer, ex2);
+				}
+			}
+		}
+
+		if (delegateMsg.OneWay)
+			return;// (flowControl: false, value: null);
+
+		DelegateResultMessage msg;
+		if (exception != null)
+		{
+			msg = new DelegateResultMessage
+			{
+				// Hmmm...is this really interesting if EXCEPTION? (position, parametername etc.?) Could exception be its own message?
+				Position = delegateMsg.Position,
+				ParameterName = delegateMsg.ParameterName,
+				Value = exception,
+				ResultType = DelegateResultType.Exception
+			};
+		}
+		else
+		{
+			msg = new DelegateResultMessage
+			{
+				Position = delegateMsg.Position,
+				ParameterName = delegateMsg.ParameterName,
+				Value = result,
+				StreamingStatus = streamingStatus,
+				ResultType = DelegateResultType.ReturnValue
+			};
+		}
+
+		var requestMsg = new GoreRequestMessage(msg, callbackData.ServiceName, callbackData.MethodName, serializer, compressor);
+
+		await res(requestMsg).ConfigureAwait(false);
+
+		if (streamingStatus == StreamingStatus.Active && exception == null)
+			goto again;
+
+		//return (flowControl: true, value: null);
+	}
+
+	private async Task HandleAsyncEnumerableProduceAsync(
+		object asyncEnumerable,
+		Type elementType,
+		AsyncEnumCallMessage aeMsg,
+		ISerializerAdapter serializer,
+		ICompressionProvider? compressor,
+		Func<GoreRequestMessage, Task> res,
+		GoreResponseMessage callbackData,
+		CancellationToken cancel
+		)
+	{
+		var method = GetType()
+			.GetMethod(nameof(HandleAsyncEnumerableProduceAsyncGeneric), BindingFlags.NonPublic | BindingFlags.Instance)!
+			.MakeGenericMethod(elementType);
+
+		await (Task)method.Invoke(this,
+			[asyncEnumerable, aeMsg, serializer, compressor, res, callbackData, cancel])!;
+	}
+
+	private async Task HandleAsyncEnumerableProduceAsyncGeneric<TElement>(
+		IAsyncEnumerable<TElement> asyncEnumerable,
+		AsyncEnumCallMessage aeMsg,
+		ISerializerAdapter serializer,
+		ICompressionProvider? compressor,
+		Func<GoreRequestMessage, Task> res,
+		GoreResponseMessage callbackData,
+		CancellationToken cancel
+		)
+	{
+		// Server is requesting the next item
+		// We need to iterate and send each item back
+		await foreach (var item in asyncEnumerable.WithCancellation(cancel).ConfigureAwait(false))
+		{
+			var msg = new AsyncEnumResultMessage
+			{
+				Position = aeMsg.Position,
+				ParameterName = aeMsg.ParameterName,
+				Value = item,
+			};
+
+			var requestMsg = new GoreRequestMessage(msg, callbackData.ServiceName, callbackData.MethodName, serializer, compressor);
+			await res(requestMsg).ConfigureAwait(false);
+		}
+
+		// Send completion signal
+		var doneMsg = new AsyncEnumResultMessage
+		{
+			Position = aeMsg.Position,
+			ParameterName = aeMsg.ParameterName,
+			Value = null,
+			StreamingDone = true
+		};
+
+		var doneRequestMsg = new GoreRequestMessage(doneMsg, callbackData.ServiceName, callbackData.MethodName, serializer, compressor);
+		await res(doneRequestMsg).ConfigureAwait(false);
 	}
 
 	/// <summary>
@@ -277,9 +363,8 @@ public class ServiceProxy<T> : AsyncInterceptor
 	private (object?[] arguments, CancellationToken cancelArgument, int? streamingDelePos) MapArguments(MethodInfo mi, object?[] arguments)
 	{
 		bool delegateHasResult = false;
-
+		bool clientToServerStreaming = false;
 		CancellationToken? cancelArgument = null;
-
 		int? streamingDelePos = null;
 
 		object?[] res = new object?[arguments.Length];
@@ -292,13 +377,35 @@ public class ServiceProxy<T> : AsyncInterceptor
 
 			var type = argument?.GetType();
 
-			if (MapDelegateArgument(type, out var mappedArgument))
+			if (type == null)
+			{
+				res[i] = argument;
+			}
+			// Check for IAsyncEnumerable<T> parameter (client-to-server streaming)
+			else if (AsyncEnumerableHelper.IsAsyncEnumerable(type, out _))
+			{
+				if (clientToServerStreaming)
+					throw new Exception("Only one streaming func delegate or IAsyncEnumerable is supported");
+				else
+					clientToServerStreaming = true;
+
+				// Create a marker that won't be serialized - similar to RemoteDelegateInfo for delegates
+				var asyncEnumMarker = new RemoteAsyncEnumPlaceholder();
+				// Store marker in serializable args, keep original in args for HandleResponseAsync
+				res[i] = asyncEnumMarker;
+			}
+			else if (MapDelegateArgument(type, out var mappedArgument))
 			{
 				if (mappedArgument.HasResult)
 				{
 					var streamingDele = methodParams[i].GetCustomAttribute<StreamingFuncAttribute>();
 					if (streamingDele != null)
 					{
+						if (clientToServerStreaming)
+							throw new Exception("Only one streaming func delegate or IAsyncEnumerable is supported");
+						else
+							clientToServerStreaming = true;
+
 						if (streamingDelePos == null)
 							streamingDelePos = i;
 						else
@@ -340,9 +447,9 @@ public class ServiceProxy<T> : AsyncInterceptor
 	/// <param name="argumentType">Type of argument to be mapped</param>
 	/// <param name="mappedArgument">Out: Mapped argument</param>
 	/// <returns>True if mapping applied, otherwise false</returns>
-	private bool MapDelegateArgument(Type? argumentType, [NotNullWhen(returnValue: true)] out RemoteDelegateInfo? mappedArgument)
+	private bool MapDelegateArgument(Type argumentType, [NotNullWhen(returnValue: true)] out RemoteDelegateInfo? mappedArgument)
 	{
-		if (argumentType == null || !typeof(Delegate).IsAssignableFrom(argumentType))
+		if (!typeof(Delegate).IsAssignableFrom(argumentType))
 		{
 			mappedArgument = null;
 			return false;

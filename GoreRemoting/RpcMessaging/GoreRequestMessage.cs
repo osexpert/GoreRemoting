@@ -12,6 +12,7 @@ public class GoreRequestMessage
 	internal string ServiceName { get; }
 	internal string MethodName { get; }
 
+	internal AsyncEnumResultMessage AsyncEnumResultMessage { get; }
 	internal DelegateResultMessage DelegateResultMessage { get; }
 	internal MethodCallMessage MethodCallMessage { get; }
 
@@ -41,6 +42,16 @@ public class GoreRequestMessage
 		MethodName = methodName;
 	}
 
+	public GoreRequestMessage(AsyncEnumResultMessage aem, string serviceName, string methodName, ISerializerAdapter serializer, ICompressionProvider? compressor)
+	{
+		AsyncEnumResultMessage = aem;
+		RequestType = RequestType.AsyncEnumResult;
+		Serializer = serializer;
+		Compressor = compressor;
+		ServiceName = serviceName;
+		MethodName = methodName;
+	}
+
 	public static GoreRequestMessage Deserialize(IRemotingParty r, Stream s, RequestType mType, string serviceName, string methodName,
 		MethodInfo method, ISerializerAdapter serializer, ICompressionProvider? compressor)
 	{
@@ -49,6 +60,8 @@ public class GoreRequestMessage
 			res = new GoreRequestMessage(GoreSerializer.Deserialize<DelegateResultMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
 		else if (mType == RequestType.MethodCall)
 			res = new GoreRequestMessage(GoreSerializer.Deserialize<MethodCallMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
+		else if (mType == RequestType.AsyncEnumResult)
+			res = new GoreRequestMessage(GoreSerializer.Deserialize<AsyncEnumResultMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
 		else
 			throw new Exception();
 
@@ -62,6 +75,8 @@ public class GoreRequestMessage
 			GoreSerializer.Serialize(r, s, method, DelegateResultMessage, Serializer, Compressor);
 		else if (RequestType == RequestType.MethodCall)
 			GoreSerializer.Serialize(r, s, method, MethodCallMessage, Serializer, Compressor);
+		else if (RequestType == RequestType.AsyncEnumResult)
+			GoreSerializer.Serialize(r, s, method, AsyncEnumResultMessage, Serializer, Compressor);
 		else
 			throw new Exception();
 
@@ -71,5 +86,11 @@ public class GoreRequestMessage
 public enum RequestType
 {
 	MethodCall = 1,
-	DelegateResult = 2
+	DelegateResult = 2,
+
+	//ResponseType.MethodResult = 3,
+	//ResponseType.DelegateCall = 4,
+	//ResponseType.AsyncEnumCall = 5,
+
+	AsyncEnumResult = 6,
 }

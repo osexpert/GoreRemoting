@@ -148,11 +148,12 @@ public class RemotingServer : IRemotingParty
 	/// Maps non serializable arguments into a serializable form.
 	/// </summary>
 	/// <param name="arguments">Array of parameter values</param>
-	/// <param name="callDelegate"></param>
 	/// <returns>Array of arguments (includes mapped ones)</returns>
-	private object?[] MapArguments(object?[] arguments, Type[] types,
-		Func<MethodInfo, DelegateCallMessage, object?> callDelegate,
-		Func<MethodInfo, DelegateCallMessage, Task<object?>> callDelegateAsync,
+	private object?[] MapArguments(
+		object?[] arguments, 
+		(Type type, string name)[] typesAndNames,
+		Func<DelegateCallMessage, Task<object?>> callDelegateAsync,
+		Func<AsyncEnumCallMessage, Task<(object? value, bool isDone)>> callAsyncEnumAsync,
 		ServerCallContext context)
 	{
 		object?[] mappedArguments = new object?[arguments.Length];
@@ -160,10 +161,12 @@ public class RemotingServer : IRemotingParty
 		for (int i = 0; i < arguments.Length; i++)
 		{
 			var argument = arguments[i];
-			var type = types[i];
+			var typeAndName = typesAndNames[i];
 
-			if (MapDelegateArgument(argument, type, i, out var mappedArgument, callDelegate, callDelegateAsync))
+			if (MapDelegateArgument(argument, typeAndName, i, out var mappedArgument, callDelegateAsync))
 				mappedArguments[i] = mappedArgument;
+			else if (MapAsyncEnumArgument(argument, typeAndName, i, out var mappedArgument2, callAsyncEnumAsync))
+				mappedArguments[i] = mappedArgument2;
 			else if (argument is CancellationTokenPlaceholder)
 				mappedArguments[i] = context.CancellationToken;
 			else
@@ -179,21 +182,20 @@ public class RemotingServer : IRemotingParty
 	/// <param name="argument">argument value</param>
 	/// <param name="position"></param>
 	/// <param name="mappedArgument">Out: argument value where delegate value is mapped into delegate proxy</param>
-	/// <param name="callDelegate"></param>
 	/// <returns>True if mapping applied, otherwise false</returns>
 	/// <exception cref="ArgumentNullException">Thrown if no session is provided</exception>
-	private bool MapDelegateArgument(object? argument, Type delegateType,
+	private bool MapDelegateArgument(
+		object? argument,
+		(Type type, string name) typeAndName,
 		int position,
 		[NotNullWhen(returnValue: true)] out object? mappedArgument,
-		Func<MethodInfo, DelegateCallMessage, object?> callDelegate,
-		Func<MethodInfo, DelegateCallMessage, Task<object?>> callDelegateAsync)
+		Func<DelegateCallMessage, Task<object?>> callDelegateAsync)
 	{
 		if (argument is not RemoteDelegateInfo remoteDelegateInfo)
 		{
 			mappedArgument = null;
 			return false;
 		}
-
 
 		//if (false)//_delegateProxyCache.ContainsKey((delegateType, position)))
 		//{
@@ -203,24 +205,25 @@ public class RemotingServer : IRemotingParty
 
 		// Forge a delegate proxy and initiate remote delegate invocation, when it is invoked
 		var delegateProxy =
-			new DelegateProxy(delegateType,
-			(method, delegateArgs) =>
+			new DelegateProxy(typeAndName.type,
+			(delegateArgs) =>
 			{
-				var r = callDelegate(method, new DelegateCallMessage
+				var r = callDelegateAsync(new DelegateCallMessage
 				{
 					Arguments = delegateArgs,
 					Position = position,
-					ParameterName = method.Name,
+					ParameterName = typeAndName.name,
 					OneWay = !remoteDelegateInfo.HasResult
-				});
+				}).GetAwaiter().GetResult();
+
 				return r;
 			},
-			(method, delegateArgs) => // async
+			(delegateArgs) => // async
 			{
-				var r = callDelegateAsync(method, new DelegateCallMessage
+				var r = callDelegateAsync(new DelegateCallMessage
 				{
 					Arguments = delegateArgs,
-					ParameterName = method.Name,
+					ParameterName = typeAndName.name,
 					Position = position,
 					OneWay = !remoteDelegateInfo.HasResult
 				});
@@ -232,6 +235,65 @@ public class RemotingServer : IRemotingParty
 
 		mappedArgument = delegateProxy.ProxiedDelegate;
 		return true;
+	}
+
+
+
+	private bool MapAsyncEnumArgument(
+		object? argument,
+		(Type type, string name) typeAndName,
+		int position,
+		[NotNullWhen(returnValue: true)] out object? mappedArgument,
+		Func<AsyncEnumCallMessage, Task<(object? value, bool isDone)>> callAsyncEnumAsync
+		)
+	{
+		if (argument is not RemoteAsyncEnumPlaceholder remoteDelegateInfo)
+		{
+			mappedArgument = null;
+			return false;
+		}
+
+		// Check if this is an IAsyncEnumerable<T> parameter
+		AsyncEnumerableHelper.IsAsyncEnumerable(typeAndName.type, out var elementType);
+
+		// Create a proxy that pulls data from the client
+		var method = typeof(AsyncEnumerableProxy)
+			.GetMethod(nameof(AsyncEnumerableProxy.Create))!
+			.MakeGenericMethod(elementType);
+
+		// Create typed pull function
+		var typedPullFunc = CreateTypedPullFunc(() =>
+		{
+			// Call back to client to get next item
+			return callAsyncEnumAsync(new AsyncEnumCallMessage
+			{
+				ParameterName = typeAndName.name,
+				Position = position
+			});
+
+		}, elementType!);
+
+		mappedArgument = method.Invoke(null, [typedPullFunc])!;
+		return true;
+
+	}
+
+	private object CreateTypedPullFunc(Func<Task<(object?, bool)>> pullFunc, Type elementType)
+	{
+		var method = typeof(RemotingServer)
+			.GetMethod(nameof(TypedPullFuncWrapper), BindingFlags.NonPublic | BindingFlags.Static)!
+			.MakeGenericMethod(elementType);
+
+		return method.Invoke(null, [pullFunc])!;
+	}
+
+	private static Func<Task<(T, bool)>> TypedPullFuncWrapper<T>(Func<Task<(object?, bool)>> pullFunc)
+	{
+		return async () =>
+		{
+			var (obj, isDone) = await pullFunc().ConfigureAwait(false);
+			return ((T)obj!, isDone);
+		};
 	}
 
 	public void RegisterService<TInterface, TService>()
@@ -262,7 +324,7 @@ public class RemotingServer : IRemotingParty
 
 		CallContext.RestoreFromChangesSnapshot(callMessage.CallContextSnapshot);
 
-		var parameterTypes = request.Method.GetParameters().Select(p => p.ParameterType).ToArray();
+		var parameterTypes = request.Method.GetParameters().Select(p => (p.ParameterType, p.Name)).ToArray();
 
 		var parameterValues = callMessage.ParameterValues();
 
@@ -273,8 +335,8 @@ public class RemotingServer : IRemotingParty
 		parameterValues = MapArguments(
 			parameterValues, 
 			parameterTypes,
-			(method, delegateCallMsg) => DelegateCall(request, req, reponse, delegateCallMsg, state, responseLock),
-			(method, delegateCallMsg) => DelegateCallAsync(request, req, reponse, delegateCallMsg, state, responseLock),
+			(delegateCallMsg) => DelegateCallAsync(request, req, reponse, delegateCallMsg, state, responseLock),
+			(asyncEnumCallMsg) => AsyncEnumCallAsync(request, req, reponse, asyncEnumCallMsg, state, responseLock, context.CancellationToken),
 			context
 			);
 
@@ -341,18 +403,6 @@ public class RemotingServer : IRemotingParty
 		await reponse(responseMsg).ConfigureAwait(false);
 	}
 
-	private object? DelegateCall(
-		GoreRequestMessage request, 
-		Func<Task<GoreRequestMessage>> req, 
-		Func<GoreResponseMessage, Task> response, 
-		DelegateCallMessage delegateCallMsg, 
-		DuplexCallState state, 
-		AsyncReaderWriterLockSlim responseLock
-		)
-	{
-		return DelegateCallAsync(request, req, response, delegateCallMsg, state, responseLock)
-			.GetAwaiter().GetResult();
-	}
 
 	private async Task<object?> DelegateCallAsync(GoreRequestMessage request,
 		Func<Task<GoreRequestMessage>> req,
@@ -361,8 +411,6 @@ public class RemotingServer : IRemotingParty
 		DuplexCallState state,
 		AsyncReaderWriterLockSlim responseLock)
 	{
-		var delegateCallReponseMsg = new GoreResponseMessage(delegateCallMsg, request.ServiceName, request.MethodName, request.Serializer, request.Compressor);
-
 		// send respose to client and client will call the delegate via DelegateProxy
 		// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
 		// These may seem to be 2 varianst of OneWay: 1 where we send and wait until sent, but do not care about result\exceptions.
@@ -379,6 +427,7 @@ public class RemotingServer : IRemotingParty
 			}
 			else
 			{
+				var delegateCallReponseMsg = new GoreResponseMessage(delegateCallMsg, request.ServiceName, request.MethodName, request.Serializer, request.Compressor);
 				await reponse(delegateCallReponseMsg).ConfigureAwait(false);
 			}
 
@@ -416,6 +465,55 @@ public class RemotingServer : IRemotingParty
 	}
 
 
+	private async Task<(object? value, bool isDone)> AsyncEnumCallAsync(
+		GoreRequestMessage request,
+		Func<Task<GoreRequestMessage>> req,
+		Func<GoreResponseMessage, Task> reponse,
+		AsyncEnumCallMessage delegateCallMsg,
+		DuplexCallState state,
+		AsyncReaderWriterLockSlim responseLock,
+		CancellationToken cancel
+		)
+	{
+		// send respose to client and client will call the delegate via DelegateProxy
+		// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
+		// These may seem to be 2 varianst of OneWay: 1 where we send and wait until sent, but do not care about result\exceptions.
+		// 2: we send and do not even wait for the sending to complete. (currently not implemented)
+		await responseLock.EnterReadLockAsync(cancel).ConfigureAwait(false);
+		try
+		{
+			if (state.ResultSent)
+				throw new Exception("Too late, result sent");
+
+			if (state.ActiveStreamingDelegatePosition == delegateCallMsg.Position)
+			{
+				// only recieve now that streaming is active
+			}
+			else
+			{
+				var delegateCallReponseMsg = new GoreResponseMessage(delegateCallMsg, request.ServiceName, request.MethodName, request.Serializer, request.Compressor);
+				await reponse(delegateCallReponseMsg).ConfigureAwait(false);
+			}
+
+			// we want result or exception
+			var reqMsg = await req().ConfigureAwait(false);
+
+			var msg = reqMsg.AsyncEnumResultMessage;
+
+			if (msg.Position != delegateCallMsg.Position)
+				throw new Exception("Incorrect result position");
+
+			state.ActiveStreamingDelegatePosition = msg.Position;
+
+			return (msg.Value, isDone: msg.StreamingDone);
+		}
+		finally
+		{
+			responseLock.ExitReadLock();
+		}
+	}
+
+
 	public Method<GoreRequestMessage, GoreResponseMessage> DuplexCallDescriptor { get; }
 
 		/// <summary>
@@ -438,18 +536,18 @@ public class RemotingServer : IRemotingParty
 				throw new Exception("No method call request data");
 
 			// TODO: pass context.CancellationToken here?
-			using var responseStreamWrapped = new GoreRemoting.StreamResponseQueue<GoreResponseMessage>(responseStream, _config.ResponseQueueLength);
+			using var threadSafeResponseStream = new GoreRemoting.ThreadSafeStreamWriter<GoreResponseMessage>(responseStream);//, _config.ResponseQueueLength);
 
 			await this.DuplexCall(requestStream.Current, async () =>
 			{
-				var gotNext = await requestStream.MoveNext(responseStreamWrapped.OnErrorToken).ConfigureAwait(false);
+				var gotNext = await requestStream.MoveNext(threadSafeResponseStream.OnErrorToken).ConfigureAwait(false);
 				if (!gotNext)
 					throw new Exception("No delegate request data");
 				return requestStream.Current;
 			},
-			resp => responseStreamWrapped.WriteAsync(resp).AsTask(), context).ConfigureAwait(false);
+			resp => threadSafeResponseStream.WriteAsync(resp).AsTask(), context).ConfigureAwait(false);
 
-			await responseStreamWrapped.CompleteAsync().ConfigureAwait(false);
+			await threadSafeResponseStream.CompleteAsync().ConfigureAwait(false);
 		}
 		catch (Exception e)
 		{
