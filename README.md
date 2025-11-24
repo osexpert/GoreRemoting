@@ -45,6 +45,9 @@ https://github.com/theRainbird/CoreRemoting
 
 GoreRemoting is (just like CoreRemoting) a way to migrate from .NET Remoting, but with Grpc instead of WebSockets\Sockets.
 
+## Runtime
+Runs on .net 4.8 and later. Can use Grpc.Core or grpc-dotnet as tranport.
+
 ## General
 Services are always stateless\single call. If you need to store state, store in a session.
 You can send extra headers with every call from client to server, eg. a sessionId or a Token via BeforeMethodCall on client and CreateInstance on server (look in examples).
@@ -120,9 +123,6 @@ A NoCompressionProvider exist in case you want to use eg. Lz4 as default but wan
 
 ## Task\async
 Support Task\ValueTask in service methods result and in result from delegate arguments.
-
-## Limitations
-Method that return IAsyncEnumerable and yield (crashes)  
 
 ## Removed from CoreRemoting
 CoreRemoting use WebSockets while GoreRemoting is a rewrite (sort of) to use Grpc instead.  
