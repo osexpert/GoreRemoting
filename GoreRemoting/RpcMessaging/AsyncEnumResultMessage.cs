@@ -14,7 +14,6 @@ public class AsyncEnumResultMessage : IMessage
 
 	public DelegateResultType ResultType { get; set; } = DelegateResultType.ReturnValue;
 
-	//public StreamingStatus StreamingStatus { get; set; }
 	public bool StreamingDone { get; set; }
 
 	public MessageType MessageType => MessageType.AsyncEnumResult;
