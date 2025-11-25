@@ -225,9 +225,20 @@ internal class GoreSerializer
 		}
 		else if (msg is AsyncEnumResultMessage aerm)
 		{
-			var aeType = param_s[aerm.Position].ParameterType;
-			AsyncEnumerableHelper.IsAsyncEnumerable(aeType, out var elementType);
-			return [elementType!];
+			if (aerm.ResultType == DelegateResultType.Exception)
+			{
+				return [GoreSerializer.GetExceptionType(serializer)];
+			}
+			else if (aerm.ResultType == DelegateResultType.Exception_dict_internal)
+			{
+				return [];
+			}
+			else
+			{
+				var aeType = param_s[aerm.Position].ParameterType;
+				AsyncEnumerableHelper.IsAsyncEnumerable(aeType, out var elementType);
+				return [elementType!];
+			}
 		}
 		else if (msg is AsyncEnumCallMessage aecm)
 		{

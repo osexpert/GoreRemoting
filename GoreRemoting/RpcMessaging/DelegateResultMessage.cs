@@ -7,7 +7,7 @@ public class DelegateResultMessage : IMessage
 
 	public object? Value { get; set; }
 
-	public DelegateResultType ResultType;
+	public DelegateResultType ResultType { get; set; } = DelegateResultType.ReturnValue;
 
 	public StreamingStatus StreamingStatus { get; set; }
 

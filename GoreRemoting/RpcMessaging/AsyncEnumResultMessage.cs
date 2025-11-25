@@ -7,57 +7,93 @@ namespace GoreRemoting.RpcMessaging;
 
 public class AsyncEnumResultMessage : IMessage
 {
-	/// <summary>
-	/// Gets or sets the return value of the invoked method.
-	/// </summary>
+	public string ParameterName { get; set; }
+	public int Position { get; set; }
+
 	public object? Value { get; set; }
 
-	/// <summary>
-	/// If Values is a single object, this is 0.
-	/// If > 0, then this is a list/array (IEnumerable>)
-	/// Added to support sending more than one results at a time (in the future)
-	/// </summary>
-	public int ListValues { get; set; }
+	public DelegateResultType ResultType { get; set; } = DelegateResultType.ReturnValue;
+
+	//public StreamingStatus StreamingStatus { get; set; }
+	public bool StreamingDone { get; set; }
 
 	public MessageType MessageType => MessageType.AsyncEnumResult;
 
-	public int CacheKey => Position;
+	public int CacheKey => (int)ResultType + (Position * 10);
 
-	public int Position { get; internal set; }
-	public bool StreamingDone { get; internal set; }
-	public string ParameterName { get; internal set; }
+	public bool IsException => ResultType == DelegateResultType.Exception
+		|| ResultType == DelegateResultType.Exception_dict_internal;
 
-	public AsyncEnumResultMessage()
+	public void Serialize(GoreBinaryWriter w, Stack<object?> st)
 	{
-	}
+		w.Write(ParameterName);
+		w.WriteVarInt(Position);
 
-	public AsyncEnumResultMessage(GoreBinaryReader r)
-	{
-		Deserialize(r);
+		var localKind = ResultType;
+
+		IDictionary<string, string>? dict = null;
+
+		if (localKind == DelegateResultType.Exception)
+		{
+			if (Value is IDictionary<string, string> d)
+			{
+				localKind = DelegateResultType.Exception_dict_internal;
+				dict = d;
+			}
+			else
+			{
+				st.Push(Value);
+			}
+		}
+		else if (localKind == DelegateResultType.ReturnValue)
+		{
+			st.Push(Value);
+		}
+
+		w.Write((byte)localKind);
+
+		if (localKind == DelegateResultType.ReturnValue)
+			w.Write(StreamingDone);
+		else if (localKind == DelegateResultType.Exception_dict_internal)
+		{
+			w.WriteVarInt(dict.Count);
+			foreach (var kv in dict)
+			{
+				w.Write(kv.Key);
+				w.Write(kv.Value);
+			}
+		}
 	}
 
 	public void Deserialize(GoreBinaryReader r)
 	{
 		ParameterName = r.ReadString();
 		Position = r.ReadVarInt();
-		StreamingDone = r.ReadBoolean();
 
-		ListValues = r.ReadVarInt();
+		ResultType = (DelegateResultType)r.ReadByte();
+
+		if (ResultType == DelegateResultType.ReturnValue)
+		{
+			StreamingDone = r.ReadBoolean();
+		}
+		else if (ResultType == DelegateResultType.Exception_dict_internal)
+		{
+			var n = r.ReadVarInt();
+			Dictionary<string, string> dict = new(n);
+			for (int i = 0; i < n; i++)
+			{
+				var k = r.ReadString();
+				var v = r.ReadString();
+				dict.Add(k, v);
+			}
+
+			Value = dict;
+		}
 	}
-
 	public void Deserialize(Stack<object?> st)
 	{
-		Value = st.Pop();
-	}
-
-	public void Serialize(GoreBinaryWriter w, Stack<object?> st)
-	{
-		w.Write(ParameterName);
-		w.WriteVarInt(Position);
-		w.Write(StreamingDone);
-
-		w.WriteVarInt(ListValues);
-
-		st.Push(Value);
+		if (ResultType == DelegateResultType.ReturnValue || ResultType == DelegateResultType.Exception)
+			Value = st.Pop();
 	}
 }
+

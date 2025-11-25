@@ -327,8 +327,8 @@ public class RemotingServer : IRemotingParty
 		var parameterTypes = request.Method.GetParameters().Select(p => (p.ParameterType, p.Name)).ToArray();
 		var parameterValues = callMessage.ParameterValues();
 
-		DuplexCallState state = new();
 		using var responseLock = new AsyncReaderWriterLockSlim();
+		DuplexCallState state = new();
 
 		parameterValues = MapArguments(
 			parameterValues, 
@@ -337,7 +337,6 @@ public class RemotingServer : IRemotingParty
 			(asyncEnumCallMsg) => AsyncEnumCallAsync(request, req, reponse, asyncEnumCallMsg, state, responseLock),
 			context
 			);
-
 
 		object? result = null;
 		ServiceHandle? serviceHandle = null;
@@ -402,13 +401,19 @@ public class RemotingServer : IRemotingParty
 	}
 
 
-	private async Task<object?> DelegateCallAsync(GoreRequestMessage request,
+	private async Task<object?> DelegateCallAsync(
+		GoreRequestMessage request,
 		Func<Task<GoreRequestMessage>> req,
 		Func<GoreResponseMessage, Task> reponse,
 		DelegateCallMessage delegateCallMsg,
 		DuplexCallState state,
-		AsyncReaderWriterLockSlim responseLock)
+		AsyncReaderWriterLockSlim responseLock
+		)
 	{
+		// Avoid responseLock's ObjectDisposedException
+		if (state.ResultSent)
+			throw new Exception("Too late, result sent");
+
 		// send respose to client and client will call the delegate via DelegateProxy
 		// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
 		// These may seem to be 2 varianst of OneWay: 1 where we send and wait until sent, but do not care about result\exceptions.
@@ -472,6 +477,10 @@ public class RemotingServer : IRemotingParty
 		AsyncReaderWriterLockSlim responseLock
 		)
 	{
+		// Avoid responseLock's ObjectDisposedException
+		if (state.ResultSent)
+			throw new Exception("Too late, result sent");
+
 		// send respose to client and client will call the delegate via DelegateProxy
 		// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
 		// These may seem to be 2 varianst of OneWay: 1 where we send and wait until sent, but do not care about result\exceptions.
@@ -500,6 +509,9 @@ public class RemotingServer : IRemotingParty
 			if (msg.Position != delegateCallMsg.Position)
 				throw new Exception("Incorrect result position");
 
+			if (msg.IsException)
+				throw GoreSerializer.RestoreSerializedException(_config.ExceptionStrategy, request.Serializer, msg.Value!);
+
 			state.ActiveStreamingDelegatePosition = msg.Position;
 
 			return (msg.Value, isDone: msg.StreamingDone);
@@ -513,13 +525,13 @@ public class RemotingServer : IRemotingParty
 
 	public Method<GoreRequestMessage, GoreResponseMessage> DuplexCallDescriptor { get; }
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="requestStream"></param>
-		/// <param name="responseStream"></param>
-		/// <param name="context"></param>
-		/// <returns></returns>
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="requestStream"></param>
+	/// <param name="responseStream"></param>
+	/// <param name="context"></param>
+	/// <returns></returns>
 	public async Task DuplexCall(
 		IAsyncStreamReader<GoreRequestMessage> requestStream,
 		IServerStreamWriter<GoreResponseMessage> responseStream, 
@@ -535,14 +547,18 @@ public class RemotingServer : IRemotingParty
 			// TODO: pass context.CancellationToken here?
 			using var threadSafeResponseStream = new GoreRemoting.ThreadSafeStreamWriter<GoreResponseMessage>(responseStream);//, _config.ResponseQueueLength);
 
-			await this.DuplexCall(requestStream.Current, async () =>
-			{
-				var gotNext = await requestStream.MoveNext(threadSafeResponseStream.OnErrorToken).ConfigureAwait(false);
-				if (!gotNext)
-					throw new Exception("No delegate request data");
-				return requestStream.Current;
-			},
-			resp => threadSafeResponseStream.WriteAsync(resp).AsTask(), context).ConfigureAwait(false);
+			await this.DuplexCall(
+				requestStream.Current,
+				async () =>
+				{
+					var gotNext = await requestStream.MoveNext(threadSafeResponseStream.OnErrorToken).ConfigureAwait(false);
+					if (!gotNext)
+						throw new Exception("No delegate request data");
+					return requestStream.Current;
+				},
+				resp => threadSafeResponseStream.WriteAsync(resp).AsTask(),
+				context
+				).ConfigureAwait(false);
 
 			await threadSafeResponseStream.CompleteAsync().ConfigureAwait(false);
 		}

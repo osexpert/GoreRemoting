@@ -39,6 +39,8 @@ public class EnumerableYield
 		Task TestProg(Action<int> p);
 		void TextNonserEx();
 		void TextNonserEx2();
+
+		Task<string> TestClientThrowsServerCatch(IAsyncEnumerable<string> arg);
 	}
 
 	public class EnumeTest : IIenumera
@@ -224,6 +226,23 @@ public class EnumerableYield
 		{
 			var e = new NonoEx2(null, "mess");
 			throw e;
+		}
+
+		public async Task<string> TestClientThrowsServerCatch(IAsyncEnumerable<string> arg)
+		{
+			try
+			{
+				// throws
+				await foreach (var a in arg)
+				{
+				}
+
+				return "";
+			}
+			catch (Exception e)
+			{
+				return e.Message;
+			}
 		}
 	}
 
@@ -588,6 +607,36 @@ public class EnumerableYield
 
 		var res = await proxy.TestEcho(GetData());
 		Assert.AreEqual("lol1,lol2,", res);
+	}
+
+
+	[TestMethod]
+	[DataRow(Serializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
+	[DataRow(Serializer.MemoryPack)]
+#endif
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task TestClientThrowsServerCatch(Serializer ser)
+	{
+		await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
+		server.RegisterService<IIenumera, EnumeTest>();
+		server.Start();
+
+		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+
+		var proxy = client.CreateProxy<IIenumera>();
+
+		async IAsyncEnumerable<string> GetData()
+		{
+			yield return "lol1";
+			yield return "lol2";
+			throw new NotImplementedException("lol42 ex");
+		}
+
+		var res = await proxy.TestClientThrowsServerCatch(GetData());
+		Assert.AreEqual("lol42 ex", res);
 	}
 
 }

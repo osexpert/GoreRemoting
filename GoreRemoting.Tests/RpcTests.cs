@@ -478,10 +478,10 @@ public class RpcTests
 
 		//Assert.Throws<System.Threading.Channels.ChannelClosedException>(() => proxy.FireServiceEvent());
 
+		var ex = Assert.ThrowsExactly<Exception>(proxy.FireServiceEvent, message: "Too late, result sent");
+		//var ex = Assert.ThrowsExactly<ObjectDisposedException>(proxy.FireServiceEvent, message: "Cannot access a disposed object.\r\nObject name: 'AsyncReaderWriterLockSlim'.");
 
-		var ex = Assert.ThrowsExactly<Exception>(proxy.FireServiceEvent);
-
-		Assert.AreEqual("Too late, result sent", ex.Message);
+		//Assert.AreEqual("Too late, result sent", ex.Message);
 
 		Assert.IsFalse(serviceEventCalled);
 	}

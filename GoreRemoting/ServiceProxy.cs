@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Castle.DynamicProxy;
 using GoreRemoting.RemoteDelegates;
@@ -223,77 +224,77 @@ public class ServiceProxy<T> : AsyncInterceptor
 	{
 		StreamingStatus streamingStatus = streamingDelegatePosition == delegateMsg.Position ? StreamingStatus.Active : StreamingStatus.None;
 
-	again:
-
-		// not possible with async here?
-		object? result = null;
-		object? exception = null;
-
-		try
+		do
 		{
-			result = delegt.DynamicInvoke(delegateMsg.Arguments);
-			result = await TaskResultHelper.GetTaskResult(delegt.Method, result).ConfigureAwait(false);
-		}
-		catch (Exception ex)
-		{
-			Exception ex2 = ex;
-			if (ex is TargetInvocationException tie)
-				ex2 = tie.InnerException;
+			// not possible with async here?
+			object? result = null;
+			object? exception = null;
 
-			if (ex2 is StreamingDoneException)
+			try
 			{
-				if (streamingStatus != StreamingStatus.Active)
-					throw new Exception("Streaming not active");
-				streamingStatus = StreamingStatus.Done;
-				result = null; // important!
+				result = delegt.DynamicInvoke(delegateMsg.Arguments);
+				result = await TaskResultHelper.GetTaskResult(delegt.Method, result).ConfigureAwait(false);
 			}
-			else
+			catch (Exception ex)
 			{
-				if (delegateMsg.OneWay)
+				Exception ex2 = ex;
+				if (ex is TargetInvocationException tie)
+					ex2 = tie.InnerException;
+
+				if (ex2 is StreamingDoneException)
 				{
-					// eat...
-					_client.OnOneWayException(ex);
+					if (streamingStatus != StreamingStatus.Active)
+						throw new Exception("Streaming not active");
+					streamingStatus = StreamingStatus.Done;
+					result = null; // important!
 				}
 				else
 				{
-					exception = GoreSerializer.GetSerializableException(serializer, ex2);
+					if (delegateMsg.OneWay)
+					{
+						// eat...
+						_client.OnOneWayException(ex);
+					}
+					else
+					{
+						exception = GoreSerializer.GetSerializableException(serializer, ex2);
+					}
 				}
 			}
-		}
 
-		if (delegateMsg.OneWay)
-			return;// (flowControl: false, value: null);
+			if (delegateMsg.OneWay)
+				return;// (flowControl: false, value: null);
 
-		DelegateResultMessage msg;
-		if (exception != null)
-		{
-			msg = new DelegateResultMessage
+			DelegateResultMessage msg;
+			if (exception != null)
 			{
-				// Hmmm...is this really interesting if EXCEPTION? (position, parametername etc.?) Could exception be its own message?
-				Position = delegateMsg.Position,
-				ParameterName = delegateMsg.ParameterName,
-				Value = exception,
-				ResultType = DelegateResultType.Exception
-			};
-		}
-		else
-		{
-			msg = new DelegateResultMessage
+				msg = new DelegateResultMessage
+				{
+					// Hmmm...is this really interesting if EXCEPTION? (position, parametername etc.?) Could exception be its own message?
+					Position = delegateMsg.Position,
+					ParameterName = delegateMsg.ParameterName,
+					Value = exception,
+					ResultType = DelegateResultType.Exception
+				};
+			}
+			else
 			{
-				Position = delegateMsg.Position,
-				ParameterName = delegateMsg.ParameterName,
-				Value = result,
-				StreamingStatus = streamingStatus,
-				ResultType = DelegateResultType.ReturnValue
-			};
+				msg = new DelegateResultMessage
+				{
+					Position = delegateMsg.Position,
+					ParameterName = delegateMsg.ParameterName,
+					Value = result,
+					StreamingStatus = streamingStatus,
+				};
+			}
+
+			var requestMsg = new GoreRequestMessage(msg, callbackData.ServiceName, callbackData.MethodName, serializer, compressor);
+			await res(requestMsg).ConfigureAwait(false);
+
+			if (exception != null)
+				return;
 		}
-
-		var requestMsg = new GoreRequestMessage(msg, callbackData.ServiceName, callbackData.MethodName, serializer, compressor);
-
-		await res(requestMsg).ConfigureAwait(false);
-
-		if (streamingStatus == StreamingStatus.Active && exception == null)
-			goto again;
+		while (streamingStatus == StreamingStatus.Active);// && exception == null);
 
 		//return (flowControl: true, value: null);
 	}
@@ -329,7 +330,12 @@ public class ServiceProxy<T> : AsyncInterceptor
 	{
 		// Server is requesting the next item
 		// We need to iterate and send each item back
-		await foreach (var item in asyncEnumerable.WithCancellation(cancel).ConfigureAwait(false))
+
+		Exception ex = null!;
+
+		var exHandlerEnum = new AsyncEnumerableExceptionHandler<TElement>(asyncEnumerable.GetAsyncEnumerator(cancel), exept =>	ex = exept);
+
+		await foreach (var item in exHandlerEnum.ConfigureAwait(false))
 		{
 			var msg = new AsyncEnumResultMessage
 			{
@@ -342,16 +348,39 @@ public class ServiceProxy<T> : AsyncInterceptor
 			await res(requestMsg).ConfigureAwait(false);
 		}
 
-		// Send completion signal
-		var doneMsg = new AsyncEnumResultMessage
-		{
-			Position = aeMsg.Position,
-			ParameterName = aeMsg.ParameterName,
-			Value = null,
-			StreamingDone = true
-		};
+		AsyncEnumResultMessage msgDone;
 
-		var doneRequestMsg = new GoreRequestMessage(doneMsg, callbackData.ServiceName, callbackData.MethodName, serializer, compressor);
+		//object? exception = null;
+		if (ex != null)
+		{
+			Exception ex2 = ex;
+			if (ex is TargetInvocationException tie)
+				ex2 = tie.InnerException;
+
+			var exception = GoreSerializer.GetSerializableException(serializer, ex2);
+
+			msgDone = new AsyncEnumResultMessage
+			{
+				// Hmmm...is this really interesting if EXCEPTION? (position, parametername etc.?) Could exception be its own message?
+				Position = aeMsg.Position,
+				ParameterName = aeMsg.ParameterName,
+				Value = exception,
+				ResultType = DelegateResultType.Exception
+			};
+		}
+		else
+		{
+			// Send completion signal
+			msgDone = new AsyncEnumResultMessage
+			{
+				Position = aeMsg.Position,
+				ParameterName = aeMsg.ParameterName,
+				Value = null,
+				StreamingDone = true,
+			};
+		}
+
+		var doneRequestMsg = new GoreRequestMessage(msgDone, callbackData.ServiceName, callbackData.MethodName, serializer, compressor);
 		await res(doneRequestMsg).ConfigureAwait(false);
 	}
 
