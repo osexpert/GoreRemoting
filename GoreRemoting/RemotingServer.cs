@@ -264,7 +264,7 @@ public class RemotingServer : IRemotingParty
 		// Create typed pull function
 		var typedPullFunc = CreateTypedPullFunc(() =>
 		{
-			// Call back to client to get next item
+			// Call back to client to make client start streaming us result messages
 			return callAsyncEnumAsync(new AsyncEnumCallMessage
 			{
 				ParameterName = typeAndName.name,
@@ -456,7 +456,10 @@ public class RemotingServer : IRemotingParty
 				if (msg.StreamingStatus == StreamingStatus.Active)
 					state.ActiveStreamingDelegatePosition = msg.Position;
 				else if (msg.StreamingStatus == StreamingStatus.Done)
+				{
+					state.ActiveStreamingDelegatePosition = null;
 					throw new StreamingDoneException();
+				}
 
 				return msg.Value;
 			}
@@ -512,7 +515,10 @@ public class RemotingServer : IRemotingParty
 			if (msg.IsException)
 				throw GoreSerializer.RestoreSerializedException(_config.ExceptionStrategy, request.Serializer, msg.Value!);
 
-			state.ActiveStreamingDelegatePosition = msg.Position;
+			if (msg.StreamingDone)
+				state.ActiveStreamingDelegatePosition = null;
+			else
+				state.ActiveStreamingDelegatePosition = msg.Position;
 
 			return (msg.Value, isDone: msg.StreamingDone);
 		}

@@ -333,9 +333,9 @@ public class ServiceProxy<T> : AsyncInterceptor
 
 		Exception ex = null!;
 
-		var exHandlerEnum = new AsyncEnumerableExceptionHandler<TElement>(asyncEnumerable.GetAsyncEnumerator(cancel), exept =>	ex = exept);
+		var asyncEnumerableExceptionHandler = new AsyncEnumerableExceptionHandler<TElement>(asyncEnumerable, exept =>	ex = exept);
 
-		await foreach (var item in exHandlerEnum.ConfigureAwait(false))
+		await foreach (var item in asyncEnumerableExceptionHandler.WithCancellation(cancel).ConfigureAwait(false))
 		{
 			var msg = new AsyncEnumResultMessage
 			{

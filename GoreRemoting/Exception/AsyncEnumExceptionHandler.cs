@@ -1,38 +1,50 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace GoreRemoting;
 
 class AsyncEnumerableExceptionHandler<T> : IAsyncEnumerable<T>
 {
-	readonly IAsyncEnumerator<T> _source;
-	readonly Action<Exception> _exept;
+	readonly IAsyncEnumerable<T> _source; // Changed from IAsyncEnumerator
+	readonly Action<Exception> _except;
+	readonly bool _rethrowAfterHandling;
 
-
-	public AsyncEnumerableExceptionHandler(IAsyncEnumerator<T> source, Action<Exception> exept)
+	public AsyncEnumerableExceptionHandler(
+		IAsyncEnumerable<T> source,
+		Action<Exception> except,
+		bool rethrowAfterHandling = false)
 	{
-		_source = source;
-		_exept = exept;
+		_source = source ?? throw new ArgumentNullException(nameof(source));
+		_except = except ?? throw new ArgumentNullException(nameof(except));
+		_rethrowAfterHandling = rethrowAfterHandling;
 	}
 
 	public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancel = default)
 	{
-		return new AsyncEnumeratorExceptionHandler<T>(_source, _exept, cancel);
+		return new AsyncEnumeratorExceptionHandler<T>(
+			_source.GetAsyncEnumerator(cancel),
+			_except,
+			_rethrowAfterHandling);
 	}
 }
 
 class AsyncEnumeratorExceptionHandler<T> : IAsyncEnumerator<T>
 {
-	readonly CancellationToken _cancel;
 	readonly IAsyncEnumerator<T> _source;
 	readonly Action<Exception> _except;
+	readonly bool _rethrowAfterHandling;
 
-	public AsyncEnumeratorExceptionHandler(IAsyncEnumerator<T> source, Action<Exception> exept, CancellationToken cancel)
+	public AsyncEnumeratorExceptionHandler(
+		IAsyncEnumerator<T> source,
+		Action<Exception> except,
+		bool rethrowAfterHandling)
 	{
-		_cancel = cancel;
-		_except = exept;
-		_source = source;
+		_source = source ?? throw new ArgumentNullException(nameof(source));
+		_except = except ?? throw new ArgumentNullException(nameof(except));
+		_rethrowAfterHandling = rethrowAfterHandling;
 	}
 
 	public T Current => _source.Current;
@@ -41,24 +53,32 @@ class AsyncEnumeratorExceptionHandler<T> : IAsyncEnumerator<T>
 	{
 		try
 		{
-			_cancel.ThrowIfCancellationRequested();
-
-			var res = await _source.MoveNextAsync().ConfigureAwait(false);
-
-			return res;
-
+			return await _source.MoveNextAsync().ConfigureAwait(false);
 		}
 		catch (Exception ex)
 		{
 			_except(ex);
-			return false; // or throw???
-		}
 
+			if (_rethrowAfterHandling)
+				throw;
+
+			return false; // End enumeration on error
+		}
 	}
 
-	public ValueTask DisposeAsync()
+	public async ValueTask DisposeAsync()
 	{
-		//	_channel.Writer.TryComplete(); seems to not be needed
-		return _source.DisposeAsync();
+		try
+		{
+			await _source.DisposeAsync().ConfigureAwait(false);
+		}
+		catch (Exception ex)
+		{
+			_except(ex);
+
+			if (_rethrowAfterHandling)
+				throw;
+		}
 	}
 }
+

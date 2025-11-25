@@ -41,6 +41,7 @@ public class EnumerableYield
 		void TextNonserEx2();
 
 		Task<string> TestClientThrowsServerCatch(IAsyncEnumerable<string> arg);
+		Task<string> TestEnum2Times(IAsyncEnumerable<string> arg);
 	}
 
 	public class EnumeTest : IIenumera
@@ -243,6 +244,21 @@ public class EnumerableYield
 			{
 				return e.Message;
 			}
+		}
+
+		public async Task<string> TestEnum2Times(IAsyncEnumerable<string> arg)
+		{
+			string res = "";
+			await foreach (var v in arg)
+			{
+				res += v + ",";
+			}
+
+			await foreach (var v in arg)
+			{
+				res += v + ",";
+			}
+			return res;
 		}
 	}
 
@@ -638,5 +654,78 @@ public class EnumerableYield
 		var res = await proxy.TestClientThrowsServerCatch(GetData());
 		Assert.AreEqual("lol42 ex", res);
 	}
+
+	[TestMethod]
+	[DataRow(Serializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
+	[DataRow(Serializer.MemoryPack)]
+#endif
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task ReIterateShouldNotWorkClient(Serializer ser)
+	{
+		await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
+		server.RegisterService<IIenumera, EnumeTest>();
+		server.Start();
+
+		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+
+		var proxy = client.CreateProxy<IIenumera>();
+
+		var res = AsyncEnumerableAdapter.FromPush<string>(bb => proxy.Jild4(bb, 42));
+
+		string sres = "";
+
+		await foreach (var item in res)
+		{
+			sres += item + ",";
+		}
+
+		await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () =>
+		{
+			await foreach (var item in res)
+			{
+				sres += item + ",";
+			}
+		}
+		, message: "This IAsyncEnumerable can only be enumerated once");
+
+	}
+
+	[TestMethod]
+	[DataRow(Serializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
+	[DataRow(Serializer.MemoryPack)]
+#endif
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task ReIterateShoulNotWorkServer(Serializer ser)
+	{
+		await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
+		server.RegisterService<IIenumera, EnumeTest>();
+		server.Start();
+
+		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+
+		var proxy = client.CreateProxy<IIenumera>();
+
+		async IAsyncEnumerable<string> GetData()
+		{
+			yield return "lol1";
+			yield return "lol2";
+		}
+
+		await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () =>
+		{
+			var res = await proxy.TestEnum2Times(GetData());
+			//Assert.AreEqual("lol1,lol2,lol1,lol2,", res);
+		}
+		, message: "This IAsyncEnumerable can only be enumerated once");
+
+	}
+
+
 
 }

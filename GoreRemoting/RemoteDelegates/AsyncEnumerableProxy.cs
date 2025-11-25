@@ -17,6 +17,7 @@ internal class AsyncEnumerableProxy
 	private class AsyncEnumerableImpl<T> : IAsyncEnumerable<T>
 	{
 		private readonly Func<Task<(T value, bool isDone)>> _pullFunc;
+		bool _enumerated;
 
 		public AsyncEnumerableImpl(Func<Task<(T value, bool isDone)>> pullFunc)
 		{
@@ -25,6 +26,10 @@ internal class AsyncEnumerableProxy
 
 		public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
 		{
+			if (_enumerated)
+				throw new InvalidOperationException("This IAsyncEnumerable can only be enumerated once");
+			_enumerated = true;
+
 			return new AsyncEnumeratorImpl(_pullFunc, cancellationToken);
 		}
 

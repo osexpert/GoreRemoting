@@ -35,18 +35,18 @@ public static class AsyncEnumerableAdapter
 			}
 		}
 
-		var source = channel.Reader.ReadAllAsync(cancel).GetAsyncEnumerator(cancel);
+		var source = channel.Reader.ReadAllAsync(cancel);//.GetAsyncEnumerator(cancel);
 		return new AsyncEnumerableImplementation<T>(source, () => _ = ForwardAsync()); // fire and forget
 	}
 
 
 	class AsyncEnumerableImplementation<T> : IAsyncEnumerable<T>
 	{
-		readonly IAsyncEnumerator<T> _source;
+		readonly IAsyncEnumerable<T> _source;
 		readonly Action _start;
 		bool _enumerated;
 
-		public AsyncEnumerableImplementation(IAsyncEnumerator<T> source, Action start)
+		public AsyncEnumerableImplementation(IAsyncEnumerable<T> source, Action start)
 		{
 			_source = source;
 			_start = start;
@@ -58,7 +58,7 @@ public static class AsyncEnumerableAdapter
 				throw new InvalidOperationException("This IAsyncEnumerable can only be enumerated once");
 			_enumerated = true;
 
-			return new AsyncEnumeratorImplementation<T>(_source, _start, cancel);
+			return new AsyncEnumeratorImplementation<T>(_source.GetAsyncEnumerator(cancel), _start, cancel);
 		}
 	}
 
