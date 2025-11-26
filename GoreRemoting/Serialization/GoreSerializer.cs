@@ -35,7 +35,8 @@ public enum MessageType
 	DelegateCall = 3,
 	DelegateResult = 4,
 	AsyncEnumCall = 5,
-	AsyncEnumResult = 6,
+	AsyncEnumCallResult = 6,
+	AsyncEnumReturnResult = 7,
 }
 
 internal class GoreSerializer
@@ -151,6 +152,10 @@ internal class GoreSerializer
 						{
 							retType = method.ReturnType.GenericTypeArguments.Single();
 						}
+						else if (AsyncEnumerableHelper.IsAsyncEnumerable(retType, out var elementType))
+						{
+							retType = elementType; // we always return null after enum is done, so we could have used some random type, eg. string
+						}
 					}
 
 					l.Add(retType);
@@ -223,7 +228,7 @@ internal class GoreSerializer
 				return [retType];
 			}
 		}
-		else if (msg is AsyncEnumResultMessage aerm)
+		else if (msg is AsyncEnumCallResultMessage aerm)
 		{
 			if (aerm.ResultType == DelegateResultType.Exception)
 			{
@@ -243,6 +248,11 @@ internal class GoreSerializer
 		else if (msg is AsyncEnumCallMessage aecm)
 		{
 			return [];
+		}
+		else if (msg is AsyncEnumReturnResultMessage aerrm)
+		{
+			AsyncEnumerableHelper.IsAsyncEnumerable(method.ReturnType, out var elementType);
+			return [elementType!];
 		}
 		else
 			throw new Exception();

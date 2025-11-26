@@ -5,7 +5,7 @@ using System.Text;
 namespace GoreRemoting.RpcMessaging;
 
 
-public class AsyncEnumResultMessage : IMessage
+public class AsyncEnumCallResultMessage : IMessage
 {
 	public string ParameterName { get; set; }
 	public int Position { get; set; }
@@ -16,7 +16,7 @@ public class AsyncEnumResultMessage : IMessage
 
 	public bool StreamingDone { get; set; }
 
-	public MessageType MessageType => MessageType.AsyncEnumResult;
+	public MessageType MessageType => MessageType.AsyncEnumCallResult;
 
 	public int CacheKey => (int)ResultType + (Position * 10);
 

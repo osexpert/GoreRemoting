@@ -476,12 +476,9 @@ public class RpcTests
 		// because only then is the callback channel open.
 		proxy.ServiceEvent += () => serviceEventCalled = true;
 
-		//Assert.Throws<System.Threading.Channels.ChannelClosedException>(() => proxy.FireServiceEvent());
+		var ex = Assert.ThrowsExactly<Exception>(proxy.FireServiceEvent);
 
-		var ex = Assert.ThrowsExactly<Exception>(proxy.FireServiceEvent, message: "Too late, result sent");
-		//var ex = Assert.ThrowsExactly<ObjectDisposedException>(proxy.FireServiceEvent, message: "Cannot access a disposed object.\r\nObject name: 'AsyncReaderWriterLockSlim'.");
-
-		//Assert.AreEqual("Too late, result sent", ex.Message);
+		Assert.AreEqual("Too late, result sent", ex.Message);
 
 		Assert.IsFalse(serviceEventCalled);
 	}

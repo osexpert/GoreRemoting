@@ -309,7 +309,7 @@ public class RemotingServer : IRemotingParty
 
 	class DuplexCallState
 	{
-		public bool ResultSent;
+//		public bool ResultSent;
 		public int? ActiveStreamingDelegatePosition;
 	}
 
@@ -327,7 +327,7 @@ public class RemotingServer : IRemotingParty
 		var parameterTypes = request.Method.GetParameters().Select(p => (p.ParameterType, p.Name)).ToArray();
 		var parameterValues = callMessage.ParameterValues();
 
-		using var responseLock = new AsyncReaderWriterLockSlim();
+		using var responseLock = new ResponseLock();
 		DuplexCallState state = new();
 
 		parameterValues = MapArguments(
@@ -353,6 +353,14 @@ public class RemotingServer : IRemotingParty
 
 			result = request.Method.Invoke(service, parameterValues);
 			result = await TaskResultHelper.GetTaskResult(request.Method, result).ConfigureAwait(false);
+
+			var returnType = request.Method.ReturnType;
+			if (AsyncEnumerableHelper.IsAsyncEnumerable(returnType, out var _))
+			{
+				// Handle IAsyncEnumerable<T> return by streaming results
+				await HandleAsyncEnumerableReturnAsync(result, request, reponse, state, responseLock, context.CancellationToken).ConfigureAwait(false);
+				result = null;
+			}
 
 			callScope?.Success(result);
 		}
@@ -392,14 +400,72 @@ public class RemotingServer : IRemotingParty
 
 		var responseMsg = new GoreResponseMessage(resultMessage, request.ServiceName, request.MethodName, request.Serializer, request.Compressor);
 
-		// This will block new delegates and wait until existing ones have left. We then get exlusive lock and set the flag.
-		await responseLock.EnterWriteLockAsync().ConfigureAwait(false);
-		state.ResultSent = true;
-		responseLock.ExitWriteLock();
+		// This will block new responses and wait until existing ones have left. We then get exlusive lock and set the flag.
+		await responseLock.RundownResponsesAsync().ConfigureAwait(false);
 
 		await reponse(responseMsg).ConfigureAwait(false);
 	}
 
+	private async Task HandleAsyncEnumerableReturnAsync(
+		object? asyncEnumerable,
+		GoreRequestMessage request,
+		Func<GoreResponseMessage, Task> response,
+		DuplexCallState state,
+		ResponseLock responseLock,
+		CancellationToken cancel
+		)
+	{
+		if (asyncEnumerable == null)
+			throw new InvalidOperationException("IAsyncEnumerable result is null");
+
+		// Use reflection to call the generic helper
+		var enumType = asyncEnumerable.GetType();
+		AsyncEnumerableHelper.IsAsyncEnumerable(enumType, out var elementType);
+
+		var method = typeof(RemotingServer)
+			.GetMethod(nameof(StreamAsyncEnumerableToClient), BindingFlags.NonPublic | BindingFlags.Instance)!
+			.MakeGenericMethod(elementType);
+
+		var task = (Task)method.Invoke(this, [asyncEnumerable, request, response, state, responseLock, cancel]);
+		await task.ConfigureAwait(false);
+	}
+
+	private async Task StreamAsyncEnumerableToClient<T>(
+		IAsyncEnumerable<T> asyncEnumerable,
+		GoreRequestMessage request,
+		Func<GoreResponseMessage, Task> response,
+		DuplexCallState state,
+		ResponseLock responseLock,
+		CancellationToken cancel
+		)
+	{
+		// No need to use exceptino wrapper, if we fail the exception will propagate back to DuplexCall and catched there and use regular method result message.
+
+		await foreach (var item in asyncEnumerable.WithCancellation(cancel).ConfigureAwait(false))
+		{
+			var resultMessage = new AsyncEnumReturnResultMessage
+			{
+				Value = item,
+			};
+
+			var responseMsg = new GoreResponseMessage(
+				resultMessage,
+				request.ServiceName,
+				request.MethodName,
+				request.Serializer,
+				request.Compressor);
+
+			await responseLock.EnterResponseAsync().ConfigureAwait(false);
+			try
+			{
+				await response(responseMsg).ConfigureAwait(false);
+			}
+			finally
+			{
+				responseLock.ExitResponse();
+			}
+		}
+	}
 
 	private async Task<object?> DelegateCallAsync(
 		GoreRequestMessage request,
@@ -407,23 +473,16 @@ public class RemotingServer : IRemotingParty
 		Func<GoreResponseMessage, Task> reponse,
 		DelegateCallMessage delegateCallMsg,
 		DuplexCallState state,
-		AsyncReaderWriterLockSlim responseLock
+		ResponseLock responseLock
 		)
 	{
-		// Avoid responseLock's ObjectDisposedException
-		if (state.ResultSent)
-			throw new Exception("Too late, result sent");
-
 		// send respose to client and client will call the delegate via DelegateProxy
 		// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
 		// These may seem to be 2 varianst of OneWay: 1 where we send and wait until sent, but do not care about result\exceptions.
 		// 2: we send and do not even wait for the sending to complete. (currently not implemented)
-		await responseLock.EnterReadLockAsync().ConfigureAwait(false);
+		await responseLock.EnterResponseAsync().ConfigureAwait(false);
 		try
 		{
-			if (state.ResultSent)
-				throw new Exception("Too late, result sent");
-
 			if (delegateCallMsg.Position == state.ActiveStreamingDelegatePosition)
 			{
 				// only recieve now that streaming is active
@@ -466,7 +525,7 @@ public class RemotingServer : IRemotingParty
 		}
 		finally
 		{
-			responseLock.ExitReadLock();
+			responseLock.ExitResponse();
 		}
 	}
 
@@ -477,23 +536,16 @@ public class RemotingServer : IRemotingParty
 		Func<GoreResponseMessage, Task> reponse,
 		AsyncEnumCallMessage delegateCallMsg,
 		DuplexCallState state,
-		AsyncReaderWriterLockSlim responseLock
+		ResponseLock responseLock
 		)
 	{
-		// Avoid responseLock's ObjectDisposedException
-		if (state.ResultSent)
-			throw new Exception("Too late, result sent");
-
 		// send respose to client and client will call the delegate via DelegateProxy
 		// TODO: should we have a different kind of OneWay too, where we dont even wait for the response to be sent???
 		// These may seem to be 2 varianst of OneWay: 1 where we send and wait until sent, but do not care about result\exceptions.
 		// 2: we send and do not even wait for the sending to complete. (currently not implemented)
-		await responseLock.EnterReadLockAsync().ConfigureAwait(false);
+		await responseLock.EnterResponseAsync().ConfigureAwait(false);
 		try
 		{
-			if (state.ResultSent)
-				throw new Exception("Too late, result sent");
-
 			if (state.ActiveStreamingDelegatePosition == delegateCallMsg.Position)
 			{
 				// only recieve now that streaming is active
@@ -507,7 +559,7 @@ public class RemotingServer : IRemotingParty
 			// we want result or exception
 			var reqMsg = await req().ConfigureAwait(false);
 
-			var msg = reqMsg.AsyncEnumResultMessage;
+			var msg = reqMsg.AsyncEnumCallResultMessage;
 
 			if (msg.Position != delegateCallMsg.Position)
 				throw new Exception("Incorrect result position");
@@ -524,7 +576,7 @@ public class RemotingServer : IRemotingParty
 		}
 		finally
 		{
-			responseLock.ExitReadLock();
+			responseLock.ExitResponse();
 		}
 	}
 

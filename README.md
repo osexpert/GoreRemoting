@@ -68,9 +68,9 @@ Support CancellationToken (via Grpc itself). CancellationToken argument in proxy
 If more than one CancellationToken argument, will get runtime exception.
 
 ## IAsyncEnumerable
-Does not support IAsyncEnumerable as result. Support IAsyncEnumerable as arguments.
-Has AsyncEnumerableAdapter to adapt to IAsyncEnumerable as a result via delegate.
-But using delegate arguments may be just as easy.
+Support IAsyncEnumerable as result. 
+Support IAsyncEnumerable as argument, but max 1 IAsyncEnumerable argument or streaming delegate (they share the logic).
+Also has AsyncEnumerableAdapter to adapt to IAsyncEnumerable as a result via delegate.
 
 ## IProgress
 Does not support IProgress as argument.

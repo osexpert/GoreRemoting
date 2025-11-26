@@ -42,6 +42,8 @@ public class EnumerableYield
 
 		Task<string> TestClientThrowsServerCatch(IAsyncEnumerable<string> arg);
 		Task<string> TestEnum2Times(IAsyncEnumerable<string> arg);
+
+		IAsyncEnumerable<string> BothArgAndResult(IAsyncEnumerable<string> arg);
 	}
 
 	public class EnumeTest : IIenumera
@@ -260,6 +262,12 @@ public class EnumerableYield
 			}
 			return res;
 		}
+
+		public async IAsyncEnumerable<string> BothArgAndResult(IAsyncEnumerable<string> arg)
+		{
+			await foreach (var v in arg)
+				yield return v;
+		}
 	}
 
 	class NonoEx : Exception
@@ -411,7 +419,7 @@ public class EnumerableYield
 	}
 
 
-//	[TestMethod]
+	[TestMethod]
 	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
 	[DataRow(Serializer.MemoryPack)]
@@ -436,16 +444,22 @@ public class EnumerableYield
 		// timing sensitive: OperationCanceledException or TaskCancelledException (either the foreach in client or the loop in server is cancelled first)
 		await Assert.ThrowsAsync<OperationCanceledException>(async () =>
 		{
+			//try
+			//{
 			await foreach (var item in res)
 			{
 			}
+			//}
+			//catch (Exception ex)
+			//{
+			//}
 		});
 
 
 	}
 
 
-//	[TestMethod]
+	[TestMethod]
 	[DataRow(Serializer.BinaryFormatter)]
 #if NET6_0_OR_GREATER
 	[DataRow(Serializer.MemoryPack)]
@@ -727,5 +741,38 @@ public class EnumerableYield
 	}
 
 
+	[TestMethod]
+	[DataRow(Serializer.BinaryFormatter)]
+#if NET6_0_OR_GREATER
+	[DataRow(Serializer.MemoryPack)]
+#endif
+	[DataRow(Serializer.Json)]
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task BothArgAndResult(Serializer ser)
+	{
+		await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
+		server.RegisterService<IIenumera, EnumeTest>();
+		server.Start();
 
+		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+
+		var proxy = client.CreateProxy<IIenumera>();
+
+		async IAsyncEnumerable<string> GetData()
+		{
+			yield return "lol1";
+			yield return "lol2";
+		}
+
+		string ress = "";
+
+		var res = proxy.BothArgAndResult(GetData());
+		await foreach (var v in res)
+		{
+			ress += v + ",";
+		}
+
+		Assert.AreEqual("lol1,lol2,", ress);
+	}
 }

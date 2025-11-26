@@ -29,6 +29,14 @@ public class ServiceProxy<T> : AsyncInterceptor
 
 		_client._serviceMethodLookup.TryAdd((_serviceName, targetMethod.Name), targetMethod);
 
+		// Check if return type is IAsyncEnumerable<T>
+		var returnType = targetMethod.ReturnType;
+		if (AsyncEnumerableHelper.IsAsyncEnumerable(returnType, out var elementType))
+		{
+			invocation.ReturnValue = HandleAsyncEnumerableReturn(targetMethod, args, elementType);
+			return;
+		}
+
 		(var arguments, var cancelArgument, var streamingDelePos) = MapArguments(targetMethod, args);
 
 		var headers = new Metadata();
@@ -114,6 +122,65 @@ public class ServiceProxy<T> : AsyncInterceptor
 
 		// restore context flow from server
 		CallContext.RestoreFromChangesSnapshot(resultMessage.CallContextSnapshot);
+	}
+
+	private object HandleAsyncEnumerableReturn(MethodInfo targetMethod, object?[] args, Type elementType)
+	{
+		// Use reflection to call the generic method
+		var method = GetType()
+			.GetMethod(nameof(StreamFromServerAsync), BindingFlags.NonPublic | BindingFlags.Instance)!
+			.MakeGenericMethod(elementType);
+
+		return method.Invoke(this, [targetMethod, args])!;
+	}
+
+	private async IAsyncEnumerable<TElement> StreamFromServerAsync<TElement>(
+		MethodInfo targetMethod,
+		object?[] args
+		)
+	{
+		var serializer = ChooseSerializer(typeof(T), targetMethod);
+		var compressor = ChooseCompressor(typeof(T), targetMethod);
+		var headers = new Metadata();
+
+		_client._config.BeforeCall?.Invoke(new BeforeCallArgs(typeof(T), targetMethod, headers, serializer, compressor));
+
+		(var arguments, var cancelArgument, var streamingDelePos) = MapArguments(targetMethod, args);
+
+		var callMessage = _client.MethodCallMessageBuilder.BuildMethodCallMessage(
+			targetMethod: targetMethod,
+			args: arguments
+		);
+
+		var requestMsg = new GoreRequestMessage(callMessage, _serviceName, targetMethod.Name, serializer, compressor);
+
+		var res = AsyncEnumerableAdapter.FromPush<TElement>(async func =>
+		{
+			var resultMessage = await _client.InvokeAsync(requestMsg,
+				async (callback, req) =>
+				{
+					if (callback.ResponseType == ResponseType.AsyncEnumReturnResult)
+					{
+						await func((TElement)callback.AsyncEnumReturnResult.Value!).ConfigureAwait(false);
+						return null; // Keep going
+					}
+					else
+					{
+						// Otherwise delegate to normal handler
+						var result = await HandleResponseAsync(serializer, compressor, callback, req, args, streamingDelePos, cancelArgument).ConfigureAwait(false);
+						return result;
+					}
+				},
+				new CallOptions(headers: headers, cancellationToken: /*combinedCancellation*/ cancelArgument)).ConfigureAwait(false);
+
+			if (resultMessage.IsException)
+				throw GoreSerializer.RestoreSerializedException(_client._config.ExceptionStrategy, serializer, resultMessage.Value!);
+		});
+
+		await foreach (var r in res.WithCancellation(cancelArgument).ConfigureAwait(false))
+		{
+			yield return r;
+		}
 	}
 
 	private ISerializerAdapter ChooseSerializer(Type t, MethodInfo mi)
@@ -337,7 +404,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 
 		await foreach (var item in asyncEnumerableExceptionHandler.WithCancellation(cancel).ConfigureAwait(false))
 		{
-			var msg = new AsyncEnumResultMessage
+			var msg = new AsyncEnumCallResultMessage
 			{
 				Position = aeMsg.Position,
 				ParameterName = aeMsg.ParameterName,
@@ -348,7 +415,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 			await res(requestMsg).ConfigureAwait(false);
 		}
 
-		AsyncEnumResultMessage msgDone;
+		AsyncEnumCallResultMessage msgDone;
 
 		//object? exception = null;
 		if (ex != null)
@@ -359,7 +426,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 
 			var exception = GoreSerializer.GetSerializableException(serializer, ex2);
 
-			msgDone = new AsyncEnumResultMessage
+			msgDone = new AsyncEnumCallResultMessage
 			{
 				// Hmmm...is this really interesting if EXCEPTION? (position, parametername etc.?) Could exception be its own message?
 				Position = aeMsg.Position,
@@ -371,7 +438,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 		else
 		{
 			// Send completion signal
-			msgDone = new AsyncEnumResultMessage
+			msgDone = new AsyncEnumCallResultMessage
 			{
 				Position = aeMsg.Position,
 				ParameterName = aeMsg.ParameterName,

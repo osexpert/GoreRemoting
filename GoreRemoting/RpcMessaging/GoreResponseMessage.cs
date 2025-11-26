@@ -42,6 +42,16 @@ public class GoreResponseMessage : IGoreSerializable
 		MethodName = methodName;
 	}
 
+	public GoreResponseMessage(AsyncEnumReturnResultMessage returnResultMessage, string serviceName, string methodName, ISerializerAdapter serializer, ICompressionProvider? compressor)
+	{
+		AsyncEnumReturnResult = returnResultMessage;
+		ResponseType = ResponseType.AsyncEnumReturnResult;
+		Serializer = serializer;
+		Compressor = compressor;
+		ServiceName = serviceName;
+		MethodName = methodName;
+	}
+
 	/// <summary>
 	/// Gets or sets the type of the message.
 	/// </summary>
@@ -52,6 +62,8 @@ public class GoreResponseMessage : IGoreSerializable
 	public DelegateCallMessage DelegateCall { get; private set; }
 
 	public AsyncEnumCallMessage AsyncEnumCall { get; private set; }
+
+	public AsyncEnumReturnResultMessage AsyncEnumReturnResult { get; private set; }
 
 
 	public void Deserialize(GoreBinaryReader r)
@@ -64,6 +76,8 @@ public class GoreResponseMessage : IGoreSerializable
 			MethodResult = new MethodResultMessage(r);
 		else if (ResponseType == ResponseType.AsyncEnumCall)
 			AsyncEnumCall = new AsyncEnumCallMessage(r);
+		else if (ResponseType == ResponseType.AsyncEnumReturnResult)
+			AsyncEnumReturnResult = new AsyncEnumReturnResultMessage(r);
 		else
 			throw new NotImplementedException();
 	}
@@ -76,6 +90,8 @@ public class GoreResponseMessage : IGoreSerializable
 			MethodResult.Deserialize(st);
 		else if (ResponseType == ResponseType.AsyncEnumCall)
 			AsyncEnumCall.Deserialize(st);
+		else if (ResponseType == ResponseType.AsyncEnumReturnResult)
+			AsyncEnumReturnResult.Deserialize(st);
 		else
 			throw new NotImplementedException();
 	}
@@ -90,6 +106,8 @@ public class GoreResponseMessage : IGoreSerializable
 			MethodResult.Serialize(w, st);
 		else if (ResponseType == ResponseType.AsyncEnumCall)
 			AsyncEnumCall.Serialize(w, st);
+		else if (ResponseType == ResponseType.AsyncEnumReturnResult)
+			AsyncEnumReturnResult.Serialize(w, st);
 		else
 			throw new NotImplementedException();
 	}
@@ -107,6 +125,9 @@ public class GoreResponseMessage : IGoreSerializable
 		else if (mType == ResponseType.AsyncEnumCall)
 			return new GoreResponseMessage(
 				GoreSerializer.Deserialize<AsyncEnumCallMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
+		else if (mType == ResponseType.AsyncEnumReturnResult)
+			return new GoreResponseMessage(
+				GoreSerializer.Deserialize<AsyncEnumReturnResultMessage>(r, s, method, serializer, compressor), serviceName, methodName, serializer, compressor);
 		else
 			throw new Exception();
 	}
@@ -119,6 +140,8 @@ public class GoreResponseMessage : IGoreSerializable
 			GoreSerializer.Serialize(r, s, method, DelegateCall, Serializer, Compressor);
 		else if (ResponseType == ResponseType.AsyncEnumCall)
 			GoreSerializer.Serialize(r, s, method, AsyncEnumCall, Serializer, Compressor);
+		else if (ResponseType == ResponseType.AsyncEnumReturnResult)
+			GoreSerializer.Serialize(r, s, method, AsyncEnumReturnResult, Serializer, Compressor);
 		else
 			throw new Exception();
 	}
@@ -142,5 +165,7 @@ public enum ResponseType
 
 	AsyncEnumCall = 5,
 
-	//RequestType.AsyncEnumResult = 6
+	//RequestType.AsyncEnumCallResult = 6
+
+	AsyncEnumReturnResult = 7,
 }
