@@ -16,7 +16,7 @@ public class AsyncEnumCallResultMessage : IMessage
 
 	public bool StreamingDone { get; set; }
 
-	public MessageType MessageType => MessageType.AsyncEnumCallResult;
+	//public MessageType MessageType => MessageType.AsyncEnumCallResult;
 
 	public int CacheKey => (int)ResultType + (Position * 10);
 

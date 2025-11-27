@@ -17,7 +17,7 @@ public interface IGoreSerializable
 
 public interface IMessage : IGoreSerializable
 {
-	MessageType MessageType { get; }
+	//MessageType MessageType { get; }
 
 	/// <summary>
 	/// A value to separate messages of same type (for the same method).
@@ -28,16 +28,16 @@ public interface IMessage : IGoreSerializable
 /// <summary>
 /// Only used in the types caching, together with CacheKey
 /// </summary>
-public enum MessageType
-{
-	MethodCall = 1,
-	MethodResult = 2,
-	DelegateCall = 3,
-	DelegateResult = 4,
-	AsyncEnumCall = 5,
-	AsyncEnumCallResult = 6,
-	AsyncEnumReturnResult = 7,
-}
+//public enum MessageType
+//{
+//	MethodCall = 1,
+//	MethodResult = 2,
+//	DelegateCall = 3,
+//	DelegateResult = 4,
+//	AsyncEnumCall = 5,
+//	AsyncEnumCallResult = 6,
+//	AsyncEnumReturnResult = 7,
+//}
 
 internal class GoreSerializer
 {
@@ -111,11 +111,13 @@ internal class GoreSerializer
 
 	private static Type[] GetTypes(IRemotingParty r, MethodInfo method, IMessage msg, ISerializerAdapter serializer)
 	{
-		if (r.TypesCache.TryGetValue((method, msg.MessageType, msg.CacheKey), out var types))
+		var msgType = msg.GetType();
+
+		if (r.TypesCache.TryGetValue((method, msgType, msg.CacheKey), out var types))
 			return types;
 
 		types = GetTypesUncached(method, msg, serializer);
-		r.TypesCache.TryAdd((method, msg.MessageType, msg.CacheKey), types);
+		r.TypesCache.TryAdd((method, msgType, msg.CacheKey), types);
 
 		return types;
 	}

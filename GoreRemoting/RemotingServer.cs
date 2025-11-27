@@ -19,7 +19,7 @@ public class RemotingServer : IRemotingParty
 	//private ConcurrentDictionary<(Type, int), DelegateProxy> _delegateProxyCache = new();
 	readonly ConcurrentDictionary<string, Type> _services = new();
 
-	ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]> IRemotingParty.TypesCache { get; } = new ConcurrentDictionary<(MethodInfo, MessageType, int), Type[]>();
+	ConcurrentDictionary<(MethodInfo, Type, int), Type[]> IRemotingParty.TypesCache { get; } = new ConcurrentDictionary<(MethodInfo, Type, int), Type[]>();
 
 	readonly ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodCache = new();
 
@@ -355,10 +355,19 @@ public class RemotingServer : IRemotingParty
 			result = await TaskResultHelper.GetTaskResult(request.Method, result).ConfigureAwait(false);
 
 			var returnType = request.Method.ReturnType;
-			if (AsyncEnumerableHelper.IsAsyncEnumerable(returnType, out var _))
+			if (AsyncEnumerableHelper.IsAsyncEnumerable(returnType, out var elementType))
 			{
 				// Handle IAsyncEnumerable<T> return by streaming results
-				await HandleAsyncEnumerableReturnAsync(result, request, reponse, state, responseLock, context.CancellationToken).ConfigureAwait(false);
+				await HandleAsyncEnumerableReturnAsync(
+					result, 
+					elementType, 
+					request, 
+					reponse, 
+					state, 
+					responseLock, 
+					context.CancellationToken
+					).ConfigureAwait(false);
+
 				result = null;
 			}
 
@@ -408,6 +417,7 @@ public class RemotingServer : IRemotingParty
 
 	private async Task HandleAsyncEnumerableReturnAsync(
 		object? asyncEnumerable,
+		Type elementType,
 		GoreRequestMessage request,
 		Func<GoreResponseMessage, Task> response,
 		DuplexCallState state,
@@ -417,10 +427,6 @@ public class RemotingServer : IRemotingParty
 	{
 		if (asyncEnumerable == null)
 			throw new InvalidOperationException("IAsyncEnumerable result is null");
-
-		// Use reflection to call the generic helper
-		var enumType = asyncEnumerable.GetType();
-		AsyncEnumerableHelper.IsAsyncEnumerable(enumType, out var elementType);
 
 		var method = typeof(RemotingServer)
 			.GetMethod(nameof(StreamAsyncEnumerableToClient), BindingFlags.NonPublic | BindingFlags.Instance)!
@@ -440,7 +446,6 @@ public class RemotingServer : IRemotingParty
 		)
 	{
 		// No need to use exceptino wrapper, if we fail the exception will propagate back to DuplexCall and catched there and use regular method result message.
-
 		await foreach (var item in asyncEnumerable.WithCancellation(cancel).ConfigureAwait(false))
 		{
 			var resultMessage = new AsyncEnumReturnResultMessage
@@ -603,7 +608,7 @@ public class RemotingServer : IRemotingParty
 				throw new Exception("No method call request data");
 
 			// TODO: pass context.CancellationToken here?
-			using var threadSafeResponseStream = new GoreRemoting.ThreadSafeStreamWriter<GoreResponseMessage>(responseStream);//, _config.ResponseQueueLength);
+			using var threadSafeResponseStream = new ThreadSafeStreamWriter<GoreResponseMessage>(responseStream);//, _config.ResponseQueueLength);
 
 			await this.DuplexCall(
 				requestStream.Current,

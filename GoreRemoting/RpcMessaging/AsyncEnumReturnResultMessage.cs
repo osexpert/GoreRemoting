@@ -17,7 +17,7 @@ public class AsyncEnumReturnResultMessage : IMessage
 		Deserialize(r);
 	}
 
-	public MessageType MessageType => MessageType.AsyncEnumReturnResult;
+	//public MessageType MessageType => MessageType.AsyncEnumReturnResult;
 
 	public int CacheKey => 0;
 

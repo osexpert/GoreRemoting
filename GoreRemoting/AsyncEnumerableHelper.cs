@@ -20,13 +20,13 @@ internal static class AsyncEnumerableHelper
 		}
 
 		// implemented / inherited?
-		var iface = type.GetInterfaces()
-			.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>));
-
-		if (iface != null)
+		foreach (var iface in type.GetInterfaces())
 		{
-			elementType = iface.GetGenericArguments()[0];
-			return true;
+			if (iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))
+			{
+				elementType = iface.GetGenericArguments()[0];
+				return true;
+			}
 		}
 
 		elementType = null;

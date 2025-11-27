@@ -19,7 +19,7 @@ public class AsyncEnumCallMessage : IMessage
 
 	public int Position { get; set; }
 
-	public MessageType MessageType => MessageType.AsyncEnumCall;
+	//public MessageType MessageType => MessageType.AsyncEnumCall;
 
 	public int CacheKey => Position;
 

@@ -337,7 +337,6 @@ public class ServiceProxy<T> : AsyncInterceptor
 			{
 				msg = new DelegateResultMessage
 				{
-					// Hmmm...is this really interesting if EXCEPTION? (position, parametername etc.?) Could exception be its own message?
 					Position = delegateMsg.Position,
 					ParameterName = delegateMsg.ParameterName,
 					Value = exception,
@@ -417,7 +416,6 @@ public class ServiceProxy<T> : AsyncInterceptor
 
 		AsyncEnumCallResultMessage msgDone;
 
-		//object? exception = null;
 		if (ex != null)
 		{
 			Exception ex2 = ex;
@@ -428,7 +426,6 @@ public class ServiceProxy<T> : AsyncInterceptor
 
 			msgDone = new AsyncEnumCallResultMessage
 			{
-				// Hmmm...is this really interesting if EXCEPTION? (position, parametername etc.?) Could exception be its own message?
 				Position = aeMsg.Position,
 				ParameterName = aeMsg.ParameterName,
 				Value = exception,

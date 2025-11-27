@@ -23,7 +23,7 @@ public class DelegateCallMessage : IMessage
 
 	public bool OneWay { get; set; }
 
-	public MessageType MessageType => MessageType.DelegateCall;
+	//public MessageType MessageType => MessageType.DelegateCall;
 
 	public int CacheKey => Position;
 

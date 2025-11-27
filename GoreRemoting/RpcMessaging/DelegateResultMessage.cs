@@ -11,7 +11,7 @@ public class DelegateResultMessage : IMessage
 
 	public StreamingStatus StreamingStatus { get; set; }
 
-	public MessageType MessageType => MessageType.DelegateResult;
+	//public MessageType MessageType => MessageType.DelegateResult;
 
 	public int CacheKey => (int)ResultType + (Position * 10);
 

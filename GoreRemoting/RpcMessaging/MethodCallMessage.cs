@@ -14,7 +14,7 @@ public class MethodCallMessage : IMessage
 	/// </summary>
 	public CallContextEntry[] CallContextSnapshot { get; set; }
 
-	public MessageType MessageType => MessageType.MethodCall;
+//	public MessageType MessageType => MessageType.MethodCall;
 
 	public int CacheKey => 0;
 

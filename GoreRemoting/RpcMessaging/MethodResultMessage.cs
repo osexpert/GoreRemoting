@@ -145,7 +145,7 @@ public class MethodResultMessage : IMessage
 	/// </summary>
 	public CallContextEntry[] CallContextSnapshot { get; set; }
 
-	public MessageType MessageType => MessageType.MethodResult;
+	//public MessageType MessageType => MessageType.MethodResult;
 
 	public int CacheKey => (int)ResultType;
 
