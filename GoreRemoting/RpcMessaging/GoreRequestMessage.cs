@@ -93,4 +93,6 @@ public enum RequestType
 	//ResponseType.AsyncEnumCall = 5,
 
 	AsyncEnumCallResult = 6,
+
+	//ResponseType.AsyncEnumReturnResult = 7
 }

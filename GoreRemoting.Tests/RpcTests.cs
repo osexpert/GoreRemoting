@@ -873,8 +873,51 @@ public class RpcTests
 
 		public string Test(Func<S1, R1> echo, Func<S2, R2> echo2, Func<S3, R3> echo3)
 		{
-			Assert.Fail();
-			throw new NotImplementedException();
+			int i = 0, i1 = 0, i2 = 0;
+			var t1 = new Thread(() =>
+			{
+				while (run)
+				{
+					var r = echo(new S1("hello"));
+					Assert.AreEqual("hellohi", r.r1);
+					i++;
+				}
+			});
+			t1.Start();
+			var t2 = new Thread(() =>
+			{
+				while (run)
+				{
+					var r = echo2(new S2("Yhello"));
+					Assert.AreEqual("Yhellohi", r.r2);
+					i1++;
+				}
+			});
+			t2.Start();
+			var t3 = new Thread(() =>
+			{
+				while (run)
+				{
+					var r = echo3(new S3("Xhello"));
+					Assert.AreEqual("Xhellohi", r.r3);
+					i2++;
+				}
+			});
+			t3.Start();
+
+			Thread.Sleep(1000);
+
+			Assert.IsGreaterThan(0, i);
+			Assert.IsGreaterThan(0, i1);
+			Assert.IsGreaterThan(0, i2);
+
+			run = false;
+
+			t1.Join();
+			t2.Join();
+			t3.Join();
+
+			return "רזו";
 		}
 
 		public string Test2(Action<S1> echo, Func<S2, R2> echo2, Action<S3> echo3)
@@ -1045,11 +1088,11 @@ public class RpcTests
 			ex1 = e;
 		}
 
-		Assert.IsFalse(wasHere);
-		Assert.IsFalse(wasHere2);
-		Assert.IsFalse(wasHere3);
+		Assert.IsTrue(wasHere);
+		Assert.IsTrue(wasHere2);
+		Assert.IsTrue(wasHere3);
 
-		Assert.AreEqual("Only one delegate with result is supported", ex1!.Message);
+//		Assert.AreEqual("Only one delegate with result is supported", ex1!.Message);
 
 		wasHere = false;
 		wasHere2 = false;
@@ -1457,7 +1500,7 @@ public class RpcTests
 			Assert.IsTrue(t4_called3);
 		}
 
-		bool t5_failed = false;
+		//bool t5_failed = false;
 		try
 		{
 			bool t5_called1 = false;
@@ -1494,9 +1537,10 @@ public class RpcTests
 		}
 		catch (Exception e)
 		{
-			t5_failed = e.Message == "Only one delegate with result is supported";
+			throw;
+	//		t5_failed = e.Message == "Only one delegate with result is supported";
 		}
-		Assert.IsTrue(t5_failed);
+//		Assert.IsTrue(t5_failed);
 
 		{
 			bool t6_called1 = false;

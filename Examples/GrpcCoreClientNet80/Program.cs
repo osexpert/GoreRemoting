@@ -10,7 +10,7 @@ internal class Program
 {
 	static void Main(string[] args)
 	{
-		Console.WriteLine("NativeClientNet60 example");
+		Console.WriteLine("NativeClientNet80 example");
 
 		var p = new Program();
 		p.Go();

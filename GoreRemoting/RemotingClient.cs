@@ -12,6 +12,7 @@ public class RemotingClient : IRemotingParty
 	internal readonly ClientConfig _config;
 	readonly CallInvoker _callInvoker;
 	ConcurrentDictionary<(MethodInfo, Type, int), Type[]> IRemotingParty.TypesCache { get; } = new ConcurrentDictionary<(MethodInfo, Type, int), Type[]>();
+	ConcurrentDictionary<Type, Type?> IRemotingParty.AsyncEnuTypesCache { get; } = new ConcurrentDictionary<Type, Type?>();
 
 	internal ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodLookup = new();
 
@@ -164,5 +165,6 @@ public class RemotingClient : IRemotingParty
 
 public interface IRemotingParty
 {
-	 ConcurrentDictionary<(MethodInfo, Type, int), Type[]> TypesCache { get; }
+	ConcurrentDictionary<(MethodInfo, Type, int), Type[]> TypesCache { get; }
+	ConcurrentDictionary<Type, Type?> AsyncEnuTypesCache { get; }
 }

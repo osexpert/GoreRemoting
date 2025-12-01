@@ -15,7 +15,7 @@ internal class Program
 	/// <returns></returns>
 	static Task Main(string[] args)
 	{
-		Console.WriteLine("NativeServerNet60 example");
+		Console.WriteLine("NativeServerNet80 example");
 
 		var p = new Program();
 		var task = p.Go();

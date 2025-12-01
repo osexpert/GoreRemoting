@@ -31,7 +31,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 
 		// Check if return type is IAsyncEnumerable<T>
 		var returnType = targetMethod.ReturnType;
-		if (AsyncEnumerableHelper.IsAsyncEnumerable(returnType, out var elementType))
+		if (AsyncEnumerableHelper.IsAsyncEnumerable(_client, returnType, out var elementType))
 		{
 			invocation.ReturnValue = HandleAsyncEnumerableReturn(targetMethod, args, elementType);
 			return;
@@ -241,7 +241,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 		GoreResponseMessage callbackData,
 		Func<GoreRequestMessage, Task> res, 
 		object?[] args,
-		int? streamingDelegatePosition,
+		HashSet<int> streamingDelegatePosition,
 		CancellationToken cancel
 		)
 	{
@@ -260,7 +260,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 					var aeMsg = callbackData.AsyncEnumCall;
 					var arg = args[aeMsg.Position]!;
 
-					AsyncEnumerableHelper.IsAsyncEnumerable(arg.GetType(), out var enumElementType);
+					AsyncEnumerableHelper.IsAsyncEnumerable(_client, arg.GetType(), out var enumElementType);
 	
 					// Handle IAsyncEnumerable streaming from client to server
 					await HandleAsyncEnumerableProduceAsync(arg, enumElementType!, aeMsg, serializer, compressor, res, callbackData, cancel).ConfigureAwait(false);
@@ -284,12 +284,12 @@ public class ServiceProxy<T> : AsyncInterceptor
 		ICompressionProvider? compressor, 
 		GoreResponseMessage callbackData, 
 		Func<GoreRequestMessage, Task> res, 
-		int? streamingDelegatePosition, 
+		HashSet<int> streamingDelegatePosition, 
 		DelegateCallMessage delegateMsg, 
 		Delegate delegt
 		)
 	{
-		StreamingStatus streamingStatus = streamingDelegatePosition == delegateMsg.Position ? StreamingStatus.Active : StreamingStatus.None;
+		StreamingStatus streamingStatus = streamingDelegatePosition.Contains(delegateMsg.Position) ? StreamingStatus.Active : StreamingStatus.None;
 
 		do
 		{
@@ -399,7 +399,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 
 		Exception ex = null!;
 
-		var asyncEnumerableExceptionHandler = new AsyncEnumerableExceptionHandler<TElement>(asyncEnumerable, exept =>	ex = exept);
+		var asyncEnumerableExceptionHandler = new AsyncEnumerableExceptionHandler<TElement>(asyncEnumerable, exept => ex = exept);
 
 		await foreach (var item in asyncEnumerableExceptionHandler.WithCancellation(cancel).ConfigureAwait(false))
 		{
@@ -453,12 +453,10 @@ public class ServiceProxy<T> : AsyncInterceptor
 	/// </summary>
 	/// <param name="arguments">Arguments</param>
 	/// <returns>Array of arguments (includes mapped ones)</returns>
-	private (object?[] arguments, CancellationToken cancelArgument, int? streamingDelePos) MapArguments(MethodInfo mi, object?[] arguments)
+	private (object?[] arguments, CancellationToken cancelArgument, HashSet<int> streamingDelePos) MapArguments(MethodInfo mi, object?[] arguments)
 	{
-		bool delegateHasResult = false;
-		bool clientToServerStreaming = false;
 		CancellationToken? cancelArgument = null;
-		int? streamingDelePos = null;
+		HashSet<int> streamingDelePos = new();
 
 		object?[] res = new object?[arguments.Length];
 
@@ -475,13 +473,8 @@ public class ServiceProxy<T> : AsyncInterceptor
 				res[i] = argument;
 			}
 			// Check for IAsyncEnumerable<T> parameter (client-to-server streaming)
-			else if (AsyncEnumerableHelper.IsAsyncEnumerable(type, out _))
+			else if (AsyncEnumerableHelper.IsAsyncEnumerable(_client, type, out _))
 			{
-				if (clientToServerStreaming)
-					throw new Exception("Only one streaming func delegate or IAsyncEnumerable is supported");
-				else
-					clientToServerStreaming = true;
-
 				// Create a marker that won't be serialized - similar to RemoteDelegateInfo for delegates
 				var asyncEnumMarker = new RemoteAsyncEnumPlaceholder();
 				// Store marker in serializable args, keep original in args for HandleResponseAsync
@@ -494,23 +487,7 @@ public class ServiceProxy<T> : AsyncInterceptor
 					var streamingDele = methodParams[i].GetCustomAttribute<StreamingFuncAttribute>();
 					if (streamingDele != null)
 					{
-						if (clientToServerStreaming)
-							throw new Exception("Only one streaming func delegate or IAsyncEnumerable is supported");
-						else
-							clientToServerStreaming = true;
-
-						if (streamingDelePos == null)
-							streamingDelePos = i;
-						else
-							throw new Exception("Only one streaming func delegate is supported");
-					}
-
-					if (!delegateHasResult)
-						delegateHasResult = true;
-					else
-					{
-						// We could probably support more than 1, but it would complicate the logic. With max 1 the logic is easier.
-						throw new Exception("Only one delegate with result is supported");
+						streamingDelePos.Add(i);
 					}
 				}
 

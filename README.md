@@ -55,21 +55,13 @@ Clients create proxies from service interfaces (typically in shared assembly).
 No support for MarshalByRef behaviour. Everything is by value.
 Currently there is a limit of 20 method parameters. It is possible to increase it, but want to avoid it.
 
-## Callbacks from server to client
-It is not possible to callback to clients directly, callbacks must happen during a call from client to server.
-The server can callback via a delegate argument (look in examples).
-Can have as many callback delegate arguments as you wish, but only one can return something from the client. 
-Others must be void\Task\ValueTask and will be OneWay (no result or exception from client).
-If you need to have a permanent open stream from server to client, have the client call a method that awaits forever and keeps an open stream,
-and send callbacks via a delegate argument (look in examples).
-
 ## Cancellation
 Support CancellationToken (via Grpc itself). CancellationToken argument in proxy method is automatically picked up and used.
 If more than one CancellationToken argument, will get runtime exception.
 
 ## IAsyncEnumerable
 Support IAsyncEnumerable as result. 
-Support IAsyncEnumerable as argument, but max 1 IAsyncEnumerable argument or streaming delegate (they share the logic).
+Support IAsyncEnumerable as argument.
 Also has AsyncEnumerableAdapter to adapt to IAsyncEnumerable as a result via delegate.
 
 ## IProgress
@@ -130,8 +122,14 @@ Encryption, authentication, session management, DependencyInjection, Linq expres
 
 ## Delegate arguments
 Delegates that return void, Task, ValueTask are all threated as OneWay. Then it will not wait for any result and any exceptions thrown are eaten.
-You can have max one delegate with result (eg. int, Task\<int\>, ValueTask\<int\>) else will get runtime exception.
+You can have delegates with result (eg. int, Task\<int\>, ValueTask\<int\>).
 If you need to force a delegate to be non-OneWay, then just make it return something (eg. a bool or Task\<bool\>).
+
+## Callbacks from server to client
+It is not possible to callback to clients directly, callbacks must happen during a call from client to server.
+The server can callback via a delegate arguments (look in examples).
+If you need to have a permanent open stream from server to client, have the client call a method that awaits forever and keeps an open stream,
+and send callbacks via a delegate argument (look in examples).
 
 ### Advanced streaming
 StreamingFuncAttribute\StreamingDoneException can be used to make streaming from client to server faster.

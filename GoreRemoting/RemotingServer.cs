@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Threading.Channels;
 using GoreRemoting.RemoteDelegates;
 using GoreRemoting.RpcMessaging;
 using Grpc.Core;
@@ -20,6 +21,7 @@ public class RemotingServer : IRemotingParty
 	readonly ConcurrentDictionary<string, Type> _services = new();
 
 	ConcurrentDictionary<(MethodInfo, Type, int), Type[]> IRemotingParty.TypesCache { get; } = new ConcurrentDictionary<(MethodInfo, Type, int), Type[]>();
+	ConcurrentDictionary<Type, Type?> IRemotingParty.AsyncEnuTypesCache { get; } = new ConcurrentDictionary<Type, Type?>();
 
 	readonly ConcurrentDictionary<(string, string), MethodInfo> _serviceMethodCache = new();
 
@@ -254,7 +256,7 @@ public class RemotingServer : IRemotingParty
 		}
 
 		// Check if this is an IAsyncEnumerable<T> parameter
-		AsyncEnumerableHelper.IsAsyncEnumerable(typeAndName.type, out var elementType);
+		AsyncEnumerableHelper.IsAsyncEnumerable(this, typeAndName.type, out var elementType);
 
 		// Create a proxy that pulls data from the client
 		var method = typeof(AsyncEnumerableProxy)
@@ -307,10 +309,18 @@ public class RemotingServer : IRemotingParty
 			throw new Exception($"Service already added: {iface.Name}");
 	}
 
-	class DuplexCallState
+	class DuplexCallState : IDisposable
 	{
-//		public bool ResultSent;
-		public int? ActiveStreamingDelegatePosition;
+		internal readonly ConcurrentDictionary<(RequestType, int), Channel<GoreRequestMessage>> _channels = new();
+
+		internal readonly SemaphoreSlim _reqLock = new SemaphoreSlim(1, 1);
+
+		public HashSet<int> ActiveStreamingDelegatePosition = new();
+
+		public void Dispose()
+		{
+			_reqLock.Dispose();
+		}
 	}
 
 	private async Task DuplexCall(
@@ -328,7 +338,7 @@ public class RemotingServer : IRemotingParty
 		var parameterValues = callMessage.ParameterValues();
 
 		using var responseLock = new ResponseLock();
-		DuplexCallState state = new();
+		using DuplexCallState state = new();
 
 		parameterValues = MapArguments(
 			parameterValues, 
@@ -355,7 +365,7 @@ public class RemotingServer : IRemotingParty
 			result = await TaskResultHelper.GetTaskResult(request.Method, result).ConfigureAwait(false);
 
 			var returnType = request.Method.ReturnType;
-			if (AsyncEnumerableHelper.IsAsyncEnumerable(returnType, out var elementType))
+			if (AsyncEnumerableHelper.IsAsyncEnumerable(this, returnType, out var elementType))
 			{
 				// Handle IAsyncEnumerable<T> return by streaming results
 				await HandleAsyncEnumerableReturnAsync(
@@ -488,7 +498,7 @@ public class RemotingServer : IRemotingParty
 		await responseLock.EnterResponseAsync().ConfigureAwait(false);
 		try
 		{
-			if (delegateCallMsg.Position == state.ActiveStreamingDelegatePosition)
+			if (state.ActiveStreamingDelegatePosition.Contains(delegateCallMsg.Position))
 			{
 				// only recieve now that streaming is active
 			}
@@ -507,21 +517,18 @@ public class RemotingServer : IRemotingParty
 			else
 			{
 				// we want result or exception
-				var reqMsg = await req().ConfigureAwait(false);
+				var reqMsg = await Dispatcher(req, state, RequestType.DelegateResult, delegateCallMsg.Position).ConfigureAwait(false);
 
 				var msg = reqMsg.DelegateResultMessage;
-
-				if (msg.Position != delegateCallMsg.Position)
-					throw new Exception("Incorrect result position");
 
 				if (msg.IsException)
 					throw GoreSerializer.RestoreSerializedException(_config.ExceptionStrategy, request.Serializer, msg.Value!);
 
 				if (msg.StreamingStatus == StreamingStatus.Active)
-					state.ActiveStreamingDelegatePosition = msg.Position;
+					state.ActiveStreamingDelegatePosition.Add(msg.Position);
 				else if (msg.StreamingStatus == StreamingStatus.Done)
 				{
-					state.ActiveStreamingDelegatePosition = null;
+					state.ActiveStreamingDelegatePosition.Remove(msg.Position);
 					throw new StreamingDoneException();
 				}
 
@@ -551,7 +558,7 @@ public class RemotingServer : IRemotingParty
 		await responseLock.EnterResponseAsync().ConfigureAwait(false);
 		try
 		{
-			if (state.ActiveStreamingDelegatePosition == delegateCallMsg.Position)
+			if (state.ActiveStreamingDelegatePosition.Contains(delegateCallMsg.Position))
 			{
 				// only recieve now that streaming is active
 			}
@@ -562,20 +569,17 @@ public class RemotingServer : IRemotingParty
 			}
 
 			// we want result or exception
-			var reqMsg = await req().ConfigureAwait(false);
+			var reqMsg = await Dispatcher(req, state, RequestType.AsyncEnumCallResult, delegateCallMsg.Position).ConfigureAwait(false);
 
 			var msg = reqMsg.AsyncEnumCallResultMessage;
-
-			if (msg.Position != delegateCallMsg.Position)
-				throw new Exception("Incorrect result position");
 
 			if (msg.IsException)
 				throw GoreSerializer.RestoreSerializedException(_config.ExceptionStrategy, request.Serializer, msg.Value!);
 
 			if (msg.StreamingDone)
-				state.ActiveStreamingDelegatePosition = null;
+				state.ActiveStreamingDelegatePosition.Remove(msg.Position);
 			else
-				state.ActiveStreamingDelegatePosition = msg.Position;
+				state.ActiveStreamingDelegatePosition.Add(msg.Position);
 
 			return (msg.Value, isDone: msg.StreamingDone);
 		}
@@ -585,6 +589,72 @@ public class RemotingServer : IRemotingParty
 		}
 	}
 
+	private async Task<GoreRequestMessage> Dispatcher(
+		Func<Task<GoreRequestMessage>> req,
+		DuplexCallState state,
+		RequestType msgType,
+		int argIndex)
+	{
+		var key = (msgType, argIndex);
+		var ourChannel = GetOrCreateChannel(state, key);
+
+		while (true)
+		{
+			// Check if someone already delivered our message (truly fast)
+			if (ourChannel.Reader.TryRead(out var cached))
+				return cached;
+
+			GoreRequestMessage? res;
+
+			await state._reqLock.WaitAsync().ConfigureAwait(false);
+			try
+			{
+				// Double-check after acquiring lock
+				if (ourChannel.Reader.TryRead(out cached))
+					return cached;
+
+				// Now we have exclusive access to req()
+				res = await req().ConfigureAwait(false);
+			}
+			finally
+			{
+				state._reqLock.Release();
+			}
+
+			// Process outside the lock so other threads can call req()
+			var (resType, resArgIndex) = res.RequestType switch
+			{
+				RequestType.DelegateResult =>
+					(res.RequestType, res.DelegateResultMessage.Position),
+				RequestType.AsyncEnumCallResult =>
+					(res.RequestType, res.AsyncEnumCallResultMessage.Position),
+				_ => throw new InvalidOperationException($"Unexpected RequestType: {res.RequestType}")
+			};
+
+			var resKey = (resType, resArgIndex);
+			if (resKey == key)
+				return res;
+
+			// Deliver to correct channel (outside lock!)
+			var targetChannel = GetOrCreateChannel(state, resKey);
+			await targetChannel.Writer.WriteAsync(res).ConfigureAwait(false);
+
+			// Loop back - either TryRead will succeed or we'll wait for lock again
+		}
+	}
+
+	private static Channel<GoreRequestMessage> GetOrCreateChannel(
+	DuplexCallState state,
+	(RequestType, int) key)
+	{
+		return state._channels.GetOrAdd(key, _ =>
+			Channel.CreateBounded<GoreRequestMessage>(
+				new BoundedChannelOptions(1)
+				{
+					SingleReader = true,
+					SingleWriter = false
+				}));
+	}
 
 	public Method<GoreRequestMessage, GoreResponseMessage> DuplexCallDescriptor { get; }
 

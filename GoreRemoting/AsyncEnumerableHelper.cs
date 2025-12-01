@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
@@ -7,9 +8,20 @@ namespace GoreRemoting;
 
 internal static class AsyncEnumerableHelper
 {
-	/// <summary>
-	/// TODO: we could cache this?
-	/// </summary>
+	public static bool IsAsyncEnumerable(IRemotingParty r, Type type, [NotNullWhen(true)] out Type? elementType)
+	{
+		if (r.AsyncEnuTypesCache.TryGetValue(type, out elementType))
+		{
+			return elementType != null;
+		}
+
+		var res = IsAsyncEnumerable(type, out elementType);
+		
+		r.AsyncEnuTypesCache.TryAdd(type, elementType);
+		return res;
+	}
+
+
 	public static bool IsAsyncEnumerable(Type type, [NotNullWhen(true)] out Type? elementType)
 	{
 		// direct type?
