@@ -33,9 +33,10 @@ internal class ResponseLock : IDisposable
 		{
 			_lock.Dispose();
 		}
-		catch (ObjectDisposedException)
+		//InvalidOperationException: At least one read lock was still active while trying to dispose the AsyncReaderWriterLockSlim.
+		catch (InvalidOperationException)
 		{
-			throw new Exception("Too late, result sent");
+			//throw new Exception("Too late, result sent");
 		}
 	}
 
