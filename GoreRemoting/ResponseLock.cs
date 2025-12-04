@@ -13,18 +13,31 @@ internal class ResponseLock : IDisposable
 
 	public async Task EnterResponseAsync()
 	{
-		// avoid random ObjectDisposedException
-		if (_resultSent)
+		try
+		{
+			await _lock.EnterReadLockAsync().ConfigureAwait(false);
+		}
+		catch (ObjectDisposedException)
+		{
 			throw new Exception("Too late, result sent");
-
-		await _lock.EnterReadLockAsync().ConfigureAwait(false);
+		}
 
 		if (_resultSent)
 			throw new Exception("Too late, result sent");
 	}
 
 	public void ExitResponse() => _lock.ExitReadLock();
-	public void Dispose() => _lock.Dispose();
+	public void Dispose()
+	{
+		try
+		{
+			_lock.Dispose();
+		}
+		catch (ObjectDisposedException)
+		{
+			throw new Exception("Too late, result sent");
+		}
+	}
 
 	public async Task RundownResponsesAsync()
 	{

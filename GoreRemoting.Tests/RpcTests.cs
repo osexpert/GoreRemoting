@@ -39,11 +39,12 @@ public class RpcTests
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
 
-		await using var server = new NativeServer(9095, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 
-		await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<ITestService>();
 
@@ -86,11 +87,12 @@ public class RpcTests
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
 
-		await using var server = new NativeServer(9095, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 
-		await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<ITestService>();
 
@@ -116,11 +118,12 @@ public class RpcTests
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
 
-		await using var server = new NativeServer(9095, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 
-		await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<ITestService>();
 
@@ -167,13 +170,14 @@ public class RpcTests
 			new ServerConfig(Serializers.GetSerializer(ser));
 		serverConfig.AddCompressor(new Lz4CompressionProvider());
 
-		await using var server = new NativeServer(9095, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 
 		var cliConf = new ClientConfig(Serializers.GetSerializer(ser));
 		cliConf.AddCompressor(new Lz4CompressionProvider());
-		await using var client = new NativeClient(9095, cliConf);
+		await using var client = new NativeClient(port, cliConf);
 
 		var proxy = client.CreateProxy<ITestService>();
 
@@ -210,11 +214,12 @@ public class RpcTests
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
-		await using var server = new NativeServer(9095, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 
-		await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<ITestService>();
 
@@ -224,10 +229,6 @@ public class RpcTests
 		Assert.AreEqual("lol", result);
 		Assert.AreEqual(3, result2);
 	}
-
-
-
-
 
 
 	[TestMethod]
@@ -267,7 +268,8 @@ public class RpcTests
 		if (compress)
 			serverConfig.AddCompressor(new Lz4CompressionProvider());
 
-		await using var server = new NativeServer(9094, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.Start();
 		server.RegisterService<ITestService, TestService>();
 
@@ -280,7 +282,7 @@ public class RpcTests
 			if (compress)
 				cc.AddCompressor(new Lz4CompressionProvider()); // default since only 1
 
-			await using var client = new NativeClient(9094, cc);
+			await using var client = new NativeClient(port, cc);
 
 			stopWatch.Stop();
 			stopWatch.Reset();
@@ -354,8 +356,8 @@ public class RpcTests
 				CreateService = (_, _) => new(testService, false)
 			};
 
-
-		await using var server = new NativeServer(9094, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 
@@ -364,7 +366,7 @@ public class RpcTests
 			var stopWatch = new Stopwatch();
 			stopWatch.Start();
 
-			await using var client = new NativeClient(9094, new ClientConfig(Serializers.GetSerializer(ser)));
+			await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 			stopWatch.Stop();
 			stopWatch.Reset();
@@ -421,13 +423,14 @@ public class RpcTests
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
 
-		await using var server = new NativeServer(9095, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 
 		async Task ClientAction()
 		{
-			await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
+			await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 			var proxy = client.CreateProxy<ITestService>();
 			proxy.TestMethodWithDelegateArg(arg => argumentFromServer = arg);
@@ -463,11 +466,12 @@ public class RpcTests
 
 		bool serviceEventCalled = false;
 
-		await using var server = new NativeServer(9096, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 
-		await using var client = new NativeClient(9096, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<ITestService>();
 
@@ -513,13 +517,14 @@ public class RpcTests
 			};
 
 
-		await using var server = new NativeServer(9097, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 
 		async Task ClientAction()
 		{
-			await using var client = new NativeClient(9097, new ClientConfig(Serializers.GetSerializer(ser)));
+			await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 			var proxy = client.CreateProxy<ITestService>();
 			proxy.TestExternalTypeParameter(new DataClass() { Value = 42 });
@@ -603,11 +608,12 @@ public class RpcTests
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
 
-		await using var server = new NativeServer(9197, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<IGenericEchoService, GenericEchoService>();
 		server.Start();
 
-		await using var client = new NativeClient(9197, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IGenericEchoService>();
 
@@ -674,11 +680,12 @@ public class RpcTests
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
 
-		await using var server = new NativeServer(9198, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<IEnumTestService, EnumTestService>();
 		server.Start();
 
-		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IEnumTestService>();
 
@@ -723,11 +730,12 @@ public class RpcTests
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
-		await using var server = new NativeServer(9198, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<IRefTestService, RefTestService>();
 		server.Start();
 
-		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IRefTestService>();
 
@@ -828,11 +836,12 @@ public class RpcTests
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
-		await using var server = new NativeServer(9198, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<IDelegateTest, DelegateTest>();
 		server.Start();
 
-		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IDelegateTest>();
 
@@ -1049,11 +1058,12 @@ public class RpcTests
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
-		await using var server = new NativeServer(9198, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<IDelegateTest2, DelegateTest2>();
 		server.Start();
 
-		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IDelegateTest2>();
 
@@ -1402,11 +1412,12 @@ public class RpcTests
 	[DataRow(Serializer.Protobuf)]
 	public async Task DoVarArgTest(Serializer ser)
 	{
-		await using var server = new NativeServer(9198, new ServerConfig(Serializers.GetSerializer(ser)));
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, new ServerConfig(Serializers.GetSerializer(ser)));
 		server.RegisterService<IVarArgTest, VarArgTest>();
 		server.Start();
 
-		await using var client = new NativeClient(9198, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IVarArgTest>();
 		{
@@ -1656,13 +1667,14 @@ public class RpcTests
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
 
-		await using var server = new NativeServer(9095, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<ITestService, TestService>();
 		server.Start();
 
 		async Task ClientAction()
 		{
-			await using var client = new NativeClient(9095, new ClientConfig(Serializers.GetSerializer(ser)));
+			await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 			var proxy = client.CreateProxy<ITestService>();
 			argumentFromServer = string.Join(",", proxy.GetIEnumerableYieldStrings().ToList());

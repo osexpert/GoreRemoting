@@ -72,11 +72,12 @@ public class AsyncTests
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
 
-		await using var server = new NativeServer(9196, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<IAsyncService, AsyncService>();
 		server.Start();
 
-		await using var client = new NativeClient(9196, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IAsyncService>();
 
@@ -107,11 +108,10 @@ public class AsyncTests
 	[DataRow(Serializer.Protobuf)]
 	public async Task AwaitingNonGenericTask_should_not_hang_forever(Serializer ser)
 	{
-		var port = 9197;
-
 		var serverConfig =
 			new ServerConfig(Serializers.GetSerializer(ser));
 
+		var port = Ports.GetNext();
 		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<IAsyncService, AsyncService>();
 		server.Start();
@@ -293,11 +293,12 @@ public class AsyncTests
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
-		await using var server = new NativeServer(9196, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<IExceptionTest, ExceptionTest>();
 		server.Start();
 
-		await using var client = new NativeClient(9196, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IExceptionTest>();
 
@@ -384,11 +385,12 @@ public class AsyncTests
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
-		await using var server = new NativeServer(9196, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<IExceptionTest, ExceptionTest>();
 		server.Start();
 
-		await using var client = new NativeClient(9196, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IExceptionTest>();
 
@@ -455,11 +457,12 @@ public class AsyncTests
 	{
 		var serverConfig = new ServerConfig(Serializers.GetSerializer(ser));
 
-		await using var server = new NativeServer(9196, serverConfig);
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
 		server.RegisterService<IExceptionTest, ExceptionTest>();
 		server.Start();
 
-		await using var client = new NativeClient(9196, new ClientConfig(Serializers.GetSerializer(ser)));
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
 
 		var proxy = client.CreateProxy<IExceptionTest>();
 
