@@ -1,3 +1,7 @@
+## 0.0.5
+* Support IAsyncEnumerable as result and as arguments
+* Support more than 1 delegate with result
+
 ## 0.0.4
 * Drop support for .net 6.0
 * Update nugets
