@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
@@ -9,8 +11,8 @@ using GoreRemoting.Serialization.MemoryPack;
 #endif
 using GoreRemoting.Serialization.MessagePack;
 using GoreRemoting.Serialization.Protobuf;
+using GoreRemoting.Tests.ExternalTypes;
 using GoreRemoting.Tests.Tools;
-using Microsoft.Data.SqlClient;
 
 
 namespace GoreRemoting.Tests;
@@ -152,27 +154,15 @@ public class AsyncTests
 
 		public void TestWithInnerException()
 		{
-			Exception? ie = null;
-			try
-			{
-				var c = new SqlConnection("lolx");
-				c.Open();
-				c.BeginTransaction();
-			}
-			catch (Exception e)
-			{
-				ie = e;
-			}
+			var e = SqlExceptionTest.CreateException(new SqlError(41, 1, 1, "ser", "error", "proc", 42), "serv3", new SqlInternalConnectionTds(), new IOException("io exc"));
 
-			throw new SerExOk("The mess", "extra string", ie!);
+			throw new SerExOk("The mess", "extra string", e);
 		}
 
 		public void TestWithSqlException()
 		{
-			using var c = new SqlConnection("Data Source=();Initial Catalog=test; Integrated Security=sspi;");
-			c.Open();
-			var cm = new SqlCommand("select * from test", c);
-			cm.ExecuteNonQuery();
+			var e = SqlExceptionTest.CreateException(new SqlError(41, 1, 1, "ser", "error", "proc", 42), "serv3", new SqlInternalConnectionTds(), new IOException("io exc"));
+			throw e;
 		}
 	}
 
@@ -399,20 +389,45 @@ public class AsyncTests
 		Assert.AreEqual("The mess", e4.Message);
 		if (ser == Serializer.BinaryFormatter)
 		{
-			Assert.AreEqual("Format of the initialization string does not conform to specification starting at index 0.", e4.InnerException!.Message);
+			Assert.AreEqual("error", e4.InnerException!.Message);
+
+#if NETFRAMEWORK
+			AssertLines(e4, [
+				"GoreRemoting.Tests.AsyncTests+SerExOk: The mess",
+				" ---> GoreRemoting.Tests.ExternalTypes.SqlExceptionTest: error",
+				" ---> System.IO.IOException: io exc",
+				"   --- End of inner exception stack trace ---",
+				"   --- End of inner exception stack trace ---",
+				"--- End of stack trace from previous location ---",
+				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType, String assertMethodName)",
+			]);
+#else
+			AssertLines(e4, [
+				"GoreRemoting.Tests.AsyncTests+SerExOk: The mess",
+				" ---> GoreRemoting.Tests.ExternalTypes.SqlExceptionTest (0x80131904): error",
+				" ---> System.IO.IOException: io exc",
+				"ExClientConnectionId",
+				"   --- End of inner exception stack trace ---",
+				"--- End of stack trace from previous location ---",
+				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType, String assertMethodName)",
+			]);
+#endif
 		}
 		else
 		{
 			Assert.IsNull(e4.InnerException);
-		}
 
-		AssertLines(e4, [
+			AssertLines(e4, [
 				"GoreRemoting.Tests.AsyncTests+SerExOk: The mess",
-				" ---> System.ArgumentException: Format of the initialization string does not conform to specification starting at index 0.",
-				"   --- End of inner exception stack trace ---",
+				" ---> GoreRemoting.Tests.ExternalTypes.SqlExceptionTest (0x80131904): error",
+				" ---> System.IO.IOException: io exc",
+				"ExClientConnectionId",
+				"ExErrorNumberStateClass",
 				"--- End of stack trace from previous location ---",
 				"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType, String assertMethodName)",
-		]);
+			]);
+		}
+
 	}
 
 	private void AssertNotLine(Exception e4, string v)
@@ -466,40 +481,19 @@ public class AsyncTests
 
 		var proxy = client.CreateProxy<IExceptionTest>();
 
-		var e4 = Assert.ThrowsExactly<SqlException>(proxy.TestWithSqlException);
+		var e4 = Assert.ThrowsExactly<SqlExceptionTest>(proxy.TestWithSqlException);
 
-		Assert.AreEqual("A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)", e4.Message);
+		Assert.AreEqual("error", e4.Message);
 
 		if (ser == Serializer.BinaryFormatter)
 		{
-#if NET6_0_OR_GREATER
-			Assert.AreEqual("The network path was not found.", e4.InnerException!.Message);
-#else
-			Assert.AreEqual("The network path was not found", e4.InnerException!.Message);
-#endif
+			Assert.AreEqual("io exc", e4.InnerException!.Message);
 		}
 		else
 		{
 			Assert.IsNull(e4.InnerException);
 		}
 
-#if NET6_0_OR_GREATER
-		AssertLines(e4,
-		[
-			"Microsoft.Data.SqlClient.SqlException (0x80131904): A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)",
-			" ---> System.ComponentModel.Win32Exception (53): The network path was not found.",
-			"--- End of stack trace from previous location ---",
-			"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType, String assertMethodName)"
-		]);
-#else
-		AssertLines(e4,
-		[
-			"Microsoft.Data.SqlClient.SqlException (0x80131904): A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)",
-			" ---> System.ComponentModel.Win32Exception (0x80004005): The network path was not found", // no dot
-			"--- End of stack trace from previous location ---",
-			"   at Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsThrowsFailing[TException](Action action, Boolean isStrictType, String assertMethodName)"
-		]);
-#endif
 
 		AssertNotLine(e4, "   --- End of inner exception stack trace ---");
 	}

@@ -28,7 +28,6 @@
     <PackageVersion Include="TupleAsJsonArray.Redux" Version="1.1.0" />
 <!--    <PackageVersion Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.0" /> -->
     <PackageVersion Include="MessagePack" Version="3.1.4" />
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="5.2.2" /> <!-- only used in testing, do not upgrade, it break the test -->
     <!--    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" /> -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
   <!--       <PackageVersion Include="xunit" Version="2.7.0" />-->
