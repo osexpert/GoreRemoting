@@ -140,6 +140,15 @@ Streaming from server to client is always fast (one way delegate).
 ## Methods
 OneWay methods not supported. Methods always wait for result\exception.
 
+## Example migration
+- While on .net 4.8\.net Remoting, change all services to stateless single call. Store server state in a session object. Reduce MarshalByRef usage to a minimum: only progress callbacks during server calls and server to client callbacks (messages) via session callback channel.
+- Change to GoreRemoting with Grpc.Core transport but keep using BinaryFormatter.
+- After client login, call a server method that awaits forever. Change session callback channel to use this method as the callback channel (using a delegate argument).
+- Change progress callbacks (and other callbacks that happen during a server call) to use delegate arguments.
+- Upgrade to latest .net
+- One method\service at a time, change to a modern formatter eg. MessagePack
+- Change transport from Grpc.Core to grpc-dotnet
+
 ## Other Rpc framework maybe of interest
 StreamJsonRpc (Json or MessagePack over streams & WebSockets)
 https://github.com/microsoft/vs-streamjsonrpc  
