@@ -11,7 +11,7 @@ internal class Program
 {
 	static void Main(string[] args)
 	{
-		Console.WriteLine("ClientNet60 example");
+		Console.WriteLine("ClientNet80 example");
 
 		var p = new Program();
 		p.Go();

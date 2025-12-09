@@ -27,7 +27,7 @@ internal class Program
 	/// <returns></returns>
 	static async Task Main(string[] args)
 	{
-		Console.WriteLine("ServerNet60 example");
+		Console.WriteLine("ServerNet80 example");
 
 		var p = new Program();
 
