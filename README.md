@@ -40,7 +40,7 @@
 		var echo = await proxy.EchoAsync("Hello world!");
 	}
   
-GoreRemoting is based on CoreRemoting
+GoreRemoting https://github.com/osexpert/GoreRemoting is based on CoreRemoting
 https://github.com/theRainbird/CoreRemoting  
 
 GoreRemoting is (just like CoreRemoting) a way to migrate from .NET Remoting, but with Grpc instead of WebSockets\Sockets.
@@ -230,3 +230,4 @@ Bug filed: https://github.com/grpc/grpc-dotnet/issues/2010
 Workaround added: use a hangup sequence.
 But still, this only workaround the problem when grpc-dotnet is used as both server and client.
 If grpc-dotnet is mixed with Grpc.Core, the problem still exist, specially when using Grpc.Core client agains grpc-dotnet server.
+
