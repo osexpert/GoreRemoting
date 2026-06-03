@@ -13,6 +13,7 @@ using GoreRemoting.Serialization.MessagePack;
 using GoreRemoting.Serialization.Protobuf;
 using GoreRemoting.Tests.ExternalTypes;
 using GoreRemoting.Tests.Tools;
+using Grpc.Core;
 
 
 namespace GoreRemoting.Tests;
@@ -22,17 +23,29 @@ public class AsyncTests
 {
 	#region Service with async method
 
-	public interface IAsyncService
+	public interface IBaseIface
+	{
+		string BaseMethod(string lol);
+	}
+
+	public interface IAsyncService : IBaseIface
 	{
 		Task<string> ConvertToBase64Async(string text);
 
 		Task NonGenericTask();
 
 		(Version?, Version, Version[], Version[]?) TestMisc(Version? v, Version v2, Version[] versions, Version[]? versions2);
+
+		Task ThrowRpcException();
 	}
 
 	public class AsyncService : IAsyncService
 	{
+		public string BaseMethod(string lol)
+		{
+			return lol + "lol";
+		}
+
 		public async Task<string> ConvertToBase64Async(string text)
 		{
 			var convertFunc = new Func<string>(() =>
@@ -55,10 +68,78 @@ public class AsyncTests
 		{
 			return (v, vs, versions, versions2);
 		}
+
+		public async Task ThrowRpcException()
+		{
+			throw new RpcException(new(StatusCode.Unauthenticated, "lol"));
+		}
 	}
 
 	#endregion
 
+
+
+
+
+	[TestMethod]
+	[DataRow(Serializer.BinaryFormatter)]
+	[DataRow(Serializer.Json)]
+#if NET6_0_OR_GREATER
+	[DataRow(Serializer.MemoryPack)]
+#endif
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task ThrowRpcExcetion(Serializer ser)
+	{
+		var serverConfig =
+			new ServerConfig(Serializers.GetSerializer(ser));
+
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
+		server.RegisterService<IAsyncService, AsyncService>();
+		server.Start();
+
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
+
+		var proxy = client.CreateProxy<IAsyncService>();
+
+		var ex = await Assert.ThrowsExactlyAsync<RpcException>(async () =>
+		{
+			await proxy.ThrowRpcException();
+		});
+
+		// Hmmm...yes...the RpcException is not serialization friendly...does not have deserializing ctor
+		Assert.AreEqual(StatusCode.OK, ex.Status.StatusCode);
+		Assert.IsNull(ex.Status.Detail);
+	}
+
+
+	[TestMethod]
+	[DataRow(Serializer.BinaryFormatter)]
+	[DataRow(Serializer.Json)]
+#if NET6_0_OR_GREATER
+	[DataRow(Serializer.MemoryPack)]
+#endif
+	[DataRow(Serializer.MessagePack)]
+	[DataRow(Serializer.Protobuf)]
+	public async Task CallBaseMethod(Serializer ser)
+	{
+		var serverConfig =
+			new ServerConfig(Serializers.GetSerializer(ser));
+
+		var port = Ports.GetNext();
+		await using var server = new NativeServer(port, serverConfig);
+		server.RegisterService<IAsyncService, AsyncService>();
+		server.Start();
+
+		await using var client = new NativeClient(port, new ClientConfig(Serializers.GetSerializer(ser)));
+
+		var proxy = client.CreateProxy<IAsyncService>();
+
+		var res = proxy.BaseMethod("hey");
+
+		Assert.AreEqual("heylol", res);
+	}
 
 
 	[TestMethod]

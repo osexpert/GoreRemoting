@@ -110,9 +110,9 @@ public class RemotingServer : IRemotingParty
 		if (_serviceMethodCache.TryGetValue((serviceName, methodName), out var mi))
 			return mi;
 
-		var serviceInterfaceType = GetServiceType(serviceName);
+		var serviceType = GetServiceType(serviceName);
 
-		var all_methods = serviceInterfaceType.GetMethods();
+		var all_methods = serviceType.GetMethods();
 
 		var methods = all_methods.Where(m => m.Name == methodName);
 
@@ -355,9 +355,11 @@ public class RemotingServer : IRemotingParty
 
 		try
 		{
+			// TODO: move outside the try? exception here should not enter callScope?
 			serviceHandle = GetService(request.ServiceName, context);
 			var service = serviceHandle.Value.Service;
 
+			// TODO: move outside the try? exception here should not enter callScope?
 			callScope = _config.CreateCallScope?.Invoke();
 			callScope?.Start(context, request.ServiceName, request.MethodName, service, request.Method, parameterValues);
 
@@ -381,6 +383,7 @@ public class RemotingServer : IRemotingParty
 				result = null;
 			}
 
+			// TODO: eat exception?
 			callScope?.Success(result);
 		}
 		catch (Exception ex)
@@ -389,10 +392,12 @@ public class RemotingServer : IRemotingParty
 			if (ex2 is TargetInvocationException tie)
 				ex2 = tie.InnerException;
 
+			// TODO: eat exception?
 			callScope?.Failure(ex2);
 		}
 		finally
 		{
+			// TODO: eat exception?
 			callScope?.Dispose();
 			callScope = null;
 
@@ -644,8 +649,8 @@ public class RemotingServer : IRemotingParty
 	}
 
 	private static Channel<GoreRequestMessage> GetOrCreateChannel(
-	DuplexCallState state,
-	(RequestType, int) key)
+		DuplexCallState state,
+		(RequestType, int) key)
 	{
 		return state._channels.GetOrAdd(key, _ =>
 			Channel.CreateBounded<GoreRequestMessage>(
@@ -671,6 +676,7 @@ public class RemotingServer : IRemotingParty
 		ServerCallContext context
 		)
 	{
+
 		try
 		{
 			bool gotNext = await requestStream.MoveNext().ConfigureAwait(false);
@@ -694,11 +700,28 @@ public class RemotingServer : IRemotingParty
 				).ConfigureAwait(false);
 
 			await threadSafeResponseStream.CompleteAsync().ConfigureAwait(false);
+
+			// Wait for END_STREAM from client to be processed
+			await WaitForCancellationAsync(context.CancellationToken);
+		}
+		catch (RpcException e)
+		{
+			context.Status = e.Status;
 		}
 		catch (Exception e)
 		{
 			context.Status = new Status(StatusCode.Unknown, e.ToString());
 		}
+	}
+
+	public static Task WaitForCancellationAsync(CancellationToken token)
+	{
+		if (token.IsCancellationRequested)
+			return Task.CompletedTask;
+
+		var tcs = new TaskCompletionSource<bool>();
+		token.Register(() => tcs.TrySetResult(true));
+		return tcs.Task;
 	}
 }
 

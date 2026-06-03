@@ -150,6 +150,7 @@ public class RemotingClient : IRemotingParty
 			}
 			finally
 			{
+				// send END_STREAM to server
 				await call.RequestStream.CompleteAsync().ConfigureAwait(false);
 			}
 		}
