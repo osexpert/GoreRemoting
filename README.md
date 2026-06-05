@@ -219,15 +219,3 @@ Conclusion: StreamingFuncAttribute\StreamingDoneException does even out the numb
 
 ## Grpc implementations
 Can use both Grpc.Core https://grpc.io/blog/grpc-csharp-future/ and grpc-dotnet https://github.com/grpc/grpc-dotnet.
-But grpc-dotnet is only fully compatible with itself, so I would discourage mixing grpc-dotnet server and Grpc.Core clients.
-Mixing Grpc.Core server and grpc-dotnet clients may work better.
-But best to not mix grpc-dotnet with anything else.
-Reason: under stress will get errors, specifically ENHANCE_YOUR_CALM
-
-## grpc-dotnet problems
-When calling the grpc-dotnet server too fast(?), I get ENHANCE_YOUR_CALM\RESOURCE_EXHAUSTED(ResourceExhausted)\RST_STREAM or similar:
-Bug filed: https://github.com/grpc/grpc-dotnet/issues/2010
-Workaround added: use a hangup sequence.
-But still, this only workaround the problem when grpc-dotnet is used as both server and client.
-If grpc-dotnet is mixed with Grpc.Core, the problem still exist, specially when using Grpc.Core client agains grpc-dotnet server.
-
